@@ -1,0 +1,585 @@
+<mxfile host="Electron" modified="2024-07-29T19:35:23.510Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="o22fnTfH0ksJdhvynx_J" version="22.1.2" type="device" pages="10">
+  <diagram name="High level" id="fYrvFYTinoTmRz4X5YVb">
+    <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c7S2mlpsnWX99IbfAqWu-15" value="&lt;h1&gt;Actors&lt;/h1&gt;&lt;p&gt;- Player (human)&lt;br&gt;- DM (human or AI)&lt;br&gt;- Game (automated)&lt;/p&gt;" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;fontColor=#333333;" parent="1" vertex="1">
+          <mxGeometry x="342" y="20" width="170" height="104.88" as="geometry" />
+        </mxCell>
+        <mxCell id="c7S2mlpsnWX99IbfAqWu-22" value="&lt;h1&gt;High level view&lt;/h1&gt;&lt;p&gt;- Turn based DnD game&lt;br&gt;- Each player plays a character&lt;br&gt;- Each player can do a finite set of pre-determined actions on their turn (attack, speak, move, rest, etc)&lt;br&gt;- The DM considers the players actions, plus the state of the game so far, and decides the outcome of the actions and tells the player what happens, possibly presenting them with choices (combat, dialogue, do nothing)&lt;br&gt;- The types of choices are pre-determined&lt;br&gt;- The DM also updates the state of the game, including the location of the players, which NPCs are in it, and the story, if worth updating&lt;br&gt;- When entering combat, DnD rules are followed&lt;br&gt;- When entering dialogue, DM is in control of the NPCs&lt;/p&gt;" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="22" y="20" width="300" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="Q3sxy9ujdcTMNlAwJ5Kt-2" value="&lt;h1&gt;Use cases&lt;/h1&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="22" y="300" width="678" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-1" value="Play turn" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="59" y="415" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-2" value="Decide outcomes" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="222" y="415" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-3" value="Combat" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="372" y="345" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-4" value="Dialogue" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="372" y="485" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-5" value="" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="4fW2pjna6EnsGgLrEOpy-1" target="4fW2pjna6EnsGgLrEOpy-2" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="142" y="525" as="sourcePoint" />
+            <mxPoint x="302" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-9" value="" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="4fW2pjna6EnsGgLrEOpy-2" target="4fW2pjna6EnsGgLrEOpy-3" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="159" y="455" as="sourcePoint" />
+            <mxPoint x="252" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4fW2pjna6EnsGgLrEOpy-10" value="" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="4fW2pjna6EnsGgLrEOpy-2" target="4fW2pjna6EnsGgLrEOpy-4" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="297" y="425" as="sourcePoint" />
+            <mxPoint x="382" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VmkPformog40XncnrNKe-1" value="Level Up" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="530" y="340" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VmkPformog40XncnrNKe-2" value="" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=0.978;exitY=0.411;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitPerimeter=0;" parent="1" source="4fW2pjna6EnsGgLrEOpy-3" target="VmkPformog40XncnrNKe-1" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="159" y="455" as="sourcePoint" />
+            <mxPoint x="232" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AeckxmovXbGe-TrOKudJ-1" value="If the DM is an AI, the &quot;story so far&quot; is given to allow for context-aware events and dialogues. The output is constrained to be one of a finite set of outcomes (e.g., Combat or Dialogue) so as to be able to effectively extract precise information from the AI response." style="shape=note;strokeWidth=2;fontSize=14;size=20;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#666600;" parent="1" vertex="1">
+          <mxGeometry x="342" y="150" width="358" height="140" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="ePjBcBRlCPru4Kch6vBQ" name="States">
+    <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-12" value="start / end dialogue" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-1" target="dOvvKlk92pLzlqRvRV1k-4" edge="1">
+          <mxGeometry x="0.4271" y="3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-13" value="fight / end combat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-1" target="dOvvKlk92pLzlqRvRV1k-3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-17" value="rest / finish rest" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-1" target="dOvvKlk92pLzlqRvRV1k-5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DlkaRSiepPMQ4LU-dYAG-1" value="start journey" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.963;exitY=0.297;exitDx=0;exitDy=0;entryX=0.037;entryY=0.297;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="dOvvKlk92pLzlqRvRV1k-1" target="dOvvKlk92pLzlqRvRV1k-2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-1" value="Explore" style="shape=ellipse;html=1;dashed=0;whiteSpace=wrap;aspect=fixed;perimeter=ellipsePerimeter;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="110" y="240" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-14" value="fight / end combat" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-2" target="dOvvKlk92pLzlqRvRV1k-3" edge="1">
+          <mxGeometry x="0.5905" y="-3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-15" value="start / end dialogue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-2" target="dOvvKlk92pLzlqRvRV1k-4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-18" value="rest / finish rest" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="dOvvKlk92pLzlqRvRV1k-2" target="dOvvKlk92pLzlqRvRV1k-5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DlkaRSiepPMQ4LU-dYAG-2" value="explore the area" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.009;exitY=0.705;exitDx=0;exitDy=0;entryX=0.981;entryY=0.705;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="dOvvKlk92pLzlqRvRV1k-2" target="dOvvKlk92pLzlqRvRV1k-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-2" value="Travel" style="shape=ellipse;html=1;dashed=0;whiteSpace=wrap;aspect=fixed;perimeter=ellipsePerimeter;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="540" y="240" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-3" value="Combat" style="shape=ellipse;html=1;dashed=0;whiteSpace=wrap;aspect=fixed;perimeter=ellipsePerimeter;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="110" y="550" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-4" value="Dialogue" style="shape=ellipse;html=1;dashed=0;whiteSpace=wrap;aspect=fixed;perimeter=ellipsePerimeter;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="540" y="550" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dOvvKlk92pLzlqRvRV1k-5" value="Rest" style="shape=ellipse;html=1;dashed=0;whiteSpace=wrap;aspect=fixed;perimeter=ellipsePerimeter;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="324" y="100" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="DlkaRSiepPMQ4LU-dYAG-3" value="continue&lt;br&gt;exploring" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" parent="1" source="dOvvKlk92pLzlqRvRV1k-1" target="dOvvKlk92pLzlqRvRV1k-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="123" y="220" />
+              <mxPoint x="60" y="220" />
+              <mxPoint x="60" y="350" />
+              <mxPoint x="123" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="DlkaRSiepPMQ4LU-dYAG-4" value="continue&lt;br&gt;journey" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" source="dOvvKlk92pLzlqRvRV1k-2" target="dOvvKlk92pLzlqRvRV1k-2" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="617" y="220" />
+              <mxPoint x="680" y="220" />
+              <mxPoint x="680" y="350" />
+              <mxPoint x="617" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="88XoMofmJithcOIcsDnV" name="Examples">
+    <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zhsZxn63C3n8AGOxbUa0-1" value="&lt;h1&gt;Play turn (combat)&lt;/h1&gt;&lt;p&gt;There are 2 players playing. The game is in Explore mode.&lt;br&gt;&lt;br&gt;The DM says: &quot;You are exploring the Dark Leaves forest, you see a goblin 30 feet ahead of you. What do you do?&lt;br&gt;Attack / Dialogue / Do Nothing&quot;&lt;br&gt;&lt;br&gt;The 1st player decides and chooses &quot;Attack&quot;.&lt;br&gt;&lt;br&gt;The game switch to Combat mode and a DnD fight between the 2 players and the goblin begins.&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="20" y="40" width="290" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="zhsZxn63C3n8AGOxbUa0-2" value="&lt;h1&gt;Play turn&amp;nbsp;(dialogue)&lt;/h1&gt;&lt;p&gt;There are 2 players playing. The game is in Explore mode.&lt;br&gt;&lt;br&gt;The DM says: &quot;You are in the Dark Leaves forest, you see a wood elf 30 feet ahead of you. What do you do?&lt;br&gt;Attack / Dialogue / Do Nothing&quot;&lt;br&gt;&lt;br&gt;The 2nd player decides and chooses &quot;Dialogue&quot;.&lt;br&gt;&lt;br&gt;The game switch to Dialogue mode and the DM impersonates the NPC (the elf), talking with the players in chat mode.&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="330" y="40" width="290" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="zhsZxn63C3n8AGOxbUa0-3" value="&lt;h1&gt;Play turn&amp;nbsp;(do nothing)&lt;/h1&gt;&lt;p&gt;There are 2 players playing. The game is in Explore mode.&lt;br&gt;&lt;br&gt;The DM says: &quot;You are in the Dark Leaves forest, you see a wood elf 30 feet ahead of you. What do you do?&lt;br&gt;Attack / Dialogue / Do Nothing&quot;&lt;br&gt;&lt;br&gt;The 2nd player decides and chooses &quot;Do Nothing&quot;.&lt;br&gt;&lt;br&gt;The game stays in Explore mode and the DM decide what happens - e.g. the elf disappears, or attacks the party, or initiates a dialogue.&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="20" y="340" width="290" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="zhsZxn63C3n8AGOxbUa0-4" value="&lt;h1&gt;Play turn&amp;nbsp;(travel)&lt;/h1&gt;&lt;p&gt;There are 2 players playing. The game is in Travel mode.&lt;br&gt;&lt;br&gt;The DM says: &quot;You are in the Dark Leaves forest, It&#39;s your second day of travel from the city of Westonia to the country of Neverdwell. You can:&lt;br&gt;Continue journey / Explore the area / Rest&quot;&lt;br&gt;&lt;br&gt;The 2nd player decides and chooses &quot;Continue journey&quot;.&lt;br&gt;&lt;br&gt;The game stays in Explore mode and the DM decide what happens - e.g. nothing important to report (e.g. sightseeing), or an ambush and you must defend yourselves.&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="330" y="340" width="290" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="zhsZxn63C3n8AGOxbUa0-5" value="&lt;h1&gt;Play turn&amp;nbsp;(explore)&lt;/h1&gt;&lt;p&gt;There are 2 players playing. The game is in Explore mode.&lt;br&gt;&lt;br&gt;The DM says: &quot;You are exploring the Dark Leaves forest, there&#39;s nothing to report. You can:&lt;br&gt;Continue exploring / Start a journey / Rest&quot;&lt;br&gt;&lt;br&gt;The 2nd player decides and chooses &quot;Continue journey&quot;.&lt;br&gt;&lt;br&gt;The game stays in Explore mode and the DM decide what happens - e.g. nothing important to report (e.g. sightseeing), or an ambush and you must defend yourselves.&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="20" y="640" width="290" height="280" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="25_Y8F30EJBaNVi29MqV" name="Sequence">
+    <mxGraphModel dx="795" dy="562" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-9" value="dnd:DnD" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="232" y="30" width="100" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-10" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-9">
+          <mxGeometry x="45" y="60" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-18" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-9">
+          <mxGeometry x="45" y="170" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-19" value="manage game &amp;lt;id&amp;gt;&amp;nbsp;" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" parent="vdofxJm4_SXy7MctPVNJ-9" target="vdofxJm4_SXy7MctPVNJ-18">
+          <mxGeometry x="-0.0017" relative="1" as="geometry">
+            <mxPoint x="-152" y="175" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-20" value="game manager view" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=-5;" edge="1" parent="vdofxJm4_SXy7MctPVNJ-9" source="vdofxJm4_SXy7MctPVNJ-18">
+          <mxGeometry x="0.0008" relative="1" as="geometry">
+            <mxPoint x="-152" y="245" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-5" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-9">
+          <mxGeometry x="45" y="320" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-6" value="join game &amp;lt;id&amp;gt; as &amp;lt;PC&amp;gt;" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" target="vdofxJm4_SXy7MctPVNJ-5" parent="vdofxJm4_SXy7MctPVNJ-9">
+          <mxGeometry x="-0.0015" relative="1" as="geometry">
+            <mxPoint x="-152" y="325" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-7" value="game view" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=-5;" edge="1" source="vdofxJm4_SXy7MctPVNJ-5" parent="vdofxJm4_SXy7MctPVNJ-9">
+          <mxGeometry x="0.0008" relative="1" as="geometry">
+            <mxPoint x="-152" y="395" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-11" value="Player" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="10" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-12" value="create game&amp;nbsp;" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" parent="1" target="vdofxJm4_SXy7MctPVNJ-10">
+          <mxGeometry x="-0.0021" relative="1" as="geometry">
+            <mxPoint x="80" y="95" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-13" value="game created &amp;lt;id&amp;gt;" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=-5;" edge="1" parent="1" source="vdofxJm4_SXy7MctPVNJ-10">
+          <mxGeometry x="0.0008" relative="1" as="geometry">
+            <mxPoint x="80" y="165" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-22" value="game:Game" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="400" y="90" width="100" height="790" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-23" value="creates" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="290" y="110" as="sourcePoint" />
+            <mxPoint x="390" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-44" value="dmChannel:Channel" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="520" y="30" width="120" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-7" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-44">
+          <mxGeometry x="55" y="70" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-54" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-44">
+          <mxGeometry x="55" y="580" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-48" value="playersChannel:Channel" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="810" y="30" width="140" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-65" value="new game view (async)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;" edge="1" source="lruQQTN8Uo5UNNwWjfcX-21" parent="vdofxJm4_SXy7MctPVNJ-48">
+          <mxGeometry x="0.6639" y="-5" relative="1" as="geometry">
+            <mxPoint x="-640" y="715" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-16" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-48">
+          <mxGeometry x="65" y="70" width="10" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-63" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="vdofxJm4_SXy7MctPVNJ-48">
+          <mxGeometry x="65" y="670" width="10" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-25" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="277" y="560" width="10" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-26" value="do &amp;lt;action&amp;gt; on game &amp;lt;id&amp;gt; as &amp;lt;PC&amp;gt;" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" parent="1" target="vdofxJm4_SXy7MctPVNJ-25">
+          <mxGeometry x="-0.0015" relative="1" as="geometry">
+            <mxPoint x="80" y="565" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-52" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="282" y="590" width="10" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-53" value="decide if DM is involved" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;" edge="1" target="vdofxJm4_SXy7MctPVNJ-52" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="287" y="570" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="317" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-55" value="post to DM channel" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" target="vdofxJm4_SXy7MctPVNJ-54" parent="1" source="vdofxJm4_SXy7MctPVNJ-52">
+          <mxGeometry x="0.0012" relative="1" as="geometry">
+            <mxPoint x="490" y="615" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-64" value="notify player" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=0.917;exitY=0.217;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" target="lruQQTN8Uo5UNNwWjfcX-21" parent="1" source="vdofxJm4_SXy7MctPVNJ-63">
+          <mxGeometry x="-0.0061" relative="1" as="geometry">
+            <mxPoint x="910" y="721" as="sourcePoint" />
+            <mxPoint x="1000" y="721" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-67" value="#PCs, PC sheet, last DM message, whose turn it is, game mode, available actions" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="132" y="435" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-69" value="updated with new message from DM and new available actions" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="132" y="760" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="vdofxJm4_SXy7MctPVNJ-70" value="PCs, story, create/delete PCs" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="132" y="280" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gmpWSADakAhGQ6CIDSBB-1" value="the decision is not actually taken by the channel, but by the collaborator that subscribes to it, woken up by the player input" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="590" y="490" width="120" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="gmpWSADakAhGQ6CIDSBB-2" value="the response is sent to the client by the collaborator that subscribes to the players channel, woken up by the DM output" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=#fff2cc;strokeColor=#d6b656;align=center;" vertex="1" parent="1">
+          <mxGeometry x="730" y="760" width="140" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-5" value="dm:ClientAgent" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="670" y="30" width="100" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-10" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="lruQQTN8Uo5UNNwWjfcX-5">
+          <mxGeometry x="45" y="590" width="10" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-13" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="lruQQTN8Uo5UNNwWjfcX-5">
+          <mxGeometry x="50" y="620" width="10" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-14" value="process&lt;br&gt;player input" style="html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;rounded=0;" edge="1" target="lruQQTN8Uo5UNNwWjfcX-13" parent="lruQQTN8Uo5UNNwWjfcX-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="55" y="600" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="85" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-8" value="subscribe" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" edge="1" target="lruQQTN8Uo5UNNwWjfcX-7" parent="1" source="lruQQTN8Uo5UNNwWjfcX-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="105" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-9" value="" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" edge="1" source="lruQQTN8Uo5UNNwWjfcX-7" parent="1" target="lruQQTN8Uo5UNNwWjfcX-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-11" value="notify DM" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=5;" edge="1" target="lruQQTN8Uo5UNNwWjfcX-10" parent="1" source="vdofxJm4_SXy7MctPVNJ-54">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="645" y="625" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-15" value="player:ClientAgent" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="980" y="30" width="110" height="850" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-21" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="lruQQTN8Uo5UNNwWjfcX-15">
+          <mxGeometry x="50" y="680" width="10" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-17" value="subscribe" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" edge="1" parent="1" target="lruQQTN8Uo5UNNwWjfcX-16" source="lruQQTN8Uo5UNNwWjfcX-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="995" y="105" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-18" value="" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" edge="1" parent="1" source="lruQQTN8Uo5UNNwWjfcX-16" target="lruQQTN8Uo5UNNwWjfcX-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="995" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lruQQTN8Uo5UNNwWjfcX-20" value="post output&lt;br&gt;to player channel" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;exitX=1;exitY=0.863;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="lruQQTN8Uo5UNNwWjfcX-10" target="vdofxJm4_SXy7MctPVNJ-63">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="910" y="750" as="sourcePoint" />
+            <mxPoint x="990" y="750" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="8TKsuL-u40tVa5DfT_p1" name="Domain">
+    <mxGraphModel dx="127" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ntdIH89KAaUfArOuov8z-1" value="Game" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="860" y="90" width="140" height="177.67" as="geometry" />
+        </mxCell>
+        <mxCell id="frbbqa00dPbBRVB90mc3-5" value="+ id: String" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="ntdIH89KAaUfArOuov8z-1">
+          <mxGeometry y="26" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-2" value="+ world: World" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="47.666666666666664" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-3" value="+ chars: [Char]" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="69.33333333333333" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-14" value="+ formation: Formation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="91" width="140" height="21.67" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-1" value="+ story: Story" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="112.67" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-7" value="+ area: Area" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="134.33666666666667" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-4" value="+ status: Status" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-1" vertex="1">
+          <mxGeometry y="156.00333333333333" width="140" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-5" value="World" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1020.0026315789472" y="90.00380952380951" width="125.26315789473684" height="91" as="geometry">
+            <mxRectangle x="1020.0026315789472" y="90.00380952380951" width="70" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-6" value="+ areas: Area" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-5" vertex="1">
+          <mxGeometry y="26" width="125.26315789473684" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-7" value="+ time: Int" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-5" vertex="1">
+          <mxGeometry y="47.666666666666664" width="125.26315789473684" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="ntdIH89KAaUfArOuov8z-8" value="+ weather: Weather" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="ntdIH89KAaUfArOuov8z-5" vertex="1">
+          <mxGeometry y="69.33333333333333" width="125.26315789473684" height="21.666666666666664" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-2" value="«interface»&lt;br&gt;&lt;b&gt;Status&lt;/b&gt;" style="html=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="90" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-3" value="Exploring" style="html=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1241" y="217.67000000000002" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-4" value="..." style="html=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1360" y="217.67000000000002" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-5" value="" style="endArrow=block;dashed=1;endFill=0;endSize=12;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="DJ0Mr-7PH0qAl21kawln-3" target="DJ0Mr-7PH0qAl21kawln-2" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="1130" y="300" as="sourcePoint" />
+            <mxPoint x="1290" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="DJ0Mr-7PH0qAl21kawln-6" value="" style="endArrow=block;dashed=1;endFill=0;endSize=12;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="DJ0Mr-7PH0qAl21kawln-4" target="DJ0Mr-7PH0qAl21kawln-2" edge="1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="1306" y="200" as="sourcePoint" />
+            <mxPoint x="1365" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WPwpLUtH1l-e6flYuqmy-1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Channel&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ consumers: Map&amp;lt;String, Consumer&amp;lt;T&amp;gt;&amp;gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ subscribe(String, Consumer&amp;lt;T&amp;gt;): void&lt;br&gt;+ post(T): void&lt;br&gt;&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=12;fontFamily=Helvetica;html=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="1225.5" y="320" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="WPwpLUtH1l-e6flYuqmy-2" value="PlayerChannel: Channel&amp;lt;PlayerOutput&amp;gt;" style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="1195.5" y="480" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="WPwpLUtH1l-e6flYuqmy-3" value="DMChannel: Channel&amp;lt;PlayerInput&amp;gt;" style="html=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="1366.5" y="480" width="148" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="WPwpLUtH1l-e6flYuqmy-4" value="" style="endArrow=block;dashed=1;endFill=0;endSize=12;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="WPwpLUtH1l-e6flYuqmy-2" target="WPwpLUtH1l-e6flYuqmy-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="1127.5" y="520" as="sourcePoint" />
+            <mxPoint x="1352.5" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WPwpLUtH1l-e6flYuqmy-5" value="" style="endArrow=block;dashed=1;endFill=0;endSize=12;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="WPwpLUtH1l-e6flYuqmy-3" target="WPwpLUtH1l-e6flYuqmy-1">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="1303.5" y="420" as="sourcePoint" />
+            <mxPoint x="1352.5" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="l9ohKiMXku80ChWyJO8y" name="UC: Play turn">
+    <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jym5h541v6-tSCxZPqvp-1" value="&lt;h1&gt;Play turn&lt;/h1&gt;&lt;p&gt;&lt;b&gt;Primary actor&lt;/b&gt;: Player&lt;br&gt;&lt;b&gt;Secondary actors&lt;/b&gt;: DM, Game&lt;br&gt;&lt;b&gt;Preconditions&lt;/b&gt;:&lt;br&gt;- The DM has described the current state of the game (including the players&#39; location and NPCs present)&lt;br&gt;- The Game presents the available actions to the player&lt;br&gt;- It&#39;s the player&#39;s turn to play&lt;br&gt;&lt;b&gt;Main flow&lt;/b&gt;:&lt;br&gt;- The player decides the action among the available ones&lt;br&gt;- Among all the players that are playing, the player that decides is the first player that takes the decision (*)&lt;br&gt;&lt;b&gt;Alternate flows&lt;/b&gt;:&lt;br&gt;- The players takes no action and nothing happens&lt;br&gt;- The players do nothing, but the DM decides that something happens (e.g. an NPC attacks or initiates a dialogue)&lt;br&gt;&lt;b&gt;Postconditions&lt;/b&gt;:&lt;br&gt;- If DM deems the action important, they update the story&lt;br&gt;- The state of the game is updated (e.g. the player&#39;s position)&lt;br&gt;- The next player can play, or the DM decides the outcomes&lt;br&gt;&lt;b&gt;Notes&lt;/b&gt;:&lt;br&gt;- (*) This&amp;nbsp;is a simplification over a full fledged &quot;election&quot;&lt;br&gt;-&amp;nbsp;In this use case, &quot;turn&quot; has a more relaxed meaning compared to a DnD fight. Here it just means that it&#39;s the players&#39; turn to do something, but any amount of time can pass between these turns (not just 6 seconds like a combat turn). We&#39;re giving the idea that the DM &quot;checks on the party&quot; every now and then (e.g. once an hour).&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="320" y="20" width="410" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-1" value="Play turn" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="210" y="115" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-2" value="Player" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="60" y="20" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="RC5epAaNW9wLMhXwp9SF-2" target="RC5epAaNW9wLMhXwp9SF-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="RC5epAaNW9wLMhXwp9SF-5" target="RC5epAaNW9wLMhXwp9SF-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-5" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="60" y="115" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="RC5epAaNW9wLMhXwp9SF-7" target="RC5epAaNW9wLMhXwp9SF-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RC5epAaNW9wLMhXwp9SF-7" value="Game" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="60" y="210" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="5tBaGklVSTVEmJ_xpnGS" name="UC: Decide Outcomes">
+    <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="oQhlsXlieiQx5E9ii2om-1" value="Decide Outcomes" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" parent="1" vertex="1">
+          <mxGeometry x="180" y="150" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="oQhlsXlieiQx5E9ii2om-2" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="50" y="50" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="oQhlsXlieiQx5E9ii2om-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="oQhlsXlieiQx5E9ii2om-2" target="oQhlsXlieiQx5E9ii2om-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Amcq1pYq7fcRmj2949xf-1" value="&lt;h1&gt;Decide Outcomes&lt;/h1&gt;&lt;p&gt;&lt;b&gt;Primary actor&lt;/b&gt;: DM&lt;br&gt;&lt;b&gt;Secondary actors&lt;/b&gt;: Player, Game&lt;br&gt;&lt;b&gt;Preconditions&lt;/b&gt;:&lt;br&gt;- Players have played their turns&lt;br&gt;&lt;b&gt;Main flow&lt;/b&gt;:&lt;br&gt;- Based on the players&#39; actions and on the state of the game, the DM describes the outcome, and possibly presents the choices to the players (e.g., Dialogue, Combat, ..., or none)&lt;br&gt;&lt;b&gt;Alternate flows&lt;/b&gt;:&lt;br&gt;- AI plays the role of the DM&lt;br&gt;- A human player takes over the AI&lt;br&gt;&lt;b&gt;Postconditions&lt;/b&gt;:&lt;br&gt;- The DM possibly updates the game story (if events are deemed important)&lt;br&gt;- The Game triggers the mechanics relative to the choice (e.g., Combat)&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="350" y="40" width="410" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="mBGg_qnuGoSxqsLzZ3I9-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="mBGg_qnuGoSxqsLzZ3I9-1" target="oQhlsXlieiQx5E9ii2om-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mBGg_qnuGoSxqsLzZ3I9-1" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="50" y="150" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="mBGg_qnuGoSxqsLzZ3I9-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="mBGg_qnuGoSxqsLzZ3I9-2" target="oQhlsXlieiQx5E9ii2om-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mBGg_qnuGoSxqsLzZ3I9-2" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="50" y="250" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="P7yuNyMh4iOH0b5V0xhg" name="UC: Combat">
+    <mxGraphModel dx="995" dy="562" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="kB_O2x9ik7Z-81abOqCe-1" value="&lt;h1&gt;Combat&lt;/h1&gt;&lt;p&gt;&lt;b&gt;Primary actor&lt;/b&gt;: Player&lt;br&gt;&lt;b&gt;Secondary actors&lt;/b&gt;: DM, Game&lt;br&gt;&lt;b&gt;Preconditions&lt;/b&gt;:&lt;br&gt;- A fight has been started&lt;br&gt;- The players and NPCs are distributed on the location&#39;s map&lt;br&gt;&lt;b&gt;Main flow&lt;/b&gt;:&lt;br&gt;- Following DnD rules, the combat begins&lt;br&gt;- The combat is turn-based&lt;br&gt;- The Game follows the mechanics, starting from initiatives&lt;br&gt;- The DM controls the NPCs&lt;br&gt;&lt;b&gt;Alternate flows&lt;/b&gt;:&lt;br&gt;- If the DM is an AI, the NPCs follow automated rules (possibly randomised, more or less advanced)&lt;br&gt;&lt;b&gt;Postconditions&lt;/b&gt;:&lt;br&gt;- The game state is updated with the players stats, XP, etc&lt;br&gt;- If a player has enough XP, they can level up&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="390" y="20" width="340" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="aXgXxV70mIvuEyONf6jD-1" value="Combat" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" vertex="1" parent="1">
+          <mxGeometry x="212" y="130" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aXgXxV70mIvuEyONf6jD-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="aXgXxV70mIvuEyONf6jD-3" target="aXgXxV70mIvuEyONf6jD-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aXgXxV70mIvuEyONf6jD-3" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="130" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aXgXxV70mIvuEyONf6jD-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="aXgXxV70mIvuEyONf6jD-5" target="aXgXxV70mIvuEyONf6jD-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aXgXxV70mIvuEyONf6jD-5" value="Player" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7zF2Gs6nKtFS8N1Hlk5C-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7zF2Gs6nKtFS8N1Hlk5C-1" target="aXgXxV70mIvuEyONf6jD-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zF2Gs6nKtFS8N1Hlk5C-1" value="Game" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="230" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="2Ix8Kco-yM9nSn4-w8uq" name="UC: Dialogue">
+    <mxGraphModel dx="995" dy="562" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="aQSkCssHRjmr5bugwkq1-1" value="&lt;h1&gt;Dialogue&lt;/h1&gt;&lt;p&gt;&lt;b&gt;Primary actor&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Secondary actors&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Preconditions&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Main flow&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Alternate flows&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Postconditions&lt;/b&gt;:&lt;br&gt;&lt;br&gt;&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="390" y="20" width="340" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="_qAM8PGwOcsk9x2490gW-1" value="Dialogue" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" vertex="1" parent="1">
+          <mxGeometry x="210" y="70" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="_qAM8PGwOcsk9x2490gW-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_qAM8PGwOcsk9x2490gW-3" target="_qAM8PGwOcsk9x2490gW-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_qAM8PGwOcsk9x2490gW-3" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="_qAM8PGwOcsk9x2490gW-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_qAM8PGwOcsk9x2490gW-5" target="_qAM8PGwOcsk9x2490gW-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_qAM8PGwOcsk9x2490gW-5" value="Player" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="-7DEMvpqBfUQA3TQqcHF" name="UC: Level Up">
+    <mxGraphModel dx="995" dy="562" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-1" value="&lt;h1&gt;Level Up&lt;/h1&gt;&lt;p&gt;&lt;b&gt;Primary actor&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Secondary actors&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Preconditions&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Main flow&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Alternate flows&lt;/b&gt;:&lt;br&gt;&lt;b&gt;Postconditions&lt;/b&gt;:&lt;br&gt;&lt;br&gt;&lt;/p&gt;" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="390" y="20" width="340" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-2" value="Dialogue" style="shape=ellipse;html=1;strokeWidth=3;fontStyle=1;whiteSpace=wrap;align=center;perimeter=ellipsePerimeter;" vertex="1" parent="1">
+          <mxGeometry x="210" y="70" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="9Pvn1xAMEvr0okOpdwSo-4" target="9Pvn1xAMEvr0okOpdwSo-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-4" value="DM" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="9Pvn1xAMEvr0okOpdwSo-6" target="9Pvn1xAMEvr0okOpdwSo-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9Pvn1xAMEvr0okOpdwSo-6" value="Player" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
