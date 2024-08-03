@@ -8,10 +8,9 @@ public record DnD(
 
     public void playTurn(
             String gameId,
-            PC pc,
             Actions action
     ) {
-        PlayerInput playerInput = new PlayerInput(pc, action);
+        PlayerInput playerInput = new PlayerInput(action);
         if (action instanceof Explore) {
             gameRepository.save(gameId, g -> g
                     .withMode(GameMode.EXPLORING));

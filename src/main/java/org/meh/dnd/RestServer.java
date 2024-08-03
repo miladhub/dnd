@@ -28,7 +28,6 @@ public class RestServer
         Game game = new Game(
                 "42",
                 GameMode.EXPLORING,
-                List.of(new PC("Randall")),
                 new ExploreOutput(
                         "You are exploring the Dark Forest, what do you do?",
                         List.of(new Explore(), new Rest()))
@@ -47,7 +46,6 @@ public class RestServer
     }
 
     @GET
-    //@Path("/characters/{pcName}/{gameId}")
     @Path("/game/{gameId}")
     @Produces(MediaType.TEXT_HTML)
     public String enter(
@@ -88,12 +86,10 @@ public class RestServer
 
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-//    @Path("/updates/{pcName}/{gameId}")
     @Path("/updates/{gameId}")
     @RestStreamElementType("text/html")
     public Multi<String> updatesStream(
             //TODO read PC from game and use it to create the HTML view
-//            @PathParam("pcName") String pcName,
             @PathParam("gameId") String gameId) {
         return Multi.createFrom().<String>emitter(
                 me -> playersChannel.subscribe(

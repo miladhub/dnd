@@ -15,7 +15,6 @@ import static org.meh.dnd.GameMode.*;
 class DnDAcceptanceTest
 {
     public static final String GAME_ID = "42";
-    private final PC pc_x = new PC("X");
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
@@ -47,7 +46,7 @@ class DnDAcceptanceTest
         startWith(exploring);
 
         dmOutcome(seeGoblin);
-        dnd.playTurn(GAME_ID, pc_x, new Explore());
+        dnd.playTurn(GAME_ID, new Explore());
 
         assertThat(x_outputs, contains(seeGoblin));
 
@@ -63,7 +62,7 @@ class DnDAcceptanceTest
     void play_turn_explore_then_rest() {
         startWith(exploring);
 
-        dnd.playTurn(GAME_ID, pc_x, new Rest());
+        dnd.playTurn(GAME_ID, new Rest());
 
         assertThat(x_outputs, contains(rest));
 
@@ -79,7 +78,7 @@ class DnDAcceptanceTest
     void play_turn_explore_attack() {
         startWith(seeGoblin);
 
-        dnd.playTurn(GAME_ID, pc_x, new Attack("goblin"));
+        dnd.playTurn(GAME_ID, new Attack("goblin"));
 
         assertThat(x_outputs, contains(combatGoblin));
 
@@ -104,7 +103,6 @@ class DnDAcceptanceTest
         Game game = new Game(
                 GAME_ID,
                 GameMode.EXPLORING,
-                List.of(pc_x),
                 lastOutput
         );
         gameRepository.save(game);
