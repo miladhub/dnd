@@ -1,5 +1,8 @@
 package org.meh.dnd;
 
+import static org.meh.dnd.GameMode.*;
+import static org.meh.dnd.GameMode.EXPLORING;
+
 public record DnD(
             GameRepository gameRepository,
             DMChannel dmChannel,
@@ -10,16 +13,15 @@ public record DnD(
             String gameId,
             Actions action
     ) {
-        PlayerInput playerInput = new PlayerInput(action);
+        PlayerInput input = new PlayerInput(action);
         if (action instanceof Explore) {
-            gameRepository.save(gameId, g -> g
-                    .withMode(GameMode.EXPLORING));
-            dmChannel.post(gameId, playerInput);
+            gameRepository.save(gameId, g -> g.withMode(EXPLORING));
+            dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
             gameRepository.save(gameId, g -> g
                     .withLastOutput(new CombatOutput(attack.target()))
-                    .withMode(GameMode.COMBAT));
+                    .withMode(COMBAT));
             playersChannel.post(gameId, gameRepository.gameById(gameId)
                     .map(Game::lastOutput)
                     .orElseThrow());
@@ -27,7 +29,7 @@ public record DnD(
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
                     .withLastOutput(new RestOutput())
-                    .withMode(GameMode.RESTING));
+                    .withMode(RESTING));
             playersChannel.post(gameId, gameRepository.gameById(gameId)
                     .map(Game::lastOutput)
                     .orElseThrow());
