@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.jboss.resteasy.reactive.RestStreamElementType;
+import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.io.*;
 import java.time.Duration;
@@ -20,7 +21,9 @@ public class RestServer
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel);
-    private final DM dm = new AiDM(gameRepository, dmChannel, playersChannel);
+    private final DM dm = new AiDM(
+            gameRepository, dmChannel, playersChannel,
+            new HttpUrlConnectionOpenAiClient());
 
     @PostConstruct
     public void initialize() {
