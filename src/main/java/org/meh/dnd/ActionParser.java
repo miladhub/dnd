@@ -5,7 +5,7 @@ public class ActionParser
     public static Actions actionFrom(String action,
                                      String info
     ) {
-        return switch (action) {
+        return switch (cleanAction(action)) {
             case "Attack" -> new Attack(info);
             case "Dialogue" -> new Dialogue(info);
             case "Rest" -> new Rest();
@@ -15,5 +15,9 @@ public class ActionParser
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
+    }
+
+    private static String cleanAction(String action) {
+        return action.replaceAll(":", "");
     }
 }

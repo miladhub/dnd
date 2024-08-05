@@ -46,32 +46,42 @@ public record AiDM(DMChannel dmChannel,
             
             You cannot add anything beyond the format above.
             
-            Present the choices with a numbered list,
-            for example:
+            Present the choices with a bullet list, for example:
             
-            1. Attach goblin
-            2. Dialogue elf
-            3. Explore
-            4. Rest
+            * Attach goblin
+            * Dialogue elf
+            * Explore
+            * Rest
             """;
     private static final String DIALOGUE_PROMPT_POSTFIX = """
-            Your response must be a phrase, followed by a list of answers to it
+            Your response must be a phrase, followed by a list of choices
             that the characters must choose from.
             
-            To mark the beginning of the answers section, place the
+            To mark the beginning of the choices section, place the
             following text before them:
             
             <new line>
-            *** ANSWERS ***
+            *** CHOICES ***
             <new line>
             
-            Present the choices with a numbered list,
-            for example:
+            Each choice must be either of these:
+            - Say:
+                - format: 'Dialogue <target>'
+                - meaning: speak with somebody, e.g., 'Dialogue goblin'; the target match exactly someone that you mention in your description; this is only applicable if the target is not hostile; if there is no target, don't present this option
+            - Attack:
+                - format: 'Attack <target>'
+                - meaning: attack a target; the target must be mentioned in your description; if there is no target, don't present this option
+            - EndDialogue:
+                - format: 'EndDialogue'
+                - meaning: to end the dialogue
             
-            1. Hello there!
-            2. Drop your weapons
-            3. Where are you from?
-            4. My name is Jinx, what's yours?
+            You cannot add anything beyond the format above.
+            
+            Present the choices with a bullet list, for example:
+            
+            * Say Hello there!
+            * Attack goblin
+            * EndDialogue
             """;
 
     @Override
@@ -98,7 +108,7 @@ public record AiDM(DMChannel dmChannel,
 
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
-            ExploreOutput output = parseExploreOutput(content);
+            ExploreOutput output = parseOutput(content);
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Dialogue d) {
@@ -144,12 +154,12 @@ public record AiDM(DMChannel dmChannel,
 
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
-            ExploreOutput output = parseExploreOutput(content);
+            ExploreOutput output = parseOutput(content);
             playersChannel.post(gameId, output);
         }
     }
 
-    static ExploreOutput parseExploreOutput(String content) {
+    static ExploreOutput parseOutput(String content) {
         String[] split = content
                 .replaceAll("\\Q<new line>\\E", "")
                 .split("\\Q*** CHOICES ***\\E");
@@ -157,7 +167,7 @@ public record AiDM(DMChannel dmChannel,
         String choicesContent = split[1];
         List<Actions> choices = Arrays.stream(choicesContent.split("\n"))
                 .filter(c -> !c.trim().isBlank())
-                .map(c -> c.substring(3))
+                .map(c -> c.substring(2))
                 .map(c ->
                         !c.contains(" ")
                         ? ActionParser.actionFrom(c, "")
@@ -170,12 +180,17 @@ public record AiDM(DMChannel dmChannel,
     static DialogueOutput parseDialogueOutput(String content) {
         String[] split = content
                 .replaceAll("\\Q<new line>\\E", "")
-                .split("\\Q*** ANSWERS ***\\E");
+                .split("\\Q*** CHOICES ***\\E");
         String phrase = split[0];
         String answersContent = split[1];
-        List<String> answers = Arrays.stream(answersContent.split("\n"))
+        List<Actions> answers = Arrays.stream(answersContent.split("\n"))
                 .filter(c -> !c.trim().isBlank())
-                .map(c -> c.substring(3).trim())
+                .map(c -> c.substring(2).trim())
+                .map(c ->
+                        !c.contains(" ")
+                                ? ActionParser.actionFrom(c, "")
+                                : ActionParser.actionFrom(c.substring(0, c.indexOf(" ")).trim(),
+                                c.substring(c.indexOf(" ")).trim()))
                 .toList();
         return new DialogueOutput(phrase.trim(), answers);
     }

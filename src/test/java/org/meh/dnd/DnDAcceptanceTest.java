@@ -29,9 +29,9 @@ class DnDAcceptanceTest
     private final CombatOutput combatGoblin = new CombatOutput("goblin");
     private final RestOutput rest = new RestOutput();
     private final DialogueOutput speakWithGoblin =
-            new DialogueOutput("hey there", List.of("hi", "what?"));
+            new DialogueOutput("hey there", List.of(new Say("hi"), new Say("what?")));
     private final DialogueOutput answerByGoblin =
-            new DialogueOutput("I said, hey there", List.of("hi"));
+            new DialogueOutput("I said, hey there", List.of(new Say("hi")));
 
     @BeforeEach
     void setUp() {

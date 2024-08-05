@@ -15,13 +15,13 @@ class AiDMTest
 
                 *** CHOICES ***
 
-                1. Explore
-                2. Rest""";
+                * Explore
+                * Rest""";
         ExploreOutput exploreOutput = new ExploreOutput(
                 "You find yourselves in a dimly lit cavern, the sound of dripping water echoing through the tunnels. As you cautiously make your way forward, you notice a faint glow up ahead. As you approach, you see a small underground river flowing through the middle of the cavern, its water shimmering with an ethereal blue light. The source of the light appears to be a cluster of glowing mushrooms growing along the riverbank. The air is thick with moisture, and the floor is slick with moss and algae.",
                 List.of(new Explore(""), new Rest())
         );
-        assertEquals(exploreOutput, AiDM.parseExploreOutput(response));
+        assertEquals(exploreOutput, AiDM.parseOutput(response));
     }
 
     @Test
@@ -31,10 +31,10 @@ class AiDMTest
 
                 *** CHOICES ***
 
-                1. Explore cavern
-                2. Attack goblin
-                3. Dialogue elf
-                4. Rest""";
+                * Explore cavern
+                * Attack goblin
+                * Dialogue elf
+                * Rest""";
         ExploreOutput exploreOutput = new ExploreOutput(
                 "Some description.",
                 List.of(
@@ -43,7 +43,7 @@ class AiDMTest
                         new Dialogue("elf"),
                         new Rest())
         );
-        assertEquals(exploreOutput, AiDM.parseExploreOutput(response));
+        assertEquals(exploreOutput, AiDM.parseOutput(response));
     }
 
     @Test
@@ -58,9 +58,9 @@ class AiDMTest
                 *** CHOICES ***
                 <new line>
 
-                1. Explore the pond \s
-                2. Explore the source of the laughter \s
-                3. Rest \s""";
+                * Explore the pond \s
+                * Explore the source of the laughter \s
+                * Rest \s""";
 
         ExploreOutput exploreOutput = new ExploreOutput(
                 """
@@ -73,6 +73,6 @@ class AiDMTest
                         new Explore("the source of the laughter"),
                         new Rest())
         );
-        assertEquals(exploreOutput, AiDM.parseExploreOutput(response));
+        assertEquals(exploreOutput, AiDM.parseOutput(response));
     }
 }

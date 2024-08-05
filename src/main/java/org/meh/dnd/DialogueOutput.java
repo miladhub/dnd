@@ -4,7 +4,7 @@ import java.util.List;
 
 public record DialogueOutput(
         String phrase,
-        List<String> answers
+        List<Actions> answers
 )
         implements PlayerOutput
 {
