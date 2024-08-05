@@ -21,7 +21,7 @@ public class HttpUrlConnectionOpenAiClient
 {
     private static final Logger LOG = LoggerFactory.getLogger(OpenAiClient.class);
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
-    private static final String OPENAI_CHAT_MODEL = "gpt-4o";
+    private static final String OPENAI_CHAT_MODEL = "gpt-4o-mini";
     private static final int OPENAI_RESPONSE_MAX_TOKENS = 500;
 
     @Override
@@ -40,6 +40,7 @@ public class HttpUrlConnectionOpenAiClient
             }
             try (InputStream is = con.getInputStream()) {
                 String res = new String(is.readAllBytes(), UTF_8);
+                LOG.info(res);
                 OpenAiResponse resp = jsonb.fromJson(res, OpenAiResponse.class);
                 OpenAiChoice choice = resp.choices().getFirst();
                 if (!"stop".equals(choice.finish_reason()))

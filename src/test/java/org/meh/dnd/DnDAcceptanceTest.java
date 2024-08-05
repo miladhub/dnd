@@ -21,11 +21,11 @@ class DnDAcceptanceTest
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel);
     private final PlayerOutput exploring = new ExploreOutput(
             "You are exploring the Dark Forest, what do you do?",
-            List.of(new Explore(), new Rest()));
+            List.of(new Explore(""), new Rest()));
     private final List<PlayerOutput> x_outputs = new ArrayList<>();
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "You see a goblin, what do you do?",
-            List.of(new Attack("goblin"), new Dialogue()));
+            List.of(new Attack("goblin"), new Dialogue("goblin")));
     private final CombatOutput combatGoblin = new CombatOutput("goblin");
     private final RestOutput rest = new RestOutput();
 
@@ -46,7 +46,7 @@ class DnDAcceptanceTest
         startWith(exploring);
 
         dmOutcome(seeGoblin);
-        dnd.playTurn(GAME_ID, new Explore());
+        dnd.playTurn(GAME_ID, new Explore(""));
 
         assertThat(x_outputs, contains(seeGoblin));
 

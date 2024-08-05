@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public record Explore()
+public record Explore(String place)
         implements Actions
 {
 }

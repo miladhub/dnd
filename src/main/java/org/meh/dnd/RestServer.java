@@ -32,7 +32,7 @@ public class RestServer
                 GameMode.EXPLORING,
                 new ExploreOutput(
                         "You are exploring the Dark Forest, what do you do?",
-                        List.of(new Explore(), new Rest()))
+                        List.of(new Explore(""), new Rest()))
         );
         gameRepository.save(game);
         dmChannel.subscribe("42", pi -> {
@@ -64,20 +64,7 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        dnd.playTurn(gameId, actionFrom(action, info));
-    }
-
-    private Actions actionFrom(String action,
-                               String info
-    ) {
-        return switch (action) {
-            case "Attack" -> new Attack(info);
-            case "Dialogue" -> new Dialogue();
-            case "Rest" -> new Rest();
-            case "Explore" -> new Explore();
-            default ->
-                    throw new IllegalStateException("Unexpected value: " + action);
-        };
+        dnd.playTurn(gameId, ActionParser.actionFrom(action, info));
     }
 
     @GET
@@ -117,7 +104,7 @@ public class RestServer
                             .toList());
             case RestOutput ignored -> new GameView(
                     "You are resting.",
-                    List.of(actionView(new Explore())));
+                    List.of(actionView(new Explore(""))));
             case CombatOutput c -> new GameView(
                     "You are now in combat against " + c.opponent() + ".",
                     List.of());
@@ -126,10 +113,13 @@ public class RestServer
 
     private static ChoiceView actionView(Actions a) {
         return switch (a) {
-            case Attack attack -> new ChoiceView("Attack", attack.target());
-            case Rest r -> new ChoiceView("Rest", "");
-            case Dialogue d -> new ChoiceView("Dialogue", "");
-            case Explore e -> new ChoiceView("Explore", "");
+            case Attack attack -> new ChoiceView("Attack", attack.target(),
+                    "Attack " + attack.target());
+            case Rest ignored -> new ChoiceView("Rest", "", "Rest");
+            case Dialogue d -> new ChoiceView("Dialogue", d.target(),
+                    "Talk to " + d.target());
+            case Explore e -> new ChoiceView("Explore", e.place(),
+                    "Explore " + e.place());
         };
     }
 }
