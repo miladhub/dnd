@@ -57,9 +57,6 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(EXPLORING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(seeGoblin),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     @Test
@@ -73,9 +70,6 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(RESTING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(rest),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     @Test
@@ -89,9 +83,6 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(combatGoblin),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     @Test
@@ -106,9 +97,6 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(DIALOGUE),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(speakWithGoblin),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     @Test
@@ -123,9 +111,6 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(DIALOGUE),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(answerByGoblin),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     @Test
@@ -140,18 +125,12 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(EXPLORING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
-        assertEquals(
-                Optional.of(exploring),
-                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
     private void dmOutcome(
             PlayerOutput output
     ) {
-        dmChannel.subscribe(GAME_ID, pi -> {
-            gameRepository.save(GAME_ID, g -> g.withLastOutput(output));
-            playersChannel.post(GAME_ID, output);
-        });
+        dmChannel.subscribe(GAME_ID, pi -> playersChannel.post(GAME_ID, output));
     }
 
     private void startWith(PlayerOutput lastOutput) {

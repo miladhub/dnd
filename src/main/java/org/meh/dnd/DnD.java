@@ -20,19 +20,13 @@ public record DnD(
         }
         else if (action instanceof Attack attack) {
             gameRepository.save(gameId, g -> g
-                    .withLastOutput(new CombatOutput(attack.target()))
                     .withMode(COMBAT));
-            playersChannel.post(gameId, gameRepository.gameById(gameId)
-                    .map(Game::lastOutput)
-                    .orElseThrow());
+            playersChannel.post(gameId, new CombatOutput(attack.target()));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
-                    .withLastOutput(new RestOutput())
                     .withMode(RESTING));
-            playersChannel.post(gameId, gameRepository.gameById(gameId)
-                    .map(Game::lastOutput)
-                    .orElseThrow());
+            playersChannel.post(gameId, new RestOutput());
         }
         else if (action instanceof Dialogue || action instanceof Say) {
             gameRepository.save(gameId, g -> g.withMode(DIALOGUE));
