@@ -2,8 +2,8 @@ package org.meh.dnd;
 
 public interface DM
 {
-    Game process(
-            Game game,
+    void process(
+            String gameId,
             PlayerInput input
-    );
+    ) throws Exception;
 }

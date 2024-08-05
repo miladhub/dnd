@@ -34,6 +34,14 @@ public record DnD(
                     .map(Game::lastOutput)
                     .orElseThrow());
         }
+        else if (action instanceof Dialogue || action instanceof Say) {
+            gameRepository.save(gameId, g -> g.withMode(DIALOGUE));
+            dmChannel.post(gameId, input);
+        }
+        else if (action instanceof EndDialogue) {
+            gameRepository.save(gameId, g -> g.withMode(EXPLORING));
+            dmChannel.post(gameId, input);
+        }
     }
 
     public PlayerOutput enter(

@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-07-29T19:35:23.510Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="o22fnTfH0ksJdhvynx_J" version="22.1.2" type="device" pages="10">
+<mxfile host="Electron" modified="2024-08-05T20:15:18.267Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="AM3qInv0U3cg6eRn-qdZ" version="22.1.2" type="device" pages="10">
   <diagram name="High level" id="fYrvFYTinoTmRz4X5YVb">
     <mxGraphModel dx="954" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -124,6 +124,31 @@
               <mxPoint x="680" y="350" />
               <mxPoint x="617" y="350" />
             </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="yWvqWb8gv8jXauNjUNPT-1" value="speak" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="dOvvKlk92pLzlqRvRV1k-4" target="dOvvKlk92pLzlqRvRV1k-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="617" y="530" />
+              <mxPoint x="680" y="530" />
+              <mxPoint x="680" y="660" />
+              <mxPoint x="617" y="660" />
+            </Array>
+            <mxPoint x="670" y="563" as="sourcePoint" />
+            <mxPoint x="670" y="627" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="yWvqWb8gv8jXauNjUNPT-2" value="play&lt;br&gt;combat&lt;br&gt;turn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="dOvvKlk92pLzlqRvRV1k-3" target="dOvvKlk92pLzlqRvRV1k-3">
+          <mxGeometry x="-0.0024" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="123" y="530" />
+              <mxPoint x="60" y="530" />
+              <mxPoint x="60" y="660" />
+              <mxPoint x="123" y="660" />
+            </Array>
+            <mxPoint x="123" y="563" as="sourcePoint" />
+            <mxPoint x="130" y="650" as="targetPoint" />
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
       </root>

@@ -9,7 +9,7 @@
 
     <section class="space-y-4">
     {{#choices}}
-    <form id="form-{{name}}" hx-post="/updates/42" hx-swap="none"
+    <form hx-post="/updates/42" hx-swap="none"
           class="bg-blue-600 p-4 rounded-lg shadow-lg hover:bg-blue-700">
         <label for="action-{{name}}" hidden="hidden">{{name}}</label>
         <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">

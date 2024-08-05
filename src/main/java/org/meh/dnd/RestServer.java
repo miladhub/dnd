@@ -7,23 +7,24 @@ import io.smallrye.mutiny.Multi;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.io.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Path("/")
 public class RestServer
 {
+    private final static Logger LOG = Logger.getLogger(RestServer.class);
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel);
-    private final DM dm = new AiDM(
-            gameRepository, dmChannel, playersChannel,
-            new HttpUrlConnectionOpenAiClient());
+    private final DM dm = new AiDM(dmChannel, playersChannel, new HttpUrlConnectionOpenAiClient());
 
     @PostConstruct
     public void initialize() {
@@ -36,8 +37,11 @@ public class RestServer
         );
         gameRepository.save(game);
         dmChannel.subscribe("42", pi -> {
-            Game newGame = dm.process(game, pi);
-            gameRepository.save(newGame);
+            try {
+                dm.process("42", pi);
+            } catch (Exception e) {
+                LOG.error(e);
+            }
         });
     }
 
@@ -100,18 +104,25 @@ public class RestServer
             case ExploreOutput e -> new GameView(
                     e.description(),
                     e.choices().stream()
-                            .map(RestServer::actionView)
+                            .map(RestServer::exploreActionView)
                             .toList());
             case RestOutput ignored -> new GameView(
                     "You are resting.",
-                    List.of(actionView(new Explore(""))));
+                    List.of(exploreActionView(new Explore(""))));
             case CombatOutput c -> new GameView(
                     "You are now in combat against " + c.opponent() + ".",
                     List.of());
+            case DialogueOutput d -> new GameView(
+                    d.phrase(),
+                    Stream.concat(
+                            d.answers().stream()
+                                    .map(a -> new ChoiceView("Say", a, a)),
+                            Stream.of(new ChoiceView("EndDialogue", "", "End Dialogue")))
+                            .toList());
         };
     }
 
-    private static ChoiceView actionView(Actions a) {
+    private static ChoiceView exploreActionView(Actions a) {
         return switch (a) {
             case Attack attack -> new ChoiceView("Attack", attack.target(),
                     "Attack " + attack.target());
@@ -120,6 +131,8 @@ public class RestServer
                     "Talk to " + d.target());
             case Explore e -> new ChoiceView("Explore", e.place(),
                     "Explore " + e.place());
+            default ->
+                    throw new IllegalStateException("Unexpected value: " + a);
         };
     }
 }

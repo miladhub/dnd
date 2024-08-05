@@ -22,16 +22,20 @@ class DnDAcceptanceTest
     private final PlayerOutput exploring = new ExploreOutput(
             "You are exploring the Dark Forest, what do you do?",
             List.of(new Explore(""), new Rest()));
-    private final List<PlayerOutput> x_outputs = new ArrayList<>();
+    private final List<PlayerOutput> playerOutputs = new ArrayList<>();
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "You see a goblin, what do you do?",
             List.of(new Attack("goblin"), new Dialogue("goblin")));
     private final CombatOutput combatGoblin = new CombatOutput("goblin");
     private final RestOutput rest = new RestOutput();
+    private final DialogueOutput speakWithGoblin =
+            new DialogueOutput("hey there", List.of("hi", "what?"));
+    private final DialogueOutput answerByGoblin =
+            new DialogueOutput("I said, hey there", List.of("hi"));
 
     @BeforeEach
     void setUp() {
-        playersChannel.subscribe(GAME_ID, x_outputs::add);
+        playersChannel.subscribe(GAME_ID, playerOutputs::add);
     }
 
     @Test
@@ -42,13 +46,13 @@ class DnDAcceptanceTest
     }
 
     @Test
-    void play_turn_explore_continue_exploring() {
+    void explore_continue_exploring() {
         startWith(exploring);
 
         dmOutcome(seeGoblin);
         dnd.playTurn(GAME_ID, new Explore(""));
 
-        assertThat(x_outputs, contains(seeGoblin));
+        assertThat(playerOutputs, contains(seeGoblin));
 
         assertEquals(
                 Optional.of(EXPLORING),
@@ -59,12 +63,12 @@ class DnDAcceptanceTest
     }
 
     @Test
-    void play_turn_explore_then_rest() {
+    void explore_then_rest() {
         startWith(exploring);
 
         dnd.playTurn(GAME_ID, new Rest());
 
-        assertThat(x_outputs, contains(rest));
+        assertThat(playerOutputs, contains(rest));
 
         assertEquals(
                 Optional.of(RESTING),
@@ -75,18 +79,69 @@ class DnDAcceptanceTest
     }
 
     @Test
-    void play_turn_explore_attack() {
+    void explore_attack() {
         startWith(seeGoblin);
 
         dnd.playTurn(GAME_ID, new Attack("goblin"));
 
-        assertThat(x_outputs, contains(combatGoblin));
+        assertThat(playerOutputs, contains(combatGoblin));
 
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
         assertEquals(
                 Optional.of(combatGoblin),
+                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
+    }
+
+    @Test
+    void explore_dialogue() {
+        startWith(seeGoblin);
+        dmOutcome(speakWithGoblin);
+
+        dnd.playTurn(GAME_ID, new Dialogue("goblin"));
+
+        assertThat(playerOutputs, contains(speakWithGoblin));
+
+        assertEquals(
+                Optional.of(DIALOGUE),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+        assertEquals(
+                Optional.of(speakWithGoblin),
+                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
+    }
+
+    @Test
+    void dialogue_say() {
+        startWith(speakWithGoblin);
+        dmOutcome(answerByGoblin);
+
+        dnd.playTurn(GAME_ID, new Say("goblin"));
+
+        assertThat(playerOutputs, contains(answerByGoblin));
+
+        assertEquals(
+                Optional.of(DIALOGUE),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+        assertEquals(
+                Optional.of(answerByGoblin),
+                gameRepository.gameById(GAME_ID).map(Game::lastOutput));
+    }
+
+    @Test
+    void dialogue_end_dialogue() {
+        startWith(answerByGoblin);
+        dmOutcome(exploring);
+
+        dnd.playTurn(GAME_ID, new EndDialogue());
+
+        assertThat(playerOutputs, contains(exploring));
+
+        assertEquals(
+                Optional.of(EXPLORING),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+        assertEquals(
+                Optional.of(exploring),
                 gameRepository.gameById(GAME_ID).map(Game::lastOutput));
     }
 
