@@ -1,10 +1,10 @@
 package org.meh.dnd;
 
-public record CombatOutput(
+public record Fight(
         boolean playerTurn,
         GameChar opponent,
         String lastAction
 )
-        implements PlayerOutput
+        implements FightStatus
 {
 }

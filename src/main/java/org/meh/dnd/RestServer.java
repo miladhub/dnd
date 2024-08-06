@@ -10,6 +10,7 @@ import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Path("/")
 public class RestServer
@@ -28,7 +29,13 @@ public class RestServer
                 GameMode.EXPLORING,
                 new ExploreOutput(
                         "You are exploring the Dark Forest, what do you do?",
-                        List.of(new Explore(""), new Rest()))
+                        List.of(new Explore(""), new Rest())),
+                new GameChar(
+                        "Randall",
+                        List.of(new Weapon("Sword")),
+                        List.of(new Spell("Magic missile"))
+                ),
+                new Peace()
         );
         gameRepository.save(game);
         dmChannel.subscribe("42", pi -> {
@@ -53,7 +60,7 @@ public class RestServer
     public String enter(
             @PathParam("gameId") String gameId
     ) {
-        return toHtml(dnd.enter(gameId));
+        return toHtml(gameId, dnd.enter(gameId));
     }
 
     @POST
@@ -65,6 +72,8 @@ public class RestServer
     ) {
         if (gameRepository.gameById(gameId).orElseThrow().mode() != GameMode.COMBAT)
             dnd.playTurn(gameId, ActionParser.actionFrom(action, info));
+        else
+            dnd.combatTurn(gameId, ActionParser.combatActionsFrom(action, info));
     }
 
     @GET
@@ -76,11 +85,16 @@ public class RestServer
         return Multi.createFrom().<String>emitter(
                         me -> playersChannel.subscribe(
                                 gameId,
-                                po -> me.emit(toHtml(po))))
+                                po -> me.emit(toHtml(gameId, po))))
                 .onFailure().retry().withBackOff(Duration.ofMillis(100)).indefinitely();
     }
 
-    private String toHtml(PlayerOutput output) {
+    private String toHtml(
+            String gameId,
+            PlayerOutput output
+    ) {
+        Game game = gameRepository.gameById(gameId).orElseThrow();
+        GameChar pc = game.playerChar();
         return switch (output) {
             case DialogueOutput d -> Templates.template(new GameView(
                     d.phrase(),
@@ -96,14 +110,20 @@ public class RestServer
                     "You are resting.",
                     List.of(actionView(new Explore("")))));
             case CombatOutput co -> Templates.combat(new CombatView(
-                    true,
-                    "Your character",
-                    co.opponent(),
-                    List.of(),
-                    List.of(
-                            new ActionView("Sword", "sword", "Attack with sword"),
-                            new ActionView("Spell", "spell", "Cast a spell")
-                    )
+                    co.playerTurn(),
+                    new CharacterView(pc.name()),
+                    new CharacterView(co.opponent().name()),
+                    co.lastAction(),
+                    Stream.concat(
+                            pc.weapons().stream().map(
+                                            w -> new ActionView("Melee",
+                                                    w.name(),
+                                                    "Attack with " + w.name())),
+                            pc.spells().stream().map(
+                                    s -> new ActionView("Spell",
+                                            s.name(),
+                                            "Cast" + s.name()))
+                            ).toList()
             ));
         };
     }

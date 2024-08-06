@@ -17,6 +17,17 @@ public class ActionParser
         };
     }
 
+    public static CombatActions combatActionsFrom(String action,
+                                                  String info
+    ) {
+        return switch (action) {
+            case "Melee" -> new MeleeAttack(info);
+            case "Spell" -> new SpellAttack(info);
+            default ->
+                    throw new IllegalStateException("Unexpected value: " + action);
+        };
+    }
+
     private static String cleanAction(String action) {
         return action.replaceAll(":", "");
     }

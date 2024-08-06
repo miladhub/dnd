@@ -19,8 +19,10 @@ public record DnD(
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
-            gameRepository.save(gameId, g -> g.withMode(COMBAT));
-            playersChannel.post(gameId, new CombatOutput(attack.target()));
+            GameChar opponent = Monsters.generate(attack.target());
+            gameRepository.save(gameId, g ->
+                    g.withMode(COMBAT).withFightStatus(new Fight(true, opponent, "")));
+            playersChannel.post(gameId, new CombatOutput(true, opponent, ""));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g.withMode(RESTING));
@@ -34,6 +36,36 @@ public record DnD(
             gameRepository.save(gameId, g -> g.withMode(EXPLORING));
             dmChannel.post(gameId, input);
         }
+    }
+
+    public void combatTurn(
+            String gameId,
+            CombatActions action
+    ) {
+        Game game = gameRepository.gameById(gameId).orElseThrow();
+        Fight fight = (Fight) game.fightStatus();
+        String description = combatActionDescription(action, game);
+        Fight newFight = new Fight(
+                !fight.playerTurn(),
+                fight.opponent(),
+                description
+        );
+        gameRepository.save(gameId, g -> g.withFightStatus(newFight));
+        playersChannel.post(gameId, new CombatOutput(
+                newFight.playerTurn(),
+                newFight.opponent(),
+                newFight.lastAction()
+        ));
+    }
+
+    private static String combatActionDescription(
+            CombatActions action,
+            Game game
+    ) {
+        return game.playerChar().name() + ": " + switch (action) {
+            case MeleeAttack m -> "melee attack with " + m.weapon();
+            case SpellAttack s -> "cast spell " + s.spell();
+        };
     }
 
     public PlayerOutput enter(
