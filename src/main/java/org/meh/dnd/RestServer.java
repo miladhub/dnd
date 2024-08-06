@@ -122,7 +122,7 @@ public class RestServer
                             pc.spells().stream().map(
                                     s -> new ActionView("Spell",
                                             s.name(),
-                                            "Cast" + s.name()))
+                                            "Cast " + s.name()))
                             ).toList()
             ));
         };

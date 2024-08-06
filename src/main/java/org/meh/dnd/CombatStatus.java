@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public sealed interface FightStatus
+public sealed interface CombatStatus
     permits Peace, Fight
 {
 }

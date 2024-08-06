@@ -78,44 +78,6 @@ class DnDAcceptanceTest
     }
 
     @Test
-    void explore_attack() {
-        startWith(seeGoblin);
-
-        dnd.playTurn(GAME_ID, new Attack("goblin"));
-
-        assertThat(playerOutputs, contains(combatGoblin));
-
-        assertEquals(
-                new Fight(true, goblin, ""),
-                game().fightStatus());
-        assertEquals(
-                Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
-    }
-
-    @Test
-    void attack_melee() {
-        startWith(combatGoblin);
-
-        dnd.playTurn(GAME_ID, new Attack("goblin"));
-        dnd.combatTurn(GAME_ID, new MeleeAttack("sword"));
-
-        assertEquals(
-                new Fight(false, goblin, meleeOutput.lastAction()),
-                game().fightStatus());
-        assertThat(playerOutputs, contains(
-                combatGoblin,
-                new CombatOutput(false, goblin, "Foo: melee attack with sword")));
-        assertEquals(
-                Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
-    }
-
-    private Game game() {
-        return gameRepository.gameById(GAME_ID).orElseThrow();
-    }
-
-    @Test
     void explore_dialogue() {
         startWith(seeGoblin);
         dmOutcome(speakWithGoblin);
@@ -157,23 +119,57 @@ class DnDAcceptanceTest
                 gameRepository.gameById(GAME_ID).map(Game::mode));
     }
 
+    @Test
+    void explore_attack() {
+        startWith(seeGoblin);
+
+        dnd.playTurn(GAME_ID, new Attack("goblin"));
+
+        assertThat(playerOutputs, contains(combatGoblin));
+
+        assertEquals(
+                new Fight(true, goblin, ""),
+                game().combatStatus());
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
+    void attack_melee_players_turn() {
+        startWith(combatGoblin);
+
+        dnd.playTurn(GAME_ID, new Attack("goblin"));
+        dnd.combatTurn(GAME_ID, new MeleeAttack("sword"));
+
+        assertEquals(
+                new Fight(false, goblin, meleeOutput.lastAction()),
+                game().combatStatus());
+        assertThat(playerOutputs, contains(
+                combatGoblin,
+                new CombatOutput(false, goblin, "Foo: melee attack with sword")));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
     private void dmOutcome(
             PlayerOutput output
     ) {
         dmChannel.subscribe(GAME_ID, pi -> playersChannel.post(GAME_ID, output));
     }
 
-    private void startWith(PlayerOutput lastOutput) {
-        startWith(lastOutput, new Peace());
+    private Game game() {
+        return gameRepository.gameById(GAME_ID).orElseThrow();
     }
 
-    private void startWith(PlayerOutput lastOutput, FightStatus fightStatus) {
+    private void startWith(PlayerOutput lastOutput) {
         Game game = new Game(
                 GAME_ID,
                 GameMode.EXPLORING,
                 lastOutput,
                 new GameChar("Foo", List.of(new Weapon("sword")), List.of()),
-                fightStatus
+                new Peace()
         );
         gameRepository.save(game);
     }

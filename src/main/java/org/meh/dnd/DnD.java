@@ -43,7 +43,7 @@ public record DnD(
             CombatActions action
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
-        Fight fight = (Fight) game.fightStatus();
+        Fight fight = (Fight) game.combatStatus();
         String description = combatActionDescription(action, game);
         Fight newFight = new Fight(
                 !fight.playerTurn(),

@@ -5,6 +5,6 @@ public record Fight(
         GameChar opponent,
         String lastAction
 )
-        implements FightStatus
+        implements CombatStatus
 {
 }
