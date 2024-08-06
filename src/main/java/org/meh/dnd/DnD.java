@@ -9,7 +9,7 @@ public record DnD(
             PlayerChannel playersChannel
     ) {
 
-    public void playTurn(
+    public void doAction(
             String gameId,
             Actions action
     ) {
@@ -19,10 +19,13 @@ public record DnD(
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
-            GameChar opponent = Monsters.generate(attack.target());
+            GameChar opponent = Combat.generateMonster(attack.target());
+            boolean playersTurn = Math.random() <= 0.5;
             gameRepository.save(gameId, g ->
-                    g.withMode(COMBAT).withFightStatus(new Fight(true, opponent, "")));
-            playersChannel.post(gameId, new CombatOutput(true, opponent, ""));
+                    g.withMode(COMBAT).withFightStatus(new Fight(playersTurn, opponent, "")));
+            playersChannel.post(gameId, new CombatOutput(playersTurn, opponent, ""));
+            if (!playersTurn)
+                enemyCombatTurn(gameId, Combat.generateAttack(opponent));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g.withMode(RESTING));
@@ -38,13 +41,31 @@ public record DnD(
         }
     }
 
-    public void combatTurn(
+    public void playCombatTurn(
             String gameId,
             CombatActions action
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        String description = combatActionDescription(action, game);
+        combatTurn(action, game.playerChar(), fight, gameId);
+    }
+
+    public void enemyCombatTurn(
+            String gameId,
+            CombatActions action
+    ) {
+        Game game = gameRepository.gameById(gameId).orElseThrow();
+        Fight fight = (Fight) game.combatStatus();
+        combatTurn(action, fight.opponent(), fight, gameId);
+    }
+
+    private void combatTurn(
+            CombatActions action,
+            GameChar gameChar,
+            Fight fight,
+            String gameId
+    ) {
+        String description = combatActionDescription(action, gameChar);
         Fight newFight = new Fight(
                 !fight.playerTurn(),
                 fight.opponent(),
@@ -60,9 +81,9 @@ public record DnD(
 
     private static String combatActionDescription(
             CombatActions action,
-            Game game
+            GameChar gameChar
     ) {
-        return game.playerChar().name() + ": " + switch (action) {
+        return gameChar.name() + ": " + switch (action) {
             case MeleeAttack m -> "melee attack with " + m.weapon();
             case SpellAttack s -> "cast spell " + s.spell();
         };

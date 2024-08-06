@@ -9,8 +9,11 @@ import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.meh.dnd.GameMode.COMBAT;
 
 @Path("/")
 public class RestServer
@@ -65,15 +68,21 @@ public class RestServer
 
     @POST
     @Path("/updates/{gameId}")
-    public void post(
+    public void doAction(
             @PathParam("gameId") String gameId,
             @FormParam("action") String action,
             @FormParam("info") String info
-    ) {
-        if (gameRepository.gameById(gameId).orElseThrow().mode() != GameMode.COMBAT)
-            dnd.playTurn(gameId, ActionParser.actionFrom(action, info));
-        else
-            dnd.combatTurn(gameId, ActionParser.combatActionsFrom(action, info));
+    )
+    throws InterruptedException {
+        if (gameRepository.gameById(gameId).orElseThrow().mode() == COMBAT) {
+            dnd.playCombatTurn(gameId, ActionParser.combatActionFrom(action, info));
+            Game game = gameRepository.gameById(gameId).orElseThrow();
+            Fight fight = (Fight) game.combatStatus();
+            Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
+            dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
+        } else {
+            dnd.doAction(gameId, ActionParser.actionFrom(action, info));
+        }
     }
 
     @GET

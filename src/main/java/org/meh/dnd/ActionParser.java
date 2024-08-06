@@ -17,8 +17,8 @@ public class ActionParser
         };
     }
 
-    public static CombatActions combatActionsFrom(String action,
-                                                  String info
+    public static CombatActions combatActionFrom(String action,
+                                                 String info
     ) {
         return switch (action) {
             case "Melee" -> new MeleeAttack(info);

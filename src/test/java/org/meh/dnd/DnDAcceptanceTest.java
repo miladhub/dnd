@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static io.smallrye.common.constraint.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +56,7 @@ class DnDAcceptanceTest
         startWith(exploring, new Peace(), EXPLORING);
 
         dmOutcome(seeGoblin);
-        dnd.playTurn(GAME_ID, new Explore(""));
+        dnd.doAction(GAME_ID, new Explore(""));
 
         assertThat(playerOutputs, contains(seeGoblin));
 
@@ -68,7 +69,7 @@ class DnDAcceptanceTest
     void explore_then_rest() {
         startWith(exploring, new Peace(), EXPLORING);
 
-        dnd.playTurn(GAME_ID, new Rest());
+        dnd.doAction(GAME_ID, new Rest());
 
         assertThat(playerOutputs, contains(rest));
 
@@ -82,7 +83,7 @@ class DnDAcceptanceTest
         startWith(seeGoblin, new Peace(), EXPLORING);
         dmOutcome(speakWithGoblin);
 
-        dnd.playTurn(GAME_ID, new Dialogue("goblin"));
+        dnd.doAction(GAME_ID, new Dialogue("goblin"));
 
         assertThat(playerOutputs, contains(speakWithGoblin));
 
@@ -96,7 +97,7 @@ class DnDAcceptanceTest
         startWith(speakWithGoblin, new Peace(), EXPLORING);
         dmOutcome(answerByGoblin);
 
-        dnd.playTurn(GAME_ID, new Say("goblin"));
+        dnd.doAction(GAME_ID, new Say("goblin"));
 
         assertThat(playerOutputs, contains(answerByGoblin));
 
@@ -110,7 +111,7 @@ class DnDAcceptanceTest
         startWith(answerByGoblin, new Peace(), EXPLORING);
         dmOutcome(exploring);
 
-        dnd.playTurn(GAME_ID, new EndDialogue());
+        dnd.doAction(GAME_ID, new EndDialogue());
 
         assertThat(playerOutputs, contains(exploring));
 
@@ -123,13 +124,16 @@ class DnDAcceptanceTest
     void explore_attack() {
         startWith(seeGoblin, new Peace(), EXPLORING);
 
-        dnd.playTurn(GAME_ID, new Attack("goblin"));
+        dnd.doAction(GAME_ID, new Attack("goblin"));
 
-        assertThat(playerOutputs, contains(combatGoblin));
-
+        assertTrue(playerOutputs.stream().anyMatch(
+                o -> o instanceof CombatOutput c &&
+                        c.opponent().equals(goblin) &&
+                        (c.lastAction().isEmpty() || c.lastAction().startsWith("goblin: "))));
+        assertTrue(game().combatStatus() instanceof Fight);
         assertEquals(
-                new Fight(true, goblin, ""),
-                game().combatStatus());
+                goblin,
+                ((Fight) game().combatStatus()).opponent());
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -139,13 +143,29 @@ class DnDAcceptanceTest
     void attack_melee_players_turn() {
         startWith(combatGoblin, new Fight(true, goblin, ""), COMBAT);
 
-        dnd.combatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
 
         assertEquals(
                 new Fight(false, goblin, meleeOutput.lastAction()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(false, goblin, "Foo: melee attack with sword")));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
+    void attack_melee_enemy_turn() {
+        startWith(combatGoblin, new Fight(false, goblin, "Foo: melee attack with sword"), COMBAT);
+
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+
+        assertEquals(
+                new Fight(true, goblin, "goblin: melee attack with sword"),
+                game().combatStatus());
+        assertThat(playerOutputs, contains(
+                new CombatOutput(true, goblin, "goblin: melee attack with sword")));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
