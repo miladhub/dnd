@@ -32,6 +32,7 @@ public class HttpUrlConnectionOpenAiClient
     throws Exception {
         try (Jsonb jsonb = JsonbBuilder.create()) {
             String json = toJson(messages, functions);
+            LOG.info("Request:\n{}", json);
             HttpURLConnection con = getHttpURLConnection();
             try (OutputStream os = con.getOutputStream()) {
                 LOG.debug("Sending JSON to chat completion API:\n{}", json);
@@ -40,7 +41,7 @@ public class HttpUrlConnectionOpenAiClient
             }
             try (InputStream is = con.getInputStream()) {
                 String res = new String(is.readAllBytes(), UTF_8);
-                LOG.info(res);
+                LOG.info("Response:\n{}", res);
                 OpenAiResponse resp = jsonb.fromJson(res, OpenAiResponse.class);
                 OpenAiChoice choice = resp.choices().getFirst();
                 if (!"stop".equals(choice.finish_reason()))
