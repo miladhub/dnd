@@ -1,0 +1,82 @@
+<div id="game" hx-ext="sse" sse-connect="/updates/42" sse-swap="message"
+     class="container mx-auto px-4 max-w-2xl">
+
+<!-- Turn Indicator -->
+{{#yourTurn}}
+<section class="w-full bg-blue-800 p-4 shadow-lg mb-6 text-center">
+    <h2 class="text-2xl font-bold">It's Your Turn</h2>
+</section>
+{{/yourTurn}}
+{{^yourTurn}}
+<section class="w-full bg-blue-800 p-4 shadow-lg mb-6 text-center">
+    <h2 class="text-2xl font-bold">It's Your Opponent's Turn</h2>
+</section>
+{{/yourTurn}}
+
+<!-- Character Sheets -->
+<section class="container mx-auto px-4 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+
+    <!-- My Character Card -->
+    <div class="bg-blue-800 p-6 rounded-lg shadow-lg">
+        <h3 class="text-2xl font-bold mb-4 text-center">{{character}}</h3>
+        <div class="mb-6 text-center">
+            <h4 class="text-xl font-semibold">Sir Galahad</h4>
+            <p class="text-lg">Level 5 Paladin</p>
+        </div>
+        <ul class="space-y-2">
+            <li><strong>Hit Points (HP):</strong> 45/50</li>
+            <li><strong>Experience Points (XP):</strong> 1200/1500</li>
+            <li><strong>Armor Class:</strong> 18</li>
+            <li><strong>Strength:</strong> 18</li>
+            <li><strong>Dexterity:</strong> 14</li>
+            <li><strong>Constitution:</strong> 16</li>
+        </ul>
+    </div>
+
+    <!-- Enemy Card -->
+    <div class="bg-red-800 p-6 rounded-lg shadow-lg">
+        <h3 class="text-2xl font-bold mb-4 text-center">{{enemy}}</h3>
+        <div class="mb-6 text-center">
+            <h4 class="text-xl font-semibold">Goblin Chief</h4>
+            <p class="text-lg">Level 3 Monster</p>
+        </div>
+        <ul class="space-y-2">
+            <li><strong>Hit Points (HP):</strong> 30/30</li>
+            <li><strong>Armor Class:</strong> 15</li>
+            <li><strong>Strength:</strong> 14</li>
+            <li><strong>Dexterity:</strong> 12</li>
+            <li><strong>Constitution:</strong> 10</li>
+        </ul>
+    </div>
+
+</section>
+
+<!-- Action Log -->
+<section class="container mx-auto px-4 max-w-4xl mb-8">
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+        <h3 class="text-xl font-bold mb-2">Action Log</h3>
+        <div class="space-y-2">
+            {{#events}}
+            <p class="text-lg leading-relaxed">
+                {{.}}
+            </p>
+            {{/events}}
+        </div>
+    </div>
+</section>
+
+<!-- Action Buttons -->
+<section class="container mx-auto px-4 max-w-4xl space-y-4">
+    {{#actions}}
+    <form hx-post="/updates/42" hx-swap="none"
+          class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
+        <label for="action-{{name}}" hidden="hidden">{{name}}</label>
+        <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">
+        <label for="info-{{name}}" hidden="hidden">{{info}}</label>
+        <input id="info-{{name}}" name="info" type="text" hidden="hidden" value="{{info}}">
+        <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
+    </form>
+    {{/actions}}
+</section>
+
+</div>

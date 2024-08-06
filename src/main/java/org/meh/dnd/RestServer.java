@@ -1,8 +1,5 @@
 package org.meh.dnd;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
 import io.smallrye.mutiny.Multi;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -11,7 +8,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
-import java.io.*;
 import java.time.Duration;
 import java.util.List;
 
@@ -67,7 +63,8 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        dnd.playTurn(gameId, ActionParser.actionFrom(action, info));
+        if (gameRepository.gameById(gameId).orElseThrow().mode() != GameMode.COMBAT)
+            dnd.playTurn(gameId, ActionParser.actionFrom(action, info));
     }
 
     @GET
@@ -84,52 +81,44 @@ public class RestServer
     }
 
     private String toHtml(PlayerOutput output) {
-        MustacheFactory mf = new DefaultMustacheFactory();
-        try (InputStream is = getClass().getResourceAsStream("/_template.html")
-        ) {
-            assert( is != null );
-            Reader r = new InputStreamReader(is);
-            Mustache template = mf.compile(r, "output");
-            StringWriter writer = new StringWriter();
-            template.execute(writer, gameView(output));
-            return writer.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private GameView gameView(PlayerOutput output) {
         return switch (output) {
-            case ExploreOutput e -> new GameView(
-                    e.description(),
-                    e.choices().stream()
-                            .map(RestServer::actionView)
-                            .toList());
-            case RestOutput ignored -> new GameView(
-                    "You are resting.",
-                    List.of(actionView(new Explore(""))));
-            case CombatOutput c -> new GameView(
-                    "You are now in combat against " + c.opponent() + ".",
-                    List.of());
-            case DialogueOutput d -> new GameView(
+            case DialogueOutput d -> Templates.template(new GameView(
                     d.phrase(),
                     d.answers().stream()
                             .map(RestServer::actionView)
-                            .toList());
+                            .toList()));
+            case ExploreOutput e -> Templates.template(new GameView(
+                    e.description(),
+                    e.choices().stream()
+                            .map(RestServer::actionView)
+                            .toList()));
+            case RestOutput ignored -> Templates.template(new GameView(
+                    "You are resting.",
+                    List.of(actionView(new Explore("")))));
+            case CombatOutput co -> Templates.combat(new CombatView(
+                    true,
+                    "Your character",
+                    co.opponent(),
+                    List.of(),
+                    List.of(
+                            new ActionView("Sword", "sword", "Attack with sword"),
+                            new ActionView("Spell", "spell", "Cast a spell")
+                    )
+            ));
         };
     }
 
-    private static ChoiceView actionView(Actions a) {
+    private static ActionView actionView(Actions a) {
         return switch (a) {
-            case Attack attack -> new ChoiceView("Attack", attack.target(),
+            case Attack attack -> new ActionView("Attack", attack.target(),
                     "Attack " + attack.target());
-            case Rest ignored -> new ChoiceView("Rest", "", "Rest");
-            case Dialogue d -> new ChoiceView("Dialogue", d.target(),
+            case Rest ignored -> new ActionView("Rest", "", "Rest");
+            case Dialogue d -> new ActionView("Dialogue", d.target(),
                     "Talk to " + d.target());
-            case Explore e -> new ChoiceView("Explore", e.place(),
+            case Explore e -> new ActionView("Explore", e.place(),
                     "Explore " + e.place());
-            case EndDialogue ignored -> new ChoiceView("EndDialogue", "", "End Dialogue");
-            case Say say -> new ChoiceView("Say", say.what(), say.what());
+            case EndDialogue ignored -> new ActionView("EndDialogue", "", "End Dialogue");
+            case Say say -> new ActionView("Say", say.what(), say.what());
         };
     }
 }

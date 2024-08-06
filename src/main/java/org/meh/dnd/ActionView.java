@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public record ChoiceView(
+public record ActionView(
         String name,
         String info,
         String label
