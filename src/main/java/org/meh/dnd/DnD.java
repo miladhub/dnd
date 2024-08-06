@@ -1,5 +1,7 @@
 package org.meh.dnd;
 
+import java.util.Random;
+
 import static org.meh.dnd.GameMode.*;
 import static org.meh.dnd.GameMode.EXPLORING;
 
@@ -20,7 +22,7 @@ public record DnD(
         }
         else if (action instanceof Attack attack) {
             GameChar opponent = Combat.generateMonster(attack.target());
-            boolean playersTurn = Math.random() <= 0.5;
+            boolean playersTurn = new Random().nextBoolean();
             gameRepository.save(gameId, g ->
                     g.withMode(COMBAT).withFightStatus(new Fight(playersTurn, opponent, "")));
             playersChannel.post(gameId, new CombatOutput(playersTurn, opponent, ""));
