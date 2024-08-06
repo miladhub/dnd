@@ -45,14 +45,14 @@ class DnDAcceptanceTest
 
     @Test
     void player_sees_last_output_when_entering() {
-        startWith(exploring);
+        startWith(exploring, new Peace(), EXPLORING);
         PlayerOutput output = dnd.enter(GAME_ID);
         assertEquals(exploring, output);
     }
 
     @Test
     void explore_continue_exploring() {
-        startWith(exploring);
+        startWith(exploring, new Peace(), EXPLORING);
 
         dmOutcome(seeGoblin);
         dnd.playTurn(GAME_ID, new Explore(""));
@@ -66,7 +66,7 @@ class DnDAcceptanceTest
 
     @Test
     void explore_then_rest() {
-        startWith(exploring);
+        startWith(exploring, new Peace(), EXPLORING);
 
         dnd.playTurn(GAME_ID, new Rest());
 
@@ -79,7 +79,7 @@ class DnDAcceptanceTest
 
     @Test
     void explore_dialogue() {
-        startWith(seeGoblin);
+        startWith(seeGoblin, new Peace(), EXPLORING);
         dmOutcome(speakWithGoblin);
 
         dnd.playTurn(GAME_ID, new Dialogue("goblin"));
@@ -93,7 +93,7 @@ class DnDAcceptanceTest
 
     @Test
     void dialogue_say() {
-        startWith(speakWithGoblin);
+        startWith(speakWithGoblin, new Peace(), EXPLORING);
         dmOutcome(answerByGoblin);
 
         dnd.playTurn(GAME_ID, new Say("goblin"));
@@ -107,7 +107,7 @@ class DnDAcceptanceTest
 
     @Test
     void dialogue_end_dialogue() {
-        startWith(answerByGoblin);
+        startWith(answerByGoblin, new Peace(), EXPLORING);
         dmOutcome(exploring);
 
         dnd.playTurn(GAME_ID, new EndDialogue());
@@ -121,7 +121,7 @@ class DnDAcceptanceTest
 
     @Test
     void explore_attack() {
-        startWith(seeGoblin);
+        startWith(seeGoblin, new Peace(), EXPLORING);
 
         dnd.playTurn(GAME_ID, new Attack("goblin"));
 
@@ -137,16 +137,14 @@ class DnDAcceptanceTest
 
     @Test
     void attack_melee_players_turn() {
-        startWith(combatGoblin);
+        startWith(combatGoblin, new Fight(true, goblin, ""), COMBAT);
 
-        dnd.playTurn(GAME_ID, new Attack("goblin"));
         dnd.combatTurn(GAME_ID, new MeleeAttack("sword"));
 
         assertEquals(
                 new Fight(false, goblin, meleeOutput.lastAction()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
-                combatGoblin,
                 new CombatOutput(false, goblin, "Foo: melee attack with sword")));
         assertEquals(
                 Optional.of(COMBAT),
@@ -163,13 +161,17 @@ class DnDAcceptanceTest
         return gameRepository.gameById(GAME_ID).orElseThrow();
     }
 
-    private void startWith(PlayerOutput lastOutput) {
+    private void startWith(
+            PlayerOutput lastOutput,
+            CombatStatus combatStatus,
+            GameMode gameMode
+    ) {
         Game game = new Game(
                 GAME_ID,
-                GameMode.EXPLORING,
+                gameMode,
                 lastOutput,
                 new GameChar("Foo", List.of(new Weapon("sword")), List.of()),
-                new Peace()
+                combatStatus
         );
         gameRepository.save(game);
     }
