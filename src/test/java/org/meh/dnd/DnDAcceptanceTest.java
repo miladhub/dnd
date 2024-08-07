@@ -271,6 +271,23 @@ class DnDAcceptanceTest
                 gameRepository.gameById(GAME_ID).map(Game::mode));
     }
 
+    @Test
+    void resting_heals() {
+        startWith(combatGoblin, new Fight(false, goblin, "", IN_PROGRESS), COMBAT);
+
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.doAction(GAME_ID, new Rest());
+
+        assertEquals(
+                10,
+                gameRepository.gameById(GAME_ID).orElseThrow().playerChar().hp()
+        );
+    }
+
     private void dmOutcome(
             PlayerOutput output
     ) {

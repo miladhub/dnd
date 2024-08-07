@@ -34,7 +34,9 @@ public record DnD(
                 enemyCombatTurn(gameId, Combat.generateAttack(opponent));
         }
         else if (action instanceof Rest) {
-            gameRepository.save(gameId, g -> g.withMode(RESTING));
+            gameRepository.save(gameId, g -> g
+                    .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
+                    .withMode(RESTING));
             playersChannel.post(gameId, new RestOutput());
         }
         else if (action instanceof Dialogue || action instanceof Say) {

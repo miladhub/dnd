@@ -17,4 +17,8 @@ public record GameChar(
     public boolean isDead() {
         return hp == 0;
     }
+
+    public GameChar withHp(int hp) {
+        return new GameChar(name, hp, maxHp, weapons, spells);
+    }
 }
