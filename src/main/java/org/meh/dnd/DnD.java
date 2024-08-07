@@ -87,7 +87,7 @@ public record DnD(
     ) {
         return gameChar.name() + ": " + switch (action) {
             case MeleeAttack m -> "melee attack with " + m.weapon();
-            case SpellAttack s -> "cast spell " + s.spell();
+            case SpellAttack s -> "cast " + s.spell();
         };
     }
 

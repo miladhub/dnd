@@ -156,6 +156,22 @@ class DnDAcceptanceTest
     }
 
     @Test
+    void attack_spell_players_turn() {
+        startWith(combatGoblin, new Fight(true, goblin, ""), COMBAT);
+
+        dnd.playCombatTurn(GAME_ID, new SpellAttack("magic missile"));
+
+        assertEquals(
+                new Fight(false, goblin, "Foo: cast magic missile"),
+                game().combatStatus());
+        assertThat(playerOutputs, contains(
+                new CombatOutput(false, goblin, "Foo: cast magic missile")));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
     void attack_melee_enemy_turn() {
         startWith(combatGoblin, new Fight(false, goblin, "Foo: melee attack with sword"), COMBAT);
 
