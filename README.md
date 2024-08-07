@@ -13,8 +13,28 @@ DnD™-like app using ChatGPT as the Dungeon Master
 Building requires [Maven](https://maven.apache.org):
 
 ```shell
-$ mvn clean install
+mvn clean install
 ```
+
+# Running on a server
+
+To install and run the game on a server, expand the contents of file
+`target/dnd-*-dist.zip` to a folder of your choice - e.g., `~/dnd`:
+
+```shell
+unzip target/dnd-*-dist.zip -d ~
+mv ~/dnd-*-SNAPSHOT ~/dnd
+```
+
+To start the game, issue:
+
+```shell
+cd ~/dnd
+export OPENAI_API_KEY=...
+java -jar quarkus-run.jar 
+```
+
+The game is accessible at <http://localhost:8080/>.
 
 # Running in dev mode
 
@@ -47,7 +67,3 @@ export OPENAI_API_KEY=...
 java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 \
   -jar target/quarkus-app/quarkus-run.jar
 ```
-
-# Playing the game
-
-The game is accessible at <http://localhost:8080/>.
