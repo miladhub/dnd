@@ -34,7 +34,7 @@ public class RestServer
                         "You are exploring the Dark Forest, what do you do?",
                         List.of(new Explore(""), new Rest())),
                 new GameChar(
-                        "Randall",
+                        "Randall", 10, 10,
                         List.of(new Weapon("Sword")),
                         List.of(new Spell("Magic missile"))
                 ),
@@ -120,8 +120,8 @@ public class RestServer
                     List.of(actionView(new Explore("")))));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(),
-                    new CharacterView(pc.name()),
-                    new CharacterView(co.opponent().name()),
+                    new CharacterView(pc.name(), pc.hp(), pc.maxHp()),
+                    new CharacterView(co.opponent().name(), co.opponent().hp(), co.opponent().maxHp()),
                     co.lastAction(),
                     Stream.concat(
                             pc.weapons().stream().map(

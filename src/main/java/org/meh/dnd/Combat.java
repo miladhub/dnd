@@ -6,7 +6,7 @@ public record Combat()
 {
     public static GameChar generateMonster(String name) {
         return new GameChar(
-                name,
+                name, 10, 10,
                 List.of(new Weapon("sword")),
                 List.of());
     }

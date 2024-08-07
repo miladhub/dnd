@@ -2,6 +2,7 @@ package org.meh.dnd;
 
 import java.util.Random;
 
+import static org.meh.dnd.FightStatus.*;
 import static org.meh.dnd.GameMode.*;
 import static org.meh.dnd.GameMode.EXPLORING;
 
@@ -24,8 +25,10 @@ public record DnD(
             GameChar opponent = Combat.generateMonster(attack.target());
             boolean playersTurn = new Random().nextBoolean();
             gameRepository.save(gameId, g ->
-                    g.withMode(COMBAT).withFightStatus(new Fight(playersTurn, opponent, "")));
-            playersChannel.post(gameId, new CombatOutput(playersTurn, opponent, ""));
+                    g.withMode(COMBAT).withFightStatus(new Fight(playersTurn,
+                            opponent, "", IN_PROGRESS)));
+            playersChannel.post(gameId, new CombatOutput(playersTurn,
+                    opponent, "", false, false));
             if (!playersTurn)
                 enemyCombatTurn(gameId, Combat.generateAttack(opponent));
         }
@@ -49,7 +52,19 @@ public record DnD(
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        combatTurn(action, game.playerChar(), fight, gameId);
+        GameChar newOpponent = fight.opponent().damage(3);
+        String description = combatActionDescription(
+                action,
+                game.playerChar(),
+                newOpponent);
+        Fight newFight = new Fight(
+                !fight.playerTurn(),
+                newOpponent,
+                description,
+                newOpponent.isDead()? PLAYER_WON : IN_PROGRESS
+        );
+        gameRepository.save(gameId, g -> g.withFightStatus(newFight));
+        notifyPlayers(gameId, newFight);
     }
 
     public void enemyCombatTurn(
@@ -58,37 +73,48 @@ public record DnD(
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        combatTurn(action, fight.opponent(), fight, gameId);
-    }
-
-    private void combatTurn(
-            CombatActions action,
-            GameChar gameChar,
-            Fight fight,
-            String gameId
-    ) {
-        String description = combatActionDescription(action, gameChar);
+        GameChar newPlayerChar = game.playerChar().damage(3);
+        String description = combatActionDescription(
+                action,
+                fight.opponent(),
+                newPlayerChar);
         Fight newFight = new Fight(
                 !fight.playerTurn(),
                 fight.opponent(),
-                description
+                description,
+                newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS
         );
-        gameRepository.save(gameId, g -> g.withFightStatus(newFight));
+        gameRepository.save(gameId, g -> g
+                .withFightStatus(newFight)
+                .withPlayerChar(newPlayerChar));
+        notifyPlayers(gameId, newFight);
+    }
+
+    private void notifyPlayers(
+            String gameId,
+            Fight fight
+    ) {
         playersChannel.post(gameId, new CombatOutput(
-                newFight.playerTurn(),
-                newFight.opponent(),
-                newFight.lastAction()
+                fight.playerTurn(),
+                fight.opponent(),
+                fight.lastAction(),
+                fight.outcome() == PLAYER_WON,
+                fight.outcome() == ENEMY_WON
         ));
     }
 
     private static String combatActionDescription(
             CombatActions action,
-            GameChar gameChar
+            GameChar gameChar,
+            GameChar opponent
     ) {
-        return gameChar.name() + ": " + switch (action) {
-            case MeleeAttack m -> "melee attack with " + m.weapon();
-            case SpellAttack s -> "cast " + s.spell();
-        };
+        if (opponent.isDead())
+            return gameChar.name() + ": killed " + opponent.name();
+        else
+            return gameChar.name() + ": " + switch (action) {
+                case MeleeAttack m -> "melee attack with " + m.weapon();
+                case SpellAttack s -> "cast " + s.spell();
+            };
     }
 
     public PlayerOutput enter(

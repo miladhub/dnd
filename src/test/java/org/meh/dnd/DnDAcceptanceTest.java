@@ -10,7 +10,9 @@ import java.util.Optional;
 import static io.smallrye.common.constraint.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.meh.dnd.FightStatus.*;
 import static org.meh.dnd.GameMode.*;
 
 class DnDAcceptanceTest
@@ -27,8 +29,13 @@ class DnDAcceptanceTest
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "You see a goblin, what do you do?",
             List.of(new Attack("goblin"), new Dialogue("goblin")));
-    private final GameChar goblin = new GameChar("goblin", List.of(new Weapon("sword")), List.of());
-    private final CombatOutput combatGoblin = new CombatOutput(true, goblin, "");
+    private final GameChar goblin = new GameChar(
+            "goblin",
+            10, 10,
+            List.of(new Weapon("sword")),
+            List.of());
+    private final CombatOutput combatGoblin = new CombatOutput(true, goblin,
+            "", false, false);
     private final RestOutput rest = new RestOutput();
     private final DialogueOutput speakWithGoblin =
             new DialogueOutput("hey there", List.of(new Say("hi"), new Say("what?")));
@@ -37,7 +44,9 @@ class DnDAcceptanceTest
     private final CombatOutput meleeOutput = new CombatOutput(
             false,
             goblin,
-            "Foo: melee attack with sword");
+            "Foo: melee attack with sword",
+            false,
+            false);
 
     @BeforeEach
     void setUp() {
@@ -141,15 +150,21 @@ class DnDAcceptanceTest
 
     @Test
     void attack_melee_players_turn() {
-        startWith(combatGoblin, new Fight(true, goblin, ""), COMBAT);
+        startWith(combatGoblin, new Fight(true, goblin, "", IN_PROGRESS), COMBAT);
 
         dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
 
+        GameChar newGoblin = new GameChar(
+                "goblin",
+                7, 10,
+                List.of(new Weapon("sword")),
+                List.of());
+
         assertEquals(
-                new Fight(false, goblin, meleeOutput.lastAction()),
+                new Fight(false, newGoblin, meleeOutput.lastAction(), IN_PROGRESS),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
-                new CombatOutput(false, goblin, "Foo: melee attack with sword")));
+                new CombatOutput(false, newGoblin, "Foo: melee attack with sword", false, false)));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -157,15 +172,21 @@ class DnDAcceptanceTest
 
     @Test
     void attack_spell_players_turn() {
-        startWith(combatGoblin, new Fight(true, goblin, ""), COMBAT);
+        startWith(combatGoblin, new Fight(true, goblin, "", IN_PROGRESS), COMBAT);
 
         dnd.playCombatTurn(GAME_ID, new SpellAttack("magic missile"));
 
+        GameChar newGoblin = new GameChar(
+                "goblin",
+                7, 10,
+                List.of(new Weapon("sword")),
+                List.of());
+
         assertEquals(
-                new Fight(false, goblin, "Foo: cast magic missile"),
+                new Fight(false, newGoblin, "Foo: cast magic missile", IN_PROGRESS),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
-                new CombatOutput(false, goblin, "Foo: cast magic missile")));
+                new CombatOutput(false, newGoblin, "Foo: cast magic missile", false, false)));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -173,15 +194,78 @@ class DnDAcceptanceTest
 
     @Test
     void attack_melee_enemy_turn() {
-        startWith(combatGoblin, new Fight(false, goblin, "Foo: melee attack with sword"), COMBAT);
+        startWith(combatGoblin,
+                new Fight(false, goblin, "Foo: melee attack with sword", IN_PROGRESS),
+                COMBAT);
 
         dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
 
         assertEquals(
-                new Fight(true, goblin, "goblin: melee attack with sword"),
+                new Fight(true, goblin, "goblin: melee attack with sword", IN_PROGRESS),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
-                new CombatOutput(true, goblin, "goblin: melee attack with sword")));
+                new CombatOutput(true, goblin, "goblin: melee attack with sword", false, false)));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
+    void attack_does_damage() {
+        startWith(combatGoblin, new Fight(true, goblin, "", IN_PROGRESS), COMBAT);
+
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+
+        GameChar damaged =
+                new GameChar("goblin", 7, 10, List.of(new Weapon("sword")),
+                        List.of());
+        assertEquals(
+                new Fight(false, damaged, "Foo: melee attack with sword", IN_PROGRESS),
+                game().combatStatus());
+        assertThat(playerOutputs, contains(
+                new CombatOutput(false, damaged,
+                        "Foo: melee attack with sword", false, false)));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
+    void killing_player_won() {
+        startWith(combatGoblin, new Fight(true, goblin, "", IN_PROGRESS), COMBAT);
+
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.playCombatTurn(GAME_ID, new MeleeAttack("sword"));
+
+        GameChar killed =
+                new GameChar("goblin", 0, 10, List.of(new Weapon("sword")),
+                        List.of());
+        assertEquals(killed, ((Fight) game().combatStatus()).opponent());
+        assertEquals("Foo: killed goblin", ((Fight) game().combatStatus()).lastAction());
+        assertEquals(PLAYER_WON, ((Fight) game().combatStatus()).outcome());
+        assertThat(playerOutputs, hasItem(
+                new CombatOutput(true, killed, "Foo: killed goblin", true, false)));
+        assertEquals(
+                Optional.of(COMBAT),
+                gameRepository.gameById(GAME_ID).map(Game::mode));
+    }
+
+    @Test
+    void killing_enemy_won() {
+        startWith(combatGoblin, new Fight(false, goblin, "", IN_PROGRESS), COMBAT);
+
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+        dnd.enemyCombatTurn(GAME_ID, new MeleeAttack("sword"));
+
+        assertEquals(
+                new Fight(false, goblin, "goblin: killed Foo", ENEMY_WON),
+                game().combatStatus());
+        assertThat(playerOutputs, hasItem(
+                new CombatOutput(false, goblin, "goblin: killed Foo", false, true)));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -206,7 +290,8 @@ class DnDAcceptanceTest
                 GAME_ID,
                 gameMode,
                 lastOutput,
-                new GameChar("Foo", List.of(new Weapon("sword")), List.of()),
+                new GameChar("Foo", 10, 10, List.of(new Weapon("sword")),
+                        List.of()),
                 combatStatus
         );
         gameRepository.save(game);

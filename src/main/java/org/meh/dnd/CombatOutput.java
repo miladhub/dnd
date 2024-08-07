@@ -3,7 +3,9 @@ package org.meh.dnd;
 public record CombatOutput(
         boolean playerTurn,
         GameChar opponent,
-        String lastAction
+        String lastAction,
+        boolean playerWon,
+        boolean enemyWon
 )
         implements PlayerOutput
 {
