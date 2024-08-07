@@ -4,6 +4,7 @@ import io.smallrye.mutiny.Multi;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
@@ -27,20 +28,7 @@ public class RestServer
 
     @PostConstruct
     public void initialize() {
-        Game game = new Game(
-                "42",
-                GameMode.EXPLORING,
-                new ExploreOutput(
-                        "You are exploring the Dark Forest, what do you do?",
-                        List.of(new Explore(""), new Rest())),
-                new GameChar(
-                        "Randall", 10, 10,
-                        List.of(new Weapon("Sword")),
-                        List.of(new Spell("Magic missile"))
-                ),
-                new Peace()
-        );
-        gameRepository.save(game);
+        loadInitialGame("42");
         dmChannel.subscribe("42", pi -> {
             try {
                 dm.process("42", pi);
@@ -85,6 +73,18 @@ public class RestServer
         } else {
             dnd.doAction(gameId, ActionParser.actionFrom(action, info));
         }
+    }
+
+    @POST
+    @Path("/restart/{gameId}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response restart(
+            @PathParam("gameId") String gameId
+    ) {
+        loadInitialGame(gameId);
+        return Response.ok()
+                .header("HX-Redirect", "/")
+                .build();
     }
 
     @GET
@@ -152,5 +152,22 @@ public class RestServer
             case EndDialogue ignored -> new ActionView("EndDialogue", "", "End Dialogue");
             case Say say -> new ActionView("Say", say.what(), say.what());
         };
+    }
+
+    private void loadInitialGame(String gameId) {
+        Game game = new Game(
+                gameId,
+                GameMode.EXPLORING,
+                new ExploreOutput(
+                        "You are exploring the Dark Forest, what do you do?",
+                        List.of(new Explore(""), new Rest())),
+                new GameChar(
+                        "Randall", 10, 10,
+                        List.of(new Weapon("Sword")),
+                        List.of(new Spell("Magic missile"))
+                ),
+                new Peace()
+        );
+        gameRepository.save(game);
     }
 }

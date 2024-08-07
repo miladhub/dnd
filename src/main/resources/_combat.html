@@ -108,12 +108,8 @@
     </form>
     {{/playerWon}}
     {{#enemyWon}}
-    <form hx-post="/updates/42" hx-swap="none"
+    <form hx-post="/restart/42" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
-        <label for="action-Restart" hidden="hidden">Restart</label>
-        <input id="action-Restart" name="action" type="text" hidden="hidden" value="Restart">
-        <label for="info-Restart" hidden="hidden"></label>
-        <input id="info-Restart" name="info" type="text" hidden="hidden" value="">
         <button type="submit" class="w-full text-center text-xl font-bold">Restart</button>
     </form>
     {{/enemyWon}}

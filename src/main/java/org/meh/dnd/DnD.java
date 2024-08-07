@@ -64,7 +64,10 @@ public record DnD(
                 description,
                 newOpponent.isDead()? PLAYER_WON : IN_PROGRESS
         );
-        gameRepository.save(gameId, g -> g.withFightStatus(newFight));
+        gameRepository.save(gameId, g -> g
+                .withFightStatus(newFight)
+                .withMode(newOpponent.isDead()? EXPLORING : COMBAT)
+        );
         notifyPlayers(gameId, newFight);
     }
 
