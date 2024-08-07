@@ -31,7 +31,7 @@ To start the game, issue:
 ```shell
 cd ~/dnd
 export OPENAI_API_KEY=...
-java -jar quarkus-run.jar 
+java -jar quarkus-run.jar
 ```
 
 The game is accessible at <http://localhost:8080/>.
