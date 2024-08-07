@@ -1,7 +1,6 @@
 package org.meh.dnd;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -10,11 +9,6 @@ public class InMemoryGameRepository
     implements GameRepository
 {
     private final Map<String, Game> games = new HashMap<>();
-
-    @Override
-    public List<String> games() {
-        return games.values().stream().sorted().map(Game::id).toList();
-    }
 
     @Override
     public Optional<Game> gameById(String gameId) {
