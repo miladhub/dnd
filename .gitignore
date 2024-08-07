@@ -39,3 +39,4 @@ build/
 .idea
 
 *.drawio.*
+.DS_Store
