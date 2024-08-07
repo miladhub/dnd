@@ -267,7 +267,7 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(false, goblin, "goblin: killed Foo", false, true)));
         assertEquals(
-                Optional.of(COMBAT),
+                Optional.of(EXPLORING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
     }
 

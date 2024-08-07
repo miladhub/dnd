@@ -19,4 +19,8 @@ public record Game(
     public Game withPlayerChar(GameChar playerChar) {
         return new Game(id, mode, lastOutput, playerChar, combatStatus);
     }
+
+    public Game withLastOutput(PlayerOutput lastOutput) {
+        return new Game(id, mode, lastOutput, playerChar, combatStatus);
+    }
 }

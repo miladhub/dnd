@@ -24,11 +24,12 @@ public record DnD(
         else if (action instanceof Attack attack) {
             GameChar opponent = Combat.generateMonster(attack.target());
             boolean playersTurn = new Random().nextBoolean();
-            gameRepository.save(gameId, g ->
-                    g.withMode(COMBAT).withFightStatus(new Fight(playersTurn,
-                            opponent, "", IN_PROGRESS)));
-            playersChannel.post(gameId, new CombatOutput(playersTurn,
-                    opponent, "", false, false));
+            CombatOutput output = new CombatOutput(playersTurn, opponent, "", false, false);
+            gameRepository.save(gameId, g -> g
+                    .withMode(COMBAT)
+                    .withFightStatus(new Fight(playersTurn, opponent, "", IN_PROGRESS))
+                    .withLastOutput(output));
+            playersChannel.post(gameId, output);
             if (!playersTurn)
                 enemyCombatTurn(gameId, Combat.generateAttack(opponent));
         }
@@ -86,7 +87,9 @@ public record DnD(
         );
         gameRepository.save(gameId, g -> g
                 .withFightStatus(newFight)
-                .withPlayerChar(newPlayerChar));
+                .withPlayerChar(newPlayerChar)
+                .withMode(newPlayerChar.isDead()? EXPLORING : COMBAT)
+        );
         notifyPlayers(gameId, newFight);
     }
 
@@ -94,13 +97,15 @@ public record DnD(
             String gameId,
             Fight fight
     ) {
-        playersChannel.post(gameId, new CombatOutput(
+        CombatOutput output = new CombatOutput(
                 fight.playerTurn(),
                 fight.opponent(),
                 fight.lastAction(),
                 fight.outcome() == PLAYER_WON,
                 fight.outcome() == ENEMY_WON
-        ));
+        );
+        gameRepository.save(gameId, g -> g.withLastOutput(output));
+        playersChannel.post(gameId, output);
     }
 
     private static String combatActionDescription(

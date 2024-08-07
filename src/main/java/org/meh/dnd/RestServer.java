@@ -78,8 +78,10 @@ public class RestServer
             dnd.playCombatTurn(gameId, ActionParser.combatActionFrom(action, info));
             Game game = gameRepository.gameById(gameId).orElseThrow();
             Fight fight = (Fight) game.combatStatus();
-            Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
-            dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
+            if (fight.outcome() == FightStatus.IN_PROGRESS) {
+                Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
+                dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
+            }
         } else {
             dnd.doAction(gameId, ActionParser.actionFrom(action, info));
         }
@@ -119,7 +121,8 @@ public class RestServer
                     "You are resting.",
                     List.of(actionView(new Explore("")))));
             case CombatOutput co -> Templates.combat(new CombatView(
-                    co.playerTurn(),
+                    co.playerTurn(), co.playerWon(), co.enemyWon(),
+                    co.playerWon() || co.enemyWon(),
                     new CharacterView(pc.name(), pc.hp(), pc.maxHp()),
                     new CharacterView(co.opponent().name(), co.opponent().hp(), co.opponent().maxHp()),
                     co.lastAction(),

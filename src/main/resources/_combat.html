@@ -1,17 +1,39 @@
 <div id="game" hx-ext="sse" sse-connect="/updates/42" sse-swap="message"
      class="container mx-auto px-4 max-w-2xl">
 
-<!-- Turn Indicator -->
+<!-- Status -->
+{{#fightOver}}
+    {{#playerWon}}
+    <section class="container mx-auto px-4 max-w-4xl mb-8 text-center">
+        <div class="bg-blue-800 p-4 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+            <h3 class="text-xl font-bold mb-2">You won the fight!</h3>
+        </div>
+    </section>
+    {{/playerWon}}
+    {{#enemyWon}}
+    <section class="container mx-auto px-4 max-w-4xl mb-8 text-center">
+        <div class="bg-blue-800 p-4 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+            <h3 class="text-xl font-bold mb-2">You're dead.</h3>
+        </div>
+    </section>
+    {{/enemyWon}}
+{{/fightOver}}
+{{^fightOver}}
 {{#yourTurn}}
-<section class="w-full bg-blue-800 p-4 shadow-lg mb-6 text-center">
-    <h2 class="text-2xl font-bold">Your Turn</h2>
+<section class="container mx-auto px-4 max-w-4xl mb-8 text-center">
+    <div class="bg-blue-800 p-4 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+        <h3 class="text-xl font-bold mb-2">Your Turn</h3>
+    </div>
 </section>
 {{/yourTurn}}
 {{^yourTurn}}
-<section class="w-full bg-blue-800 p-4 shadow-lg mb-6 text-center">
-    <h2 class="text-2xl font-bold">Enemy's Turn</h2>
+<section class="container mx-auto px-4 max-w-4xl mb-8 text-center">
+    <div class="bg-blue-800 p-4 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+        <h3 class="text-xl font-bold mb-2">Enemy's Turn</h3>
+    </div>
 </section>
 {{/yourTurn}}
+{{/fightOver}}
 
 <section class="container mx-auto px-4 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
     {{#character}}
@@ -62,6 +84,7 @@
 </section>
 
 <section class="container mx-auto px-4 max-w-4xl space-y-4">
+    {{^fightOver}}
     {{#actions}}
     <form hx-post="/updates/42" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
@@ -72,6 +95,29 @@
         <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
     </form>
     {{/actions}}
+    {{/fightOver}}
+    {{#fightOver}}
+    {{#playerWon}}
+    <form hx-post="/updates/42" hx-swap="none"
+          class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
+        <label for="action-Explore" hidden="hidden">Explore</label>
+        <input id="action-Explore" name="action" type="text" hidden="hidden" value="Explore">
+        <label for="info-Explore" hidden="hidden"></label>
+        <input id="info-Explore" name="info" type="text" hidden="hidden" value="">
+        <button type="submit" class="w-full text-center text-xl font-bold">Go back</button>
+    </form>
+    {{/playerWon}}
+    {{#enemyWon}}
+    <form hx-post="/updates/42" hx-swap="none"
+          class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
+        <label for="action-Restart" hidden="hidden">Restart</label>
+        <input id="action-Restart" name="action" type="text" hidden="hidden" value="Restart">
+        <label for="info-Restart" hidden="hidden"></label>
+        <input id="info-Restart" name="info" type="text" hidden="hidden" value="">
+        <button type="submit" class="w-full text-center text-xl font-bold">Restart</button>
+    </form>
+    {{/enemyWon}}
+    {{/fightOver}}
 </section>
 
 </div>
