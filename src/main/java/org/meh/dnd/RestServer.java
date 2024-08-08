@@ -69,7 +69,7 @@ public class RestServer
             Fight fight = (Fight) game.combatStatus();
             if (fight.outcome() == FightStatus.IN_PROGRESS) {
                 Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
-                dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
+                dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight));
             }
         } else {
             dnd.doAction(gameId, ActionParser.actionFrom(action, info));
@@ -171,8 +171,8 @@ public class RestServer
                         List.of(new Explore(""), new Rest())),
                 new GameChar(
                         "Randall", 10, 10,
-                        List.of(new Weapon("Sword")),
-                        List.of(new Spell("Magic missile"))
+                        List.of(new Weapon("sword")),
+                        List.of(new Spell("Magic Missile"))
                 ),
                 new Peace(),
                 new Chat(List.of())

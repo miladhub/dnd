@@ -138,7 +138,7 @@ class DnDAcceptanceTest
 
         assertTrue(playerOutputs.stream().anyMatch(
                 o -> o instanceof CombatOutput c &&
-                        c.opponent().equals(goblin) &&
+                        c.opponent().name().equals("goblin") &&
                         (c.lastAction().isEmpty() || c.lastAction().startsWith("goblin: "))));
         assertTrue(game().combatStatus() instanceof Fight);
         assertEquals(

@@ -32,7 +32,7 @@ public record DnD(
                     .withLastOutput(output));
             playersChannel.post(gameId, output);
             if (!fight.playerTurn())
-                enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
+                enemyCombatTurn(gameId, Combat.generateAttack(fight));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
