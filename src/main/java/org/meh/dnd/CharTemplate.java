@@ -4,6 +4,8 @@ import java.util.List;
 
 public record CharTemplate(
         int maxHp,
+        int level,
+        CharClass charClass,
         Stats stats,
         List<Weapon> weapons,
         List<Spell> spells

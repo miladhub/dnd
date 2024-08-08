@@ -4,6 +4,8 @@ import java.util.List;
 
 public record GameChar(
         String name,
+        int level,
+        CharClass charClass,
         int hp,
         int maxHp,
         Stats stats,
@@ -12,7 +14,10 @@ public record GameChar(
 )
 {
     public GameChar damage(int damage) {
-        return new GameChar(name, Math.max(hp - damage, 0), maxHp, stats, weapons, spells);
+        return new GameChar(name, level, charClass, Math.max(hp - damage, 0),
+                maxHp,
+                stats,
+                weapons, spells);
     }
 
     public boolean isDead() {
@@ -20,6 +25,6 @@ public record GameChar(
     }
 
     public GameChar withHp(int hp) {
-        return new GameChar(name, hp, maxHp, stats, weapons, spells);
+        return new GameChar(name, level, charClass, hp, maxHp, stats, weapons, spells);
     }
 }

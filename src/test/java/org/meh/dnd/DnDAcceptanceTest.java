@@ -29,6 +29,8 @@ class DnDAcceptanceTest
                 public Fight generateFight(String opponentName) {
                     GameChar opponent = new GameChar(
                             opponentName,
+                            3,
+                            CharClass.FIGHTER,
                             10,
                             10,
                             STATS_FIGHTER,
@@ -59,6 +61,8 @@ class DnDAcceptanceTest
             List.of(new Attack("goblin"), new Dialogue("goblin")));
     private final GameChar goblin = new GameChar(
             "goblin",
+            3,
+            CharClass.FIGHTER,
             10, 10,
             STATS_FIGHTER,
             List.of(SWORD),
@@ -187,6 +191,8 @@ class DnDAcceptanceTest
 
         GameChar newGoblin = new GameChar(
                 "goblin",
+                3,
+                CharClass.FIGHTER,
                 7, 10,
                 STATS_FIGHTER,
                 List.of(SWORD),
@@ -212,6 +218,8 @@ class DnDAcceptanceTest
 
         GameChar newGoblin = new GameChar(
                 "goblin",
+                3,
+                CharClass.FIGHTER,
                 7, 10,
                 STATS_FIGHTER,
                 List.of(SWORD),
@@ -295,7 +303,10 @@ class DnDAcceptanceTest
         dnd.playCombatTurn(GAME_ID, new WeaponAttack(SWORD.name()));
 
         GameChar damaged =
-                new GameChar("goblin", 7, 10, STATS_FIGHTER,
+                new GameChar("goblin",
+                        3,
+                        CharClass.FIGHTER,
+                        7, 10, STATS_FIGHTER,
                         List.of(SWORD),
                         List.of());
         assertEquals(
@@ -321,7 +332,9 @@ class DnDAcceptanceTest
         dnd.playCombatTurn(GAME_ID, new WeaponAttack(SWORD.name()));
 
         GameChar killed =
-                new GameChar("goblin", 0, 10, STATS_FIGHTER, List.of(SWORD),
+                new GameChar("goblin", 3,
+                        CharClass.FIGHTER,
+                        0, 10, STATS_FIGHTER, List.of(SWORD),
                         List.of());
         assertEquals(killed, ((Fight) game().combatStatus()).opponent());
         assertEquals("Foo: killed goblin, melee attack with sword (3 hp damage)",
@@ -396,7 +409,9 @@ class DnDAcceptanceTest
                 GAME_ID,
                 gameMode,
                 lastOutput,
-                new GameChar("Foo", 10, 10, STATS_FIGHTER, List.of(SWORD),
+                new GameChar("Foo", 3,
+                        CharClass.FIGHTER,
+                        10, 10, STATS_FIGHTER, List.of(SWORD),
                         List.of()),
                 combatStatus,
                 new Chat(List.of())

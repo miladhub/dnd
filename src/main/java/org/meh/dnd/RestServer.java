@@ -126,7 +126,10 @@ public class RestServer
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),
-                    new CharacterView(pc.name(), pc.hp(), pc.maxHp(),
+                    new CharacterView(pc.name(),
+                            pc.level(),
+                            pc.charClass().toString().toLowerCase(),
+                            pc.hp(), pc.maxHp(),
                             pc.stats().strength(),
                             pc.stats().dexterity(),
                             pc.stats().constitution(),
@@ -134,7 +137,10 @@ public class RestServer
                             pc.stats().wisdom(),
                             pc.stats().charisma()),
                     new CharacterView(co.opponent().name(),
-                            co.opponent().hp(), co.opponent().maxHp(),
+                            co.opponent().level(),
+                            co.opponent().charClass().toString().toLowerCase(),
+                            co.opponent().hp(),
+                            co.opponent().maxHp(),
                             co.opponent().stats().strength(),
                             co.opponent().stats().dexterity(),
                             co.opponent().stats().constitution(),
@@ -185,7 +191,7 @@ public class RestServer
                         "You are exploring the Dark Forest, what do you do?",
                         List.of(new Explore(""), new Rest())),
                 new GameChar(
-                        "Duncan", 10, 10,
+                        "Duncan", 4, CharClass.WIZARD, 10, 10,
                         STATS_WIZARD,
                         List.of(DAGGER),
                         List.of(MAGIC_MISSILE, FIRE_BOLT, SHOCKING_GRASP)

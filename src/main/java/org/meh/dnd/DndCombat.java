@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+import static org.meh.dnd.CharClass.*;
 import static org.meh.dnd.FightStatus.IN_PROGRESS;
 
 public class DndCombat implements Combat
@@ -29,10 +30,14 @@ public class DndCombat implements Combat
     );
     private static final List<CharTemplate> TEMPLATES = List.of(
             new CharTemplate(10,
+                    3,
+                    FIGHTER,
                     STATS_FIGHTER,
                     List.of(SWORD, BOW),
                     List.of()),
             new CharTemplate(10,
+                    3,
+                    WIZARD,
                     STATS_WIZARD,
                     List.of(BOW),
                     List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT))
@@ -113,6 +118,8 @@ public class DndCombat implements Combat
         CharTemplate template = TEMPLATES.get(templateIndex);
         return new GameChar(
                 name,
+                template.level(),
+                template.charClass(),
                 template.maxHp(),
                 template.maxHp(),
                 template.stats(),
