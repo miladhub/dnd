@@ -41,9 +41,11 @@ public class DndCombat implements Combat
     public CombatActions generateAttack(Fight fight) {
         GameChar monster = fight.opponent();
         Optional<CombatActions> melee = pickMelee(monster).map(x -> x);
-        Optional<CombatActions> ranged = pickRanged(monster).map(x -> x);;
-        return melee.filter(ignored -> fight.distance() <= 5)
-                .orElse(ranged.orElse(new Move(Dir.TOWARDS_ENEMY, 5)));
+        Optional<CombatActions> ranged = pickRanged(monster).map(x -> x);
+        if (fight.distance() <= 5)
+            return melee.orElseGet(() -> new Move(Dir.AWAY_FROM_ENEMY, 5));
+        else
+            return ranged.orElseGet(() -> new Move(Dir.TOWARDS_ENEMY, 5));
     }
 
     private Optional<Attacks> pickMelee(GameChar monster) {
@@ -94,7 +96,7 @@ public class DndCombat implements Combat
                     .map(Spell::damage)
                     .findFirst().orElseThrow();
         };
-        int damage = new Random().nextInt(maxDmg);
+        int damage = new Random().nextInt(maxDmg) + 1;
         return new AttackResult(defender.damage(damage), damage);
     }
 
