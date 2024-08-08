@@ -23,7 +23,8 @@ public class RestServer
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
-    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel);
+    private final DndCombat combat = new DndCombat();
+    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
     private final DM dm = new AiDM(dmChannel, playersChannel,
             new HttpUrlConnectionOpenAiClient(), gameRepository);
 
@@ -69,7 +70,7 @@ public class RestServer
             Fight fight = (Fight) game.combatStatus();
             if (fight.outcome() == FightStatus.IN_PROGRESS) {
                 Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
-                dnd.enemyCombatTurn(gameId, Combat.generateAttack(fight));
+                dnd.enemyCombatTurn(gameId, combat.generateAttack(fight));
             }
         } else {
             dnd.doAction(gameId, ActionParser.actionFrom(action, info));
@@ -171,8 +172,8 @@ public class RestServer
                         List.of(new Explore(""), new Rest())),
                 new GameChar(
                         "Randall", 10, 10,
-                        List.of(new Weapon("sword")),
-                        List.of(new Spell("Magic Missile"))
+                        List.of(DndCombat.SWORD),
+                        List.of(DndCombat.MAGIC_MISSILE)
                 ),
                 new Peace(),
                 new Chat(List.of())

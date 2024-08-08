@@ -7,9 +7,9 @@ import static org.meh.dnd.GameMode.EXPLORING;
 public record DnD(
             GameRepository gameRepository,
             DMChannel dmChannel,
-            PlayerChannel playersChannel
+            PlayerChannel playersChannel,
+            Combat combat
     ) {
-
     public void doAction(
             String gameId,
             Actions action
@@ -20,7 +20,7 @@ public record DnD(
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
-            Fight fight = Combat.generateFight(attack.target());
+            Fight fight = combat.generateFight(attack.target());
             CombatOutput output = new CombatOutput(
                     fight.playerTurn(),
                     fight.opponent(),
@@ -32,7 +32,7 @@ public record DnD(
                     .withLastOutput(output));
             playersChannel.post(gameId, output);
             if (!fight.playerTurn())
-                enemyCombatTurn(gameId, Combat.generateAttack(fight));
+                enemyCombatTurn(gameId, combat.generateAttack(fight));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
@@ -58,10 +58,11 @@ public record DnD(
         Fight fight = (Fight) game.combatStatus();
         if (action instanceof Move move) {
             int newDistance = computeDistance(move, fight);
-            String description = combatActionDescription(
-                    action,
-                    game.playerChar(),
-                    fight.opponent());
+            GameChar gameChar = game.playerChar();
+            GameChar opponent = fight.opponent();
+            String description =
+                    gameChar.name() + ": " + "move " +
+                    dirDescription(move) + opponent.name();
             Fight newFight = new Fight(
                     !fight.playerTurn(),
                     fight.opponent(),
@@ -74,19 +75,19 @@ public record DnD(
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(gameId, newFight);
-        } else if (action instanceof Attacks a) {
-            GameChar newOpponent =
-                    Combat.computeAttack(a, game.playerChar(), fight.opponent());
+        } else if (action instanceof Attacks attack) {
+            AttackResult result =
+                    combat.computeAttack(attack, game.playerChar(), fight.opponent());
             String description = combatActionDescription(
-                    action,
+                    attack,
                     game.playerChar(),
-                    newOpponent);
+                    result);
             Fight newFight = new Fight(
                     !fight.playerTurn(),
-                    newOpponent,
+                    result.gameChar(),
                     description,
                     fight.distance(),
-                    newOpponent.isDead() ? PLAYER_WON : IN_PROGRESS
+                    result.gameChar().isDead() ? PLAYER_WON : IN_PROGRESS
             );
             gameRepository.save(gameId, g -> g
                     .withFightStatus(newFight)
@@ -104,10 +105,10 @@ public record DnD(
         Fight fight = (Fight) game.combatStatus();
         if (action instanceof Move move) {
             int newDistance = computeDistance(move, fight);
-            String description = combatActionDescription(
-                    action,
-                    fight.opponent(),
-                    game.playerChar());
+            GameChar gameChar = fight.opponent();
+            GameChar opponent = game.playerChar();
+            String description = gameChar.name() + ": " + "move " +
+                    dirDescription(move) + opponent.name();
             Fight newFight = new Fight(
                     !fight.playerTurn(),
                     fight.opponent(),
@@ -120,24 +121,24 @@ public record DnD(
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(gameId, newFight);
-        } else if (action instanceof Attacks a) {
-            GameChar newPlayerChar =
-                    Combat.computeAttack(a, fight.opponent(), game.playerChar());
+        } else if (action instanceof Attacks attack) {
+            AttackResult result =
+                    combat.computeAttack(attack, fight.opponent(), game.playerChar());
             String description = combatActionDescription(
-                    action,
+                    attack,
                     fight.opponent(),
-                    newPlayerChar);
+                    result);
             Fight newFight = new Fight(
                     !fight.playerTurn(),
                     fight.opponent(),
                     description,
                     fight.distance(),
-                    newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS
+                    result.gameChar().isDead()? ENEMY_WON : IN_PROGRESS
             );
             gameRepository.save(gameId, g -> g
                     .withFightStatus(newFight)
-                    .withPlayerChar(newPlayerChar)
-                    .withMode(newPlayerChar.isDead()? EXPLORING : COMBAT)
+                    .withPlayerChar(result.gameChar())
+                    .withMode(result.gameChar().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(gameId, newFight);
         }
@@ -170,17 +171,18 @@ public record DnD(
     }
 
     private static String combatActionDescription(
-            CombatActions action,
-            GameChar gameChar,
-            GameChar opponent
+            Attacks attack,
+            GameChar attacker,
+            AttackResult result
     ) {
+        GameChar opponent = result.gameChar();
+        String dmg = " (" + result.damage() + " hp damage)";
         if (opponent.isDead())
-            return gameChar.name() + ": killed " + opponent.name();
+            return attacker.name() + ": killed " + opponent.name() + dmg;
         else
-            return gameChar.name() + ": " + switch (action) {
-                case MeleeAttack m -> "melee attack with " + m.weapon();
-                case SpellAttack s -> "cast " + s.spell();
-                case Move move -> "move " + dirDescription(move) + opponent.name();
+            return attacker.name() + ": " + switch (attack) {
+                case WeaponAttack m -> "melee attack with " + m.weapon() + dmg;
+                case SpellAttack s -> "cast " + s.spell() + dmg;
             };
     }
 

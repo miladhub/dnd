@@ -34,7 +34,7 @@ public class ActionParser
             String info
     ) {
         return switch (action) {
-            case "Melee" -> new MeleeAttack(info);
+            case "Melee" -> new WeaponAttack(info);
             case "Spell" -> new SpellAttack(info);
             case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
             case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
