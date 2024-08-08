@@ -37,4 +37,12 @@ public record Combat()
         else
             return new Move(Dir.TOWARDS_ENEMY, 5);
     }
+
+    public static GameChar computeAttack(
+            Attacks attack,
+            GameChar attacker,
+            GameChar defender
+            ) {
+        return defender.damage(3);
+    }
 }

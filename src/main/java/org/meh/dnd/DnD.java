@@ -74,8 +74,9 @@ public record DnD(
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(gameId, newFight);
-        } else {
-            GameChar newOpponent = fight.opponent().damage(3);
+        } else if (action instanceof Attacks a) {
+            GameChar newOpponent =
+                    Combat.computeAttack(a, game.playerChar(), fight.opponent());
             String description = combatActionDescription(
                     action,
                     game.playerChar(),
@@ -119,8 +120,9 @@ public record DnD(
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(gameId, newFight);
-        } else {
-            GameChar newPlayerChar = game.playerChar().damage(3);
+        } else if (action instanceof Attacks a) {
+            GameChar newPlayerChar =
+                    Combat.computeAttack(a, fight.opponent(), game.playerChar());
             String description = combatActionDescription(
                     action,
                     fight.opponent(),
