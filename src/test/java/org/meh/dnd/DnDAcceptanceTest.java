@@ -142,8 +142,8 @@ class DnDAcceptanceTest
                         (c.lastAction().isEmpty() || c.lastAction().startsWith("goblin: "))));
         assertTrue(game().combatStatus() instanceof Fight);
         assertEquals(
-                goblin,
-                ((Fight) game().combatStatus()).opponent());
+                "goblin",
+                ((Fight) game().combatStatus()).opponent().name());
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
