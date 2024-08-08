@@ -1,15 +1,15 @@
 package org.meh.dnd;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class InMemoryChannel<T>
         implements Channel<T>
 {
-    private final Map<String, List<Consumer<T>>> consumers = new HashMap<>();
+    private final Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
 
     @Override
     public void subscribe(

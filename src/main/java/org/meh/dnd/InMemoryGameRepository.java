@@ -1,14 +1,14 @@
 package org.meh.dnd;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class InMemoryGameRepository
     implements GameRepository
 {
-    private final Map<String, Game> games = new HashMap<>();
+    private final Map<String, Game> games = new ConcurrentHashMap<>();
 
     @Override
     public Optional<Game> gameById(String gameId) {
