@@ -57,10 +57,7 @@ public record DnD(
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
         if (action instanceof Move move) {
-            int newDistance = switch (move.dir()) {
-                case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
-                case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
-            };
+            int newDistance = computeDistance(move, fight);
             String description = combatActionDescription(
                     action,
                     game.playerChar(),
@@ -105,10 +102,7 @@ public record DnD(
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
         if (action instanceof Move move) {
-            int newDistance = switch (move.dir()) {
-                case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
-                case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
-            };
+            int newDistance = computeDistance(move, fight);
             String description = combatActionDescription(
                     action,
                     fight.opponent(),
@@ -145,6 +139,16 @@ public record DnD(
             );
             notifyPlayers(gameId, newFight);
         }
+    }
+
+    private static int computeDistance(
+            Move move,
+            Fight fight
+    ) {
+        return switch (move.dir()) {
+            case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
+            case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
+        };
     }
 
     private void notifyPlayers(
