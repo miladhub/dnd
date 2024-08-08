@@ -177,13 +177,17 @@ public record DnD(
     ) {
         GameChar opponent = result.gameChar();
         String dmg = " (" + result.damage() + " hp damage)";
-        if (opponent.isDead())
-            return attacker.name() + ": killed " + opponent.name() + dmg;
-        else
-            return attacker.name() + ": " + switch (attack) {
-                case WeaponAttack m -> "melee attack with " + m.weapon() + dmg;
-                case SpellAttack s -> "cast " + s.spell() + dmg;
-            };
+        String attackDescription = switch (attack) {
+            case WeaponAttack m -> "melee attack with " + m.weapon() + dmg;
+            case SpellAttack s -> "cast " + s.spell() + dmg;
+        };
+        if (opponent.isDead()) {
+            return attacker.name() + ": killed " + opponent.name() + ", " +
+                    attackDescription;
+        }
+        else {
+            return attacker.name() + ": " + attackDescription;
+        }
     }
 
     private static String dirDescription(Move m) {

@@ -318,12 +318,12 @@ class DnDAcceptanceTest
                 new GameChar("goblin", 0, 10, List.of(SWORD),
                         List.of());
         assertEquals(killed, ((Fight) game().combatStatus()).opponent());
-        assertEquals("Foo: killed goblin (3 hp damage)",
+        assertEquals("Foo: killed goblin, melee attack with sword (3 hp damage)",
                 ((Fight) game().combatStatus()).lastAction());
         assertEquals(PLAYER_WON, ((Fight) game().combatStatus()).outcome());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, killed,
-                        "Foo: killed goblin (3 hp damage)", true,
+                        "Foo: killed goblin, melee attack with sword (3 hp damage)", true,
                         false, 5)));
         assertEquals(
                 Optional.of(EXPLORING),
@@ -342,12 +342,12 @@ class DnDAcceptanceTest
 
         assertEquals(
                 new Fight(false, goblin,
-                        "goblin: killed Foo (3 hp damage)",
+                        "goblin: killed Foo, melee attack with sword (3 hp damage)",
                         5, ENEMY_WON),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(false, goblin,
-                        "goblin: killed Foo (3 hp damage)", false, true, 5)));
+                        "goblin: killed Foo, melee attack with sword (3 hp damage)", false, true, 5)));
         assertEquals(
                 Optional.of(EXPLORING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
