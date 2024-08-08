@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.meh.dnd.DndCombat.*;
 import static org.meh.dnd.GameMode.COMBAT;
 
 @Path("/")
@@ -125,8 +126,21 @@ public class RestServer
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),
-                    new CharacterView(pc.name(), pc.hp(), pc.maxHp()),
-                    new CharacterView(co.opponent().name(), co.opponent().hp(), co.opponent().maxHp()),
+                    new CharacterView(pc.name(), pc.hp(), pc.maxHp(),
+                            pc.stats().strength(),
+                            pc.stats().dexterity(),
+                            pc.stats().constitution(),
+                            pc.stats().intelligence(),
+                            pc.stats().wisdom(),
+                            pc.stats().charisma()),
+                    new CharacterView(co.opponent().name(),
+                            co.opponent().hp(), co.opponent().maxHp(),
+                            co.opponent().stats().strength(),
+                            co.opponent().stats().dexterity(),
+                            co.opponent().stats().constitution(),
+                            co.opponent().stats().intelligence(),
+                            co.opponent().stats().wisdom(),
+                            co.opponent().stats().charisma()),
                     co.lastAction(),
                     co.distance(),
                     Stream.concat(
@@ -171,9 +185,10 @@ public class RestServer
                         "You are exploring the Dark Forest, what do you do?",
                         List.of(new Explore(""), new Rest())),
                 new GameChar(
-                        "Randall", 10, 10,
-                        List.of(DndCombat.SWORD),
-                        List.of(DndCombat.MAGIC_MISSILE)
+                        "Duncan", 10, 10,
+                        STATS_WIZARD,
+                        List.of(DAGGER),
+                        List.of(MAGIC_MISSILE, FIRE_BOLT, SHOCKING_GRASP)
                 ),
                 new Peace(),
                 new Chat(List.of())

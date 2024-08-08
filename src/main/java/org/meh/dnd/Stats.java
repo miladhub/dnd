@@ -1,13 +1,12 @@
 package org.meh.dnd;
 
-public record CharacterView(
-        String charName,
-        int hp,
-        int maxHp,
+public record Stats(
         int strength,
         int dexterity,
         int constitution,
         int intelligence,
         int wisdom,
         int charisma
-) {}
+)
+{
+}

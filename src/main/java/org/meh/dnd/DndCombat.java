@@ -8,26 +8,34 @@ import static org.meh.dnd.FightStatus.IN_PROGRESS;
 
 public class DndCombat implements Combat
 {
+    public static final Stats STATS_FIGHTER = new Stats(15, 13, 14, 8, 12, 10);
+    public static final Stats STATS_WIZARD = new Stats(8, 12, 14, 15, 13, 10);
     public static final Weapon SWORD = new Weapon("sword", false, 8);
     public static final Weapon BOW = new Weapon("bow", true, 6);
+    public static final Weapon DAGGER = new Weapon("dagger", false, 6);
     public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, 8);
     public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, 8);
+    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, 10);
 
     private static final List<Weapon> WEAPONS = List.of(
             SWORD,
-            BOW
+            BOW,
+            DAGGER
     );
     private static final List<Spell> SPELLS = List.of(
-            MAGIC_MISSILE,
-            SHOCKING_GRASP
+            SHOCKING_GRASP,
+            FIRE_BOLT,
+            MAGIC_MISSILE
     );
     private static final List<CharTemplate> TEMPLATES = List.of(
             new CharTemplate(10,
-                    List.of(SWORD),
-                    List.of(MAGIC_MISSILE)),
+                    STATS_FIGHTER,
+                    List.of(SWORD, BOW),
+                    List.of()),
             new CharTemplate(10,
+                    STATS_WIZARD,
                     List.of(BOW),
-                    List.of(SHOCKING_GRASP))
+                    List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT))
     );
 
     @Override
@@ -107,6 +115,7 @@ public class DndCombat implements Combat
                 name,
                 template.maxHp(),
                 template.maxHp(),
+                template.stats(),
                 template.weapons(),
                 template.spells()
         );

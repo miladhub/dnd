@@ -6,12 +6,13 @@ public record GameChar(
         String name,
         int hp,
         int maxHp,
+        Stats stats,
         List<Weapon> weapons,
         List<Spell> spells
 )
 {
     public GameChar damage(int damage) {
-        return new GameChar(name, Math.max(hp - damage, 0), maxHp, weapons, spells);
+        return new GameChar(name, Math.max(hp - damage, 0), maxHp, stats, weapons, spells);
     }
 
     public boolean isDead() {
@@ -19,6 +20,6 @@ public record GameChar(
     }
 
     public GameChar withHp(int hp) {
-        return new GameChar(name, hp, maxHp, weapons, spells);
+        return new GameChar(name, hp, maxHp, stats, weapons, spells);
     }
 }
