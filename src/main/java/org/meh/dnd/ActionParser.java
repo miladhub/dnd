@@ -1,5 +1,9 @@
 package org.meh.dnd;
 
+import static java.lang.Integer.parseInt;
+import static org.meh.dnd.Dir.AWAY_FROM_ENEMY;
+import static org.meh.dnd.Dir.TOWARDS_ENEMY;
+
 public class ActionParser
 {
     public static Actions actionFrom(String action,
@@ -32,6 +36,8 @@ public class ActionParser
         return switch (action) {
             case "Melee" -> new MeleeAttack(info);
             case "Spell" -> new SpellAttack(info);
+            case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
+            case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };

@@ -1,7 +1,5 @@
 package org.meh.dnd;
 
-import java.util.Random;
-
 import static org.meh.dnd.FightStatus.*;
 import static org.meh.dnd.GameMode.*;
 import static org.meh.dnd.GameMode.EXPLORING;
@@ -22,16 +20,19 @@ public record DnD(
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
-            GameChar opponent = Combat.generateMonster(attack.target());
-            boolean playersTurn = new Random().nextBoolean();
-            CombatOutput output = new CombatOutput(playersTurn, opponent, "", false, false);
+            Fight fight = Combat.generateFight(attack.target());
+            CombatOutput output = new CombatOutput(
+                    fight.playerTurn(),
+                    fight.opponent(),
+                    "",
+                    false, false, fight.distance());
             gameRepository.save(gameId, g -> g
                     .withMode(COMBAT)
-                    .withFightStatus(new Fight(playersTurn, opponent, "", IN_PROGRESS))
+                    .withFightStatus(fight)
                     .withLastOutput(output));
             playersChannel.post(gameId, output);
-            if (!playersTurn)
-                enemyCombatTurn(gameId, Combat.generateAttack(opponent));
+            if (!fight.playerTurn())
+                enemyCombatTurn(gameId, Combat.generateAttack(fight.opponent()));
         }
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
@@ -55,22 +56,46 @@ public record DnD(
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        GameChar newOpponent = fight.opponent().damage(3);
-        String description = combatActionDescription(
-                action,
-                game.playerChar(),
-                newOpponent);
-        Fight newFight = new Fight(
-                !fight.playerTurn(),
-                newOpponent,
-                description,
-                newOpponent.isDead()? PLAYER_WON : IN_PROGRESS
-        );
-        gameRepository.save(gameId, g -> g
-                .withFightStatus(newFight)
-                .withMode(newOpponent.isDead()? EXPLORING : COMBAT)
-        );
-        notifyPlayers(gameId, newFight);
+        if (action instanceof Move move) {
+            int newDistance = switch (move.dir()) {
+                case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
+                case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
+            };
+            String description = combatActionDescription(
+                    action,
+                    game.playerChar(),
+                    fight.opponent());
+            Fight newFight = new Fight(
+                    !fight.playerTurn(),
+                    fight.opponent(),
+                    description,
+                    newDistance,
+                    fight.outcome()
+            );
+            gameRepository.save(gameId, g -> g
+                    .withFightStatus(newFight)
+                    .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
+            );
+            notifyPlayers(gameId, newFight);
+        } else {
+            GameChar newOpponent = fight.opponent().damage(3);
+            String description = combatActionDescription(
+                    action,
+                    game.playerChar(),
+                    newOpponent);
+            Fight newFight = new Fight(
+                    !fight.playerTurn(),
+                    newOpponent,
+                    description,
+                    fight.distance(),
+                    newOpponent.isDead() ? PLAYER_WON : IN_PROGRESS
+            );
+            gameRepository.save(gameId, g -> g
+                    .withFightStatus(newFight)
+                    .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
+            );
+            notifyPlayers(gameId, newFight);
+        }
     }
 
     public void enemyCombatTurn(
@@ -79,23 +104,47 @@ public record DnD(
     ) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        GameChar newPlayerChar = game.playerChar().damage(3);
-        String description = combatActionDescription(
-                action,
-                fight.opponent(),
-                newPlayerChar);
-        Fight newFight = new Fight(
-                !fight.playerTurn(),
-                fight.opponent(),
-                description,
-                newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS
-        );
-        gameRepository.save(gameId, g -> g
-                .withFightStatus(newFight)
-                .withPlayerChar(newPlayerChar)
-                .withMode(newPlayerChar.isDead()? EXPLORING : COMBAT)
-        );
-        notifyPlayers(gameId, newFight);
+        if (action instanceof Move move) {
+            int newDistance = switch (move.dir()) {
+                case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
+                case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
+            };
+            String description = combatActionDescription(
+                    action,
+                    fight.opponent(),
+                    game.playerChar());
+            Fight newFight = new Fight(
+                    !fight.playerTurn(),
+                    fight.opponent(),
+                    description,
+                    newDistance,
+                    fight.outcome()
+            );
+            gameRepository.save(gameId, g -> g
+                    .withFightStatus(newFight)
+                    .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
+            );
+            notifyPlayers(gameId, newFight);
+        } else {
+            GameChar newPlayerChar = game.playerChar().damage(3);
+            String description = combatActionDescription(
+                    action,
+                    fight.opponent(),
+                    newPlayerChar);
+            Fight newFight = new Fight(
+                    !fight.playerTurn(),
+                    fight.opponent(),
+                    description,
+                    fight.distance(),
+                    newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS
+            );
+            gameRepository.save(gameId, g -> g
+                    .withFightStatus(newFight)
+                    .withPlayerChar(newPlayerChar)
+                    .withMode(newPlayerChar.isDead()? EXPLORING : COMBAT)
+            );
+            notifyPlayers(gameId, newFight);
+        }
     }
 
     private void notifyPlayers(
@@ -107,7 +156,8 @@ public record DnD(
                 fight.opponent(),
                 fight.lastAction(),
                 fight.outcome() == PLAYER_WON,
-                fight.outcome() == ENEMY_WON
+                fight.outcome() == ENEMY_WON,
+                fight.distance()
         );
         gameRepository.save(gameId, g -> g.withLastOutput(output));
         playersChannel.post(gameId, output);
@@ -124,7 +174,15 @@ public record DnD(
             return gameChar.name() + ": " + switch (action) {
                 case MeleeAttack m -> "melee attack with " + m.weapon();
                 case SpellAttack s -> "cast " + s.spell();
+                case Move move -> "move " + dirDescription(move) + opponent.name();
             };
+    }
+
+    private static String dirDescription(Move m) {
+        return m.amount() + switch (m.dir()) {
+            case TOWARDS_ENEMY -> " feet towards ";
+            case AWAY_FROM_ENEMY -> " feet away from ";
+        };
     }
 
     public PlayerOutput enter(

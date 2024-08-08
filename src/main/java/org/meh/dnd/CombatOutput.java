@@ -5,7 +5,8 @@ public record CombatOutput(
         GameChar opponent,
         String lastAction,
         boolean playerWon,
-        boolean enemyWon
+        boolean enemyWon,
+        int distance
 )
         implements PlayerOutput
 {

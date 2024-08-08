@@ -10,6 +10,7 @@ public record CombatView(
         CharacterView character,
         CharacterView enemy,
         String lastAction,
+        int distance,
         List<ActionView> actions
 )
 {

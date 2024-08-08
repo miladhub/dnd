@@ -1,9 +1,9 @@
 package org.meh.dnd;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class InMemoryChannel<T>
@@ -16,7 +16,7 @@ public class InMemoryChannel<T>
             String topic,
             Consumer<T> consumer
     ) {
-        consumers.putIfAbsent(topic, new ArrayList<>());
+        consumers.putIfAbsent(topic, new CopyOnWriteArrayList<>());
         consumers.get(topic).add(consumer);
     }
 

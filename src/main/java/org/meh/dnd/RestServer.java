@@ -127,7 +127,9 @@ public class RestServer
                     new CharacterView(pc.name(), pc.hp(), pc.maxHp()),
                     new CharacterView(co.opponent().name(), co.opponent().hp(), co.opponent().maxHp()),
                     co.lastAction(),
+                    co.distance(),
                     Stream.concat(
+                            Stream.concat(
                             pc.weapons().stream().map(
                                             w -> new ActionView("Melee",
                                                     w.name(),
@@ -136,7 +138,12 @@ public class RestServer
                                     s -> new ActionView("Spell",
                                             s.name(),
                                             "Cast " + s.name()))
-                            ).toList()
+                            ),
+                            Stream.of(new ActionView("MoveForward", "5",
+                                            "Move 5 feet forward"),
+                                    new ActionView("MoveBackward", "5",
+                                            "Move 5 feet backward"))
+                    ).toList()
             ));
         };
     }
