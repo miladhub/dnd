@@ -5,13 +5,15 @@ import org.meh.dnd.openai.OpenAiClient;
 import org.meh.dnd.openai.OpenAiRequestMessage;
 import org.meh.dnd.openai.Role;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public record AiDM(DMChannel dmChannel,
-                   PlayerChannel playersChannel, OpenAiClient openAiClient)
-    implements DM
-{
+                   PlayerChannel playersChannel,
+                   OpenAiClient openAiClient,
+                   GameRepository gameRepository
+) implements DM {
     private static final String SYSTEM_PROMPT = """
             You are a Dungeons and Dragons master, and I'm going
             to provide to you what the players are doing.
@@ -54,6 +56,8 @@ public record AiDM(DMChannel dmChannel,
             * Rest
             """;
     private static final String DIALOGUE_PROMPT_POSTFIX = """
+            It is important to keep the dialogue brief.
+            
             Your response must be a phrase, followed by a list of choices
             that the characters must choose from.
             
@@ -125,6 +129,9 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content);
+            gameRepository.save(gameId, g -> g.withChat(new Chat(List.of(
+                    new ChatMessage(ChatRole.DM, output.phrase())
+            ))));
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Say s) {
@@ -133,13 +140,28 @@ public record AiDM(DMChannel dmChannel,
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     s.what());
-            ChatResponse response = openAiClient.chatCompletion(List.of(
-                            new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                            new OpenAiRequestMessage(Role.user, prompt)),
+            List<OpenAiRequestMessage> messages = new ArrayList<>(List.of(
+                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT)
+            ));
+            messages.addAll(gameRepository.gameById(gameId).orElseThrow().chat().messages().stream()
+                    .map(m -> new OpenAiRequestMessage(
+                            switch (m.role()) {
+                                case DM -> Role.assistant;
+                                case PLAYER -> Role.user;
+                            },
+                            m.message()))
+                    .toList());
+            messages.add(new OpenAiRequestMessage(Role.user, prompt));
+
+            ChatResponse response = openAiClient.chatCompletion(messages,
                     List.of());
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content);
+            gameRepository.save(gameId, g -> g.withChat(g.chat().add(
+                    new ChatMessage(ChatRole.PLAYER, s.what()),
+                    new ChatMessage(ChatRole.DM, output.phrase())
+            )));
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof EndDialogue) {
@@ -155,6 +177,7 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseOutput(content);
+            gameRepository.save(gameId, g -> g.withChat(new Chat(List.of())));
             playersChannel.post(gameId, output);
         }
     }

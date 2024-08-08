@@ -24,7 +24,8 @@ public class RestServer
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel);
-    private final DM dm = new AiDM(dmChannel, playersChannel, new HttpUrlConnectionOpenAiClient());
+    private final DM dm = new AiDM(dmChannel, playersChannel,
+            new HttpUrlConnectionOpenAiClient(), gameRepository);
 
     @PostConstruct
     public void initialize() {
@@ -166,7 +167,8 @@ public class RestServer
                         List.of(new Weapon("Sword")),
                         List.of(new Spell("Magic missile"))
                 ),
-                new Peace()
+                new Peace(),
+                new Chat(List.of())
         );
         gameRepository.save(game);
     }

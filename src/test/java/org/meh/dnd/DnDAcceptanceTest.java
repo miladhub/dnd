@@ -309,7 +309,8 @@ class DnDAcceptanceTest
                 lastOutput,
                 new GameChar("Foo", 10, 10, List.of(new Weapon("sword")),
                         List.of()),
-                combatStatus
+                combatStatus,
+                new Chat(List.of())
         );
         gameRepository.save(game);
     }

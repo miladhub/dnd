@@ -10,15 +10,24 @@ public class ActionParser
             case "Dialogue" -> new Dialogue(info);
             case "Rest" -> new Rest();
             case "Explore" -> new Explore(info);
-            case "Say" -> new Say(info);
+            case "Say" -> new Say(cleanSay(info));
             case "EndDialogue" -> new EndDialogue();
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
     }
 
-    public static CombatActions combatActionFrom(String action,
-                                                 String info
+    private static String cleanSay(String what) {
+        String clean = what.trim();
+        if (clean.startsWith("\"") && clean.endsWith("\""))
+            return clean.substring(1, clean.length() - 1).trim();
+        else
+            return clean;
+    }
+
+    public static CombatActions combatActionFrom(
+            String action,
+            String info
     ) {
         return switch (action) {
             case "Melee" -> new MeleeAttack(info);
