@@ -18,6 +18,8 @@ public record DnD(
     ) {
         PlayerInput input = new PlayerInput(action);
         if (action instanceof Start) {
+            gameRepository.save(gameId, g -> g.withPlayerChar(
+                    g.playerChar().withHp(g.playerChar().maxHp())));
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Explore) {
