@@ -84,7 +84,7 @@ public record DnD(
         } else if (action instanceof Attacks attack) {
             AttackResult result =
                     combat.computeAttack(attack, game.playerChar(), fight.opponent());
-            String description = combatActionDescription(
+            String description = DndCombat.combatActionDescription(
                     attack,
                     game.playerChar(),
                     result);
@@ -130,7 +130,7 @@ public record DnD(
         } else if (action instanceof Attacks attack) {
             AttackResult result =
                     combat.computeAttack(attack, fight.opponent(), game.playerChar());
-            String description = combatActionDescription(
+            String description = DndCombat.combatActionDescription(
                     attack,
                     fight.opponent(),
                     result);
@@ -174,26 +174,6 @@ public record DnD(
         );
         gameRepository.save(gameId, g -> g.withLastOutput(output));
         playersChannel.post(gameId, output);
-    }
-
-    private static String combatActionDescription(
-            Attacks attack,
-            GameChar attacker,
-            AttackResult result
-    ) {
-        GameChar opponent = result.gameChar();
-        String dmg = " (" + result.damage() + " hp damage)";
-        String attackDescription = switch (attack) {
-            case WeaponAttack m -> "melee attack with " + m.weapon() + dmg;
-            case SpellAttack s -> "cast " + s.spell() + dmg;
-        };
-        if (opponent.isDead()) {
-            return attacker.name() + ": killed " + opponent.name() + ", " +
-                    attackDescription;
-        }
-        else {
-            return attacker.name() + ": " + attackDescription;
-        }
     }
 
     private static String dirDescription(Move m) {

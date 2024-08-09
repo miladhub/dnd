@@ -50,6 +50,34 @@ public class DndCombat implements Combat
                     WIZARD_SPELLS)
     );
 
+    public static String combatActionDescription(
+            Attacks attack,
+            GameChar attacker,
+            AttackResult result
+    ) {
+        GameChar opponent = result.gameChar();
+        String dmg = " (" + result.damage() + " hp damage)";
+        String attackDescription = switch (attack) {
+            case WeaponAttack m ->
+                    (weaponByName(m.weapon()).ranged()? "ranged" : "melee") +
+                    " attack with " + m.weapon() + dmg;
+            case SpellAttack s -> "cast " + s.spell() + dmg;
+        };
+        if (opponent.isDead()) {
+            return attacker.name() + ": killed " + opponent.name() + ", " +
+                    attackDescription;
+        }
+        else {
+            return attacker.name() + ": " + attackDescription;
+        }
+    }
+
+    private static Weapon weaponByName(String name) {
+        return WEAPONS.stream()
+                .filter(w -> w.name().equals(name))
+                .findFirst().orElseThrow();
+    }
+
     @Override
     public Fight generateFight(String opponentName) {
         boolean playersTurn = new Random().nextBoolean();
