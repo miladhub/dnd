@@ -42,6 +42,9 @@ public record AiDM(DMChannel dmChannel,
             - <friendliness> can either be 'hostile' or 'friendly'
             - <race> can either be 'humanoid' or 'beast'
             
+            Only list the NPCs that are in my proximity, and make it only 20%
+            likely to encounter hostile creatures.
+            
             Present the NPCs with a bullet list, for example:
             * hostile beast Wolf
             * friendly humanoid Elf
