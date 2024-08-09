@@ -32,7 +32,7 @@ class DnDAcceptanceTest
                             3,
                             CharClass.FIGHTER,
                             10,
-                            10,
+                            10, 15, 1000, 1500,
                             STATS_FIGHTER,
                             List.of(SWORD),
                             List.of()
@@ -63,7 +63,7 @@ class DnDAcceptanceTest
             "goblin",
             3,
             CharClass.FIGHTER,
-            10, 10,
+            10, 10, 15, 1000, 1500,
             STATS_FIGHTER,
             List.of(SWORD),
             List.of());
@@ -193,7 +193,7 @@ class DnDAcceptanceTest
                 "goblin",
                 3,
                 CharClass.FIGHTER,
-                7, 10,
+                7, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of());
@@ -220,7 +220,7 @@ class DnDAcceptanceTest
                 "goblin",
                 3,
                 CharClass.FIGHTER,
-                7, 10,
+                7, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of());
@@ -306,7 +306,7 @@ class DnDAcceptanceTest
                 new GameChar("goblin",
                         3,
                         CharClass.FIGHTER,
-                        7, 10, STATS_FIGHTER,
+                        7, 10, 15, 1000, 1500, STATS_FIGHTER,
                         List.of(SWORD),
                         List.of());
         assertEquals(
@@ -334,7 +334,7 @@ class DnDAcceptanceTest
         GameChar killed =
                 new GameChar("goblin", 3,
                         CharClass.FIGHTER,
-                        0, 10, STATS_FIGHTER, List.of(SWORD),
+                        0, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
                         List.of());
         assertEquals(killed, ((Fight) game().combatStatus()).opponent());
         assertEquals("Foo: killed goblin, melee attack with sword (3 hp damage)",
@@ -411,7 +411,7 @@ class DnDAcceptanceTest
                 lastOutput,
                 new GameChar("Foo", 3,
                         CharClass.FIGHTER,
-                        10, 10, STATS_FIGHTER, List.of(SWORD),
+                        10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
                         List.of()),
                 combatStatus,
                 new Chat(List.of())

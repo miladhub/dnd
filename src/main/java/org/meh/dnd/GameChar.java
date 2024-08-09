@@ -8,6 +8,9 @@ public record GameChar(
         CharClass charClass,
         int hp,
         int maxHp,
+        int ac,
+        int xp,
+        int nextXp,
         Stats stats,
         List<Weapon> weapons,
         List<Spell> spells
@@ -15,7 +18,7 @@ public record GameChar(
 {
     public GameChar damage(int damage) {
         return new GameChar(name, level, charClass, Math.max(hp - damage, 0),
-                maxHp,
+                maxHp, ac, xp, nextXp,
                 stats,
                 weapons, spells);
     }
@@ -25,6 +28,6 @@ public record GameChar(
     }
 
     public GameChar withHp(int hp) {
-        return new GameChar(name, level, charClass, hp, maxHp, stats, weapons, spells);
+        return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells);
     }
 }

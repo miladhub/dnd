@@ -4,6 +4,7 @@ import java.util.List;
 
 public record CharTemplate(
         int maxHp,
+        int ac,
         int level,
         CharClass charClass,
         Stats stats,

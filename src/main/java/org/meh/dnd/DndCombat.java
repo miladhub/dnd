@@ -29,13 +29,17 @@ public class DndCombat implements Combat
             MAGIC_MISSILE
     );
     private static final List<CharTemplate> TEMPLATES = List.of(
-            new CharTemplate(10,
+            new CharTemplate(
+                    10,
+                    13,
                     3,
                     FIGHTER,
                     STATS_FIGHTER,
                     List.of(SWORD, BOW),
                     List.of()),
-            new CharTemplate(10,
+            new CharTemplate(
+                    10,
+                    13,
                     3,
                     WIZARD,
                     STATS_WIZARD,
@@ -122,6 +126,8 @@ public class DndCombat implements Combat
                 template.charClass(),
                 template.maxHp(),
                 template.maxHp(),
+                template.ac(),
+                0, 0,
                 template.stats(),
                 template.weapons(),
                 template.spells()

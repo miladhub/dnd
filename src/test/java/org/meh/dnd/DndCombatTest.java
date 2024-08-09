@@ -11,11 +11,11 @@ import static org.meh.dnd.DndCombat.*;
 class DndCombatTest
 {
     private final DndCombat c = new DndCombat();
-    private final GameChar all_weapons = new GameChar("Foo", 3, FIGHTER, 10, 10, STATS_FIGHTER, List.of(SWORD, BOW), List.of());
-    private final GameChar all_spells = new GameChar("Foo", 3, FIGHTER, 10, 10, STATS_FIGHTER, List.of(), List.of(MAGIC_MISSILE, SHOCKING_GRASP));
-    private final GameChar everything = new GameChar("Foo", 3, FIGHTER, 10, 10, STATS_FIGHTER, List.of(SWORD, BOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP));
-    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, STATS_FIGHTER, List.of(SWORD), List.of(SHOCKING_GRASP));
-    private final GameChar only_ranged = new GameChar("Foo", 3, FIGHTER, 10, 10, STATS_FIGHTER, List.of(BOW), List.of(MAGIC_MISSILE));
+    private final GameChar all_weapons =new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of());
+    private final GameChar all_spells = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(), List.of(MAGIC_MISSILE, SHOCKING_GRASP));
+    private final GameChar everything = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP));
+    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD), List.of(SHOCKING_GRASP));
+    private final GameChar only_ranged =new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(BOW), List.of(MAGIC_MISSILE));
 
     @Test
     void pick_melee_weapon_with_less_than_5_feet() {
