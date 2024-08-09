@@ -16,6 +16,7 @@ public class ActionParser
             case "Explore" -> new Explore(info);
             case "Say" -> new Say(cleanSay(info));
             case "EndDialogue" -> new EndDialogue();
+            case "Start" -> new Start();
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };

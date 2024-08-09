@@ -93,17 +93,36 @@ public record AiDM(DMChannel dmChannel,
             String gameId,
             PlayerInput input
     ) throws Exception {
+        Game game = gameRepository.gameById(gameId).orElseThrow();
+        if (input.action() instanceof Start) {
+            ChatResponse response = openAiClient.chatCompletion(List.of(
+                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
+                    new OpenAiRequestMessage(Role.user,
+                            game.story() + """
+                            
+                            Let's begin, what happens?
+                            
+                            """ + EXPLORE_PROMPT_POSTFIX)
+            ), List.of());
+
+            String content =
+                    ((ChatResponse.MessageChatResponse) response).content();
+            ExploreOutput output = parseOutput(content);
+            playersChannel.post(gameId, output);
+        }
         if (input.action() instanceof Explore e) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
                             e.place().isBlank()
-                                    ? """
+                                    ? game.story() + """
+                                    
                                     The characters are currently exploring, what happens?
                                     
                                     """ + EXPLORE_PROMPT_POSTFIX
                                     : String.format(
-                                    """
+                                    game.story() + """
+                                    
                                     The characters are currently exploring %s, what happens?
                                     
                                     """ + EXPLORE_PROMPT_POSTFIX,
@@ -116,7 +135,8 @@ public record AiDM(DMChannel dmChannel,
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Dialogue d) {
-            String prompt = String.format("""
+            String prompt = String.format(game.story() + """
+                    
                     The characters choose to speak to '%s', what does '%s' say to start the dialogue?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
@@ -135,7 +155,8 @@ public record AiDM(DMChannel dmChannel,
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Say s) {
-            String prompt = String.format("""
+            String prompt = String.format(game.story() + """
+                    
                     The characters say '%s', what's the answer?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
@@ -168,7 +189,8 @@ public record AiDM(DMChannel dmChannel,
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
-                            """
+                            game.story() + """
+                            
                             The characters are currently exploring, what happens?
                             
                             """ + EXPLORE_PROMPT_POSTFIX)

@@ -123,7 +123,7 @@
     {{#playerWon}}
     <form hx-post="/updates/42" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
-        <label for="action-Explore" hidden="hidden">Explore</label>
+        <label for="action-Explore" hidden="hidden"></label>
         <input id="action-Explore" name="action" type="text" hidden="hidden" value="Explore">
         <label for="info-Explore" hidden="hidden"></label>
         <input id="info-Explore" name="info" type="text" hidden="hidden" value="">
@@ -131,8 +131,12 @@
     </form>
     {{/playerWon}}
     {{#enemyWon}}
-    <form hx-post="/restart/42" hx-swap="none"
+    <form hx-post="/updates/42" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
+        <label for="action-Start" hidden="hidden"></label>
+        <input id="action-Start" name="action" type="text" hidden="hidden" value="Start">
+        <label for="info-Start" hidden="hidden"></label>
+        <input id="info-Start" name="info" type="text" hidden="hidden" value="">
         <button type="submit" class="w-full text-center text-xl font-bold">Restart</button>
     </form>
     {{/enemyWon}}

@@ -1,5 +1,8 @@
 package org.meh.dnd;
 
+import java.util.List;
+
+import static org.meh.dnd.DndCombat.*;
 import static org.meh.dnd.FightStatus.*;
 import static org.meh.dnd.GameMode.*;
 import static org.meh.dnd.GameMode.EXPLORING;
@@ -15,7 +18,11 @@ public record DnD(
             Actions action
     ) {
         PlayerInput input = new PlayerInput(action);
-        if (action instanceof Explore) {
+        if (action instanceof Start) {
+            loadInitialGame(gameId);
+            dmChannel.post(gameId, input);
+        }
+        else if (action instanceof Explore) {
             gameRepository.save(gameId, g -> g.withMode(EXPLORING));
             dmChannel.post(gameId, input);
         }
@@ -201,5 +208,35 @@ public record DnD(
             String gameId
     ) {
         return gameRepository.gameById(gameId).map(Game::lastOutput).orElseThrow();
+    }
+
+    public void loadInitialGame(String gameId) {
+        Game game = new Game(
+                gameId,
+                GameMode.EXPLORING,
+                new ExploreOutput(
+                        "Ready.",
+                        List.of(new Start())),
+                new GameChar(
+                        "Duncan",
+                        4,
+                        CharClass.WIZARD,
+                        10,
+                        10,
+                        15,
+                        1500,
+                        2000,
+                        STATS_WIZARD,
+                        List.of(DAGGER),
+                        List.of(MAGIC_MISSILE, FIRE_BOLT, SHOCKING_GRASP)
+                ),
+                new Peace(),
+                new Chat(List.of()),
+                """
+                Duncan is a wizard that is exploring a dark forest full of dungeons
+                and creatures, both good and evil. He is looking for adventure.
+                """
+        );
+        gameRepository.save(game);
     }
 }

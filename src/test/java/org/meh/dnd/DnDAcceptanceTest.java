@@ -414,7 +414,8 @@ class DnDAcceptanceTest
                         10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
                         List.of()),
                 combatStatus,
-                new Chat(List.of())
+                new Chat(List.of()),
+                "Once upon a time in the west..."
         );
         gameRepository.save(game);
     }
