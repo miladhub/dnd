@@ -28,6 +28,9 @@ public class DndCombat implements Combat
             FIRE_BOLT,
             MAGIC_MISSILE
     );
+    public static final List<Weapon> FIGHTER_WEAPONS = List.of(SWORD, BOW);
+    public static final List<Weapon> WIZARD_WEAPONS = List.of(BOW);
+    public static final List<Spell> WIZARD_SPELLS = List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT);
     private static final List<CharTemplate> TEMPLATES = List.of(
             new CharTemplate(
                     10,
@@ -35,7 +38,7 @@ public class DndCombat implements Combat
                     3,
                     FIGHTER,
                     STATS_FIGHTER,
-                    List.of(SWORD, BOW),
+                    FIGHTER_WEAPONS,
                     List.of()),
             new CharTemplate(
                     10,
@@ -43,8 +46,8 @@ public class DndCombat implements Combat
                     3,
                     WIZARD,
                     STATS_WIZARD,
-                    List.of(BOW),
-                    List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT))
+                    WIZARD_WEAPONS,
+                    WIZARD_SPELLS)
     );
 
     @Override

@@ -4,16 +4,19 @@ import io.smallrye.mutiny.Multi;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.meh.dnd.GameMode.COMBAT;
+import static org.meh.dnd.GameMode.EXPLORING;
 
 @Path("/")
 public class RestServer
@@ -29,7 +32,7 @@ public class RestServer
 
     @PostConstruct
     public void initialize() {
-        dnd.loadInitialGame("42");
+//        dnd.loadInitialGame("42");
         dmChannel.subscribe("42", pi -> {
             try {
                 dm.process("42", pi);
@@ -37,6 +40,69 @@ public class RestServer
                 LOG.error(e);
             }
         });
+    }
+
+    @POST
+    @Path("/character/{gameId}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response createCharacter(
+            @PathParam("gameId") String gameId,
+            @FormParam("name") String name,
+            @FormParam("class") String clazz,
+            @FormParam("level") int level,
+            @FormParam("max_hp") int maxHp,
+            @FormParam("armor_class") int ac,
+            @FormParam("experience_points") int xp,
+            @FormParam("strength") int strength,
+            @FormParam("constitution") int constitution,
+            @FormParam("dexterity") int dexterity,
+            @FormParam("intelligence") int intelligence,
+            @FormParam("wisdom") int wisdom,
+            @FormParam("charisma") int charisma,
+            @FormParam("backstory") String backstory
+    ) {
+        CharClass charClass = CharClass.valueOf(clazz.toUpperCase());
+        GameChar gameChar = new GameChar(
+                name,
+                level,
+                charClass,
+                maxHp,
+                maxHp,
+                ac,
+                xp,
+                xp,
+                new Stats(
+                        strength,
+                        dexterity,
+                        constitution,
+                        intelligence,
+                        wisdom,
+                        charisma
+                ),
+                switch (charClass) {
+                    case FIGHTER -> DndCombat.FIGHTER_WEAPONS;
+                    case WIZARD -> DndCombat.WIZARD_WEAPONS;
+                },
+                switch (charClass) {
+                    case FIGHTER -> List.of();
+                    case WIZARD -> DndCombat.WIZARD_SPELLS;
+                }
+        );
+        Game game = new Game(
+                gameId,
+                EXPLORING,
+                new ExploreOutput(
+                        "Ready.",
+                        List.of(new Start())),
+                gameChar,
+                new Peace(),
+                new Chat(List.of()),
+                backstory
+        );
+        gameRepository.save(game);
+        return Response.ok()
+                .header("HX-Redirect", "/")
+                .build();
     }
 
     @GET
@@ -49,10 +115,14 @@ public class RestServer
     @GET
     @Path("/game/{gameId}")
     @Produces(MediaType.TEXT_HTML)
-    public String enter(
+    public Response enter(
             @PathParam("gameId") String gameId
     ) {
-        return toHtml(gameId, dnd.enter(gameId));
+        return dnd.enter(gameId)
+                .map(o -> toHtml(gameId, o))
+                .map(Response::ok)
+                .orElse(Response.seeOther(URI.create("/create.html")))
+                .build();
     }
 
     @POST

@@ -90,8 +90,8 @@ class DnDAcceptanceTest
     @Test
     void player_sees_last_output_when_entering() {
         startWith(exploring, new Peace(), EXPLORING);
-        PlayerOutput output = dnd.enter(GAME_ID);
-        assertEquals(exploring, output);
+        Optional<PlayerOutput> output = dnd.enter(GAME_ID);
+        assertEquals(Optional.of(exploring), output);
     }
 
     @Test

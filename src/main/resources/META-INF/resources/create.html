@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Your DnD Character</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
+</head>
+
+<body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center">
+
+    <!-- Character Creation Form -->
+    <section class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-3xl">
+        <h1 class="text-3xl font-bold mb-8 text-center">Create Your DnD Character</h1>
+
+        <form hx-post="/character/42" class="space-y-6">
+
+            <!-- Character Name -->
+            <div>
+                <label for="name" class="block text-lg font-semibold mb-2">Character Name</label>
+                <input type="text" id="name" name="name"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Character Class -->
+            <div>
+                <label for="class" class="block text-lg font-semibold mb-2">Class</label>
+                <select id="class" name="class"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Wizard">Wizard</option>
+                    <option value="Fighter">Fighter</option>
+                </select>
+            </div>
+
+            <!-- Level -->
+            <div>
+                <label for="level" class="block text-lg font-semibold mb-2">Level</label>
+                <input type="number" id="level" name="level" required min="1" max="20" value="3"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Max HP -->
+            <div>
+                <label for="max_hp" class="block text-lg font-semibold mb-2">Max HP</label>
+                <input type="number" id="max_hp" name="max_hp" required min="1" value="10"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Armour Class -->
+            <div>
+                <label for="armor_class" class="block text-lg font-semibold mb-2">Armor Class</label>
+                <input type="number" id="armor_class" name="armor_class" required min="1" value="13"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Strength -->
+                <div>
+                    <label for="strength" class="block text-lg font-semibold mb-2">Strength</label>
+                    <input type="number" id="strength" name="strength" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Constitution -->
+                <div>
+                    <label for="constitution" class="block text-lg font-semibold mb-2">Constitution</label>
+                    <input type="number" id="constitution" name="constitution" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Dexterity -->
+                <div>
+                    <label for="dexterity" class="block text-lg font-semibold mb-2">Dexterity</label>
+                    <input type="number" id="dexterity" name="dexterity" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Intelligence -->
+                <div>
+                    <label for="intelligence" class="block text-lg font-semibold mb-2">Intelligence</label>
+                    <input type="number" id="intelligence" name="intelligence" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Wisdom -->
+                <div>
+                    <label for="wisdom" class="block text-lg font-semibold mb-2">Wisdom</label>
+                    <input type="number" id="wisdom" name="wisdom" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Charisma -->
+                <div>
+                    <label for="charisma" class="block text-lg font-semibold mb-2">Charisma</label>
+                    <input type="number" id="charisma" name="charisma" required min="1" max="20" value="10"
+                        class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- Experience Points -->
+            <div>
+                <label for="experience_points" class="block text-lg font-semibold mb-2">Experience Points</label>
+                <input type="number" id="experience_points" name="experience_points" required min="0" value="1000"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Backstory -->
+            <div>
+                <label for="backstory" class="block text-lg font-semibold mb-2">Backstory</label>
+                <textarea id="backstory" name="backstory" rows="5"
+                    class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit"
+                    class="w-full p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-lg font-bold text-white transition-all duration-200">
+                    Create Character
+                </button>
+            </div>
+        </form>
+    </section>
+
+</body>
+
+</html>
