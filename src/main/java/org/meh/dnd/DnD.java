@@ -42,7 +42,8 @@ public record DnD(
         else if (action instanceof Rest) {
             gameRepository.save(gameId, g -> g
                     .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
-                    .withMode(RESTING));
+                    .withMode(RESTING)
+                    .withLastOutput(new RestOutput()));
             playersChannel.post(gameId, new RestOutput());
         }
         else if (action instanceof Dialogue || action instanceof Say) {

@@ -108,6 +108,7 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseOutput(content);
+            gameRepository.save(gameId, g -> g.withLastOutput(output));
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Explore e) {
@@ -132,6 +133,7 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseOutput(content);
+            gameRepository.save(gameId, g -> g.withLastOutput(output));
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Dialogue d) {
@@ -149,9 +151,10 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content);
-            gameRepository.save(gameId, g -> g.withChat(new Chat(List.of(
-                    new ChatMessage(ChatRole.DM, output.phrase())
-            ))));
+            gameRepository.save(gameId, g -> g
+                    .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
+                    .withLastOutput(output)
+            );
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof Say s) {
@@ -179,10 +182,12 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content);
-            gameRepository.save(gameId, g -> g.withChat(g.chat().add(
-                    new ChatMessage(ChatRole.PLAYER, s.what()),
-                    new ChatMessage(ChatRole.DM, output.phrase())
-            )));
+            gameRepository.save(gameId, g -> g
+                    .withChat(g.chat().add(
+                            new ChatMessage(ChatRole.PLAYER, s.what()),
+                            new ChatMessage(ChatRole.DM, output.phrase())))
+                    .withLastOutput(output)
+            );
             playersChannel.post(gameId, output);
         }
         if (input.action() instanceof EndDialogue) {
@@ -199,7 +204,10 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseOutput(content);
-            gameRepository.save(gameId, g -> g.withChat(new Chat(List.of())));
+            gameRepository.save(gameId, g -> g
+                    .withChat(new Chat(List.of()))
+                    .withLastOutput(output)
+            );
             playersChannel.post(gameId, output);
         }
     }
