@@ -53,10 +53,12 @@ class DnDAcceptanceTest
                 }
             });
     private final PlayerOutput exploring = new ExploreOutput(
+            "Dark Forest",
             "You are exploring the Dark Forest, what do you do?",
-            List.of(new Explore(""), new Rest()));
+            List.of(new Explore("Dark Forest"), new Rest()));
     private final List<PlayerOutput> playerOutputs = new ArrayList<>();
     private final PlayerOutput seeGoblin = new ExploreOutput(
+            "Dark Forest",
             "You see a goblin, what do you do?",
             List.of(new Attack("goblin"), new Dialogue("goblin")));
     private final GameChar goblin = new GameChar(
@@ -71,9 +73,9 @@ class DnDAcceptanceTest
             "", false, false, 5);
     private final RestOutput rest = new RestOutput();
     private final DialogueOutput speakWithGoblin =
-            new DialogueOutput("hey there", List.of(new Say("hi"), new Say("what?")));
+            new DialogueOutput("goblin", "hey there", List.of(new Say("hi"), new Say("what?")));
     private final DialogueOutput answerByGoblin =
-            new DialogueOutput("I said, hey there", List.of(new Say("hi")));
+            new DialogueOutput("goblin", "I said, hey there", List.of(new Say("hi")));
     private final CombatOutput meleeOutput = new CombatOutput(
             false,
             goblin,
@@ -99,7 +101,7 @@ class DnDAcceptanceTest
         startWith(exploring, new Peace(), EXPLORING);
 
         dmOutcome(seeGoblin);
-        dnd.doAction(GAME_ID, new Explore(""));
+        dnd.doAction(GAME_ID, new Explore("Dark Forest"));
 
         assertThat(playerOutputs, contains(seeGoblin));
 
@@ -408,14 +410,16 @@ class DnDAcceptanceTest
         Game game = new Game(
                 GAME_ID,
                 gameMode,
-                lastOutput,
+                List.of(lastOutput),
                 new GameChar("Foo", 3,
                         CharClass.FIGHTER,
                         10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
                         List.of()),
                 combatStatus,
                 new Chat(List.of()),
-                "Once upon a time in the west..."
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody()
         );
         gameRepository.save(game);
     }

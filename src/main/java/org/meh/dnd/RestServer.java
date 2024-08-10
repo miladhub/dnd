@@ -32,7 +32,6 @@ public class RestServer
 
     @PostConstruct
     public void initialize() {
-//        dnd.loadInitialGame("42");
         dmChannel.subscribe("42", pi -> {
             try {
                 dm.process("42", pi);
@@ -59,7 +58,8 @@ public class RestServer
             @FormParam("intelligence") int intelligence,
             @FormParam("wisdom") int wisdom,
             @FormParam("charisma") int charisma,
-            @FormParam("backstory") String backstory
+            @FormParam("background") String background,
+            @FormParam("place") String place
     ) {
         CharClass charClass = CharClass.valueOf(clazz.toUpperCase());
         GameChar gameChar = new GameChar(
@@ -91,13 +91,16 @@ public class RestServer
         Game game = new Game(
                 gameId,
                 EXPLORING,
-                new ExploreOutput(
+                List.of(new ExploreOutput(
+                        place,
                         "Ready.",
-                        List.of(new Start())),
+                        List.of(new Start()))),
                 gameChar,
                 new Peace(),
                 new Chat(List.of()),
-                backstory
+                background,
+                place,
+                new Nobody()
         );
         gameRepository.save(game);
         return Response.ok()
@@ -178,7 +181,7 @@ public class RestServer
                             .toList()));
             case RestOutput ignored -> Templates.template(new GameView(
                     "You are resting.",
-                    List.of(actionView(new Explore("")))));
+                    List.of(actionView(new Explore(game.place())))));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),

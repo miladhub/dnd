@@ -22,8 +22,10 @@ public record DnD(
                     g.playerChar().withHp(g.playerChar().maxHp())));
             dmChannel.post(gameId, input);
         }
-        else if (action instanceof Explore) {
-            gameRepository.save(gameId, g -> g.withMode(EXPLORING));
+        else if (action instanceof Explore e) {
+            gameRepository.save(gameId, g -> g
+                    .withMode(EXPLORING)
+                    .withPlace(e.place()));
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
@@ -45,16 +47,27 @@ public record DnD(
             gameRepository.save(gameId, g -> g
                     .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
                     .withMode(RESTING)
-                    .withLastOutput(new RestOutput()));
+                    .withLastOutput(new RestOutput())
+                    .withDialogueTarget(new Nobody()));
             playersChannel.post(gameId, new RestOutput());
         }
-        else if (action instanceof Dialogue || action instanceof Say) {
+        else if (action instanceof Dialogue d) {
+            gameRepository.save(gameId, g -> g
+                    .withMode(DIALOGUE)
+                    .withDialogueTarget(new Somebody(d.target()))
+            );
+            dmChannel.post(gameId, input);
+        } else if (action instanceof Say) {
             gameRepository.save(gameId, g -> g.withMode(DIALOGUE));
             dmChannel.post(gameId, input);
-        }
-        else if (action instanceof EndDialogue) {
-            gameRepository.save(gameId, g -> g.withMode(EXPLORING));
-            dmChannel.post(gameId, input);
+        } else {
+            if (action instanceof EndDialogue) {
+                gameRepository.save(gameId, g -> g
+                        .withMode(EXPLORING)
+                        .withDialogueTarget(new Nobody())
+                );
+                dmChannel.post(gameId, input);
+            }
         }
     }
 
@@ -188,6 +201,6 @@ public record DnD(
     public Optional<PlayerOutput> enter(
             String gameId
     ) {
-        return gameRepository.gameById(gameId).map(Game::lastOutput);
+        return gameRepository.gameById(gameId).map(g -> g.events().getLast());
     }
 }
