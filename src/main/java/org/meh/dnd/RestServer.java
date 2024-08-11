@@ -223,7 +223,7 @@ public class RestServer
                             co.opponent().stats().intelligence(),
                             co.opponent().stats().wisdom(),
                             co.opponent().stats().charisma()),
-                    String.join("\n", co.log()).trim(),
+                    String.join("\n", co.log().reversed()).trim(),
                     co.distance(),
                     co.availableActions().stream().flatMap(a -> switch (a.type()) {
                         case WEAPON -> Stream.of(
