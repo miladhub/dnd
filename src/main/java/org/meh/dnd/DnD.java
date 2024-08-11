@@ -17,6 +17,7 @@ public record DnD(
     ) {
 
     private static final int MOVE_STEP = 5;
+    private static final int WEAPONS_REACH = 5;
 
     public void doAction(Actions action) {
         PlayerInput input = new PlayerInput(action);
@@ -110,7 +111,7 @@ public record DnD(
                     .withFightStatus(newFight)
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
             if (!newFight.playerTurn())
                 playEnemyCombatTurn();
         } else if (action instanceof Attacks attack) {
@@ -137,7 +138,7 @@ public record DnD(
                     .withFightStatus(newFight)
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
             if (!newFight.playerTurn())
                 playEnemyCombatTurn();
         } else if (action instanceof EndTurn) {
@@ -151,8 +152,22 @@ public record DnD(
                     fight.opponent().availableActions()
             );
             gameRepository.save(g -> g.withFightStatus(newFight));
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
             playEnemyCombatTurn();
+        }
+    }
+
+    private void playEnemyCombatTurn() {
+        Game game = gameRepository.game().orElseThrow();
+        Fight fight = (Fight) game.combatStatus();
+        while (fight.outcome() == IN_PROGRESS &&
+                fight.opponentActions().hasActionsLeft() &&
+                !fight.playerTurn()
+        ) {
+            GeneratedCombatAction ga = combat.generateAttack(fight);
+            enemyCombatAction(ga);
+            game = gameRepository.game().orElseThrow();
+            fight = (Fight) game.combatStatus();
         }
     }
 
@@ -182,7 +197,7 @@ public record DnD(
                     .withFightStatus(newFight)
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
             );
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
         } else if (ga.action() instanceof Attacks attack) {
             AttackResult result =
                     combat.computeAttack(attack, fight.opponent(), game.playerChar());
@@ -208,7 +223,7 @@ public record DnD(
                     .withPlayerChar(result.gameChar())
                     .withMode(result.gameChar().isDead()? EXPLORING : COMBAT)
             );
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
         } else if (ga.action() instanceof EndTurn) {
             Fight newFight = new Fight(
                     true,
@@ -222,7 +237,7 @@ public record DnD(
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
             );
-            notifyPlayers(game, newFight);
+            notifyPlayersFight(game, newFight);
         }
     }
 
@@ -236,7 +251,7 @@ public record DnD(
         };
     }
 
-    private void notifyPlayers(
+    private void notifyPlayersFight(
             Game game,
             Fight fight
     ) {
@@ -266,20 +281,6 @@ public record DnD(
         return gameRepository.game().map(g -> g.events().getLast());
     }
 
-    private void playEnemyCombatTurn() {
-        Game game = gameRepository.game().orElseThrow();
-        Fight fight = (Fight) game.combatStatus();
-        while (fight.outcome() == FightOutcome.IN_PROGRESS &&
-                fight.opponentActions().hasActionsLeft() &&
-                !fight.playerTurn()
-        ) {
-            GeneratedCombatAction ga = combat.generateAttack(fight);
-            enemyCombatAction(ga);
-            game = gameRepository.game().orElseThrow();
-            fight = (Fight) game.combatStatus();
-        }
-    }
-
     private List<AvailableAction> computeActions(
             GameChar gc,
             AvailableActions av,
@@ -287,18 +288,18 @@ public record DnD(
     ) {
         Stream<AvailableAction> stdActions = av.actions() > 0
                 ? gc.weapons().stream()
-                .filter(w -> distance <= 5 || w.ranged())
+                .filter(w -> distance <= WEAPONS_REACH || w.ranged())
                 .map(w -> new AvailableAction(WEAPON, w.name(), false))
                 : Stream.of();
         Stream<AvailableAction> bonusWeapons = av.bonusActions() > 0
                 ? gc.weapons().stream()
                 .filter(Weapon::light)
-                .filter(w -> distance <= 5 || w.ranged())
+                .filter(w -> distance <= WEAPONS_REACH || w.ranged())
                 .map(w -> new AvailableAction(WEAPON, w.name(), true))
                 : Stream.of();
         Stream<AvailableAction> spells = av.actions() > 0
                 ? gc.spells().stream()
-                .filter(s -> distance <= 5 || s.ranged())
+                .filter(s -> distance <= WEAPONS_REACH || s.ranged())
                 .map(s -> new AvailableAction(SPELL, s.name(), false))
                 : Stream.of();
         int moveAmount = Math.min(av.remainingSpeed(), MOVE_STEP);
