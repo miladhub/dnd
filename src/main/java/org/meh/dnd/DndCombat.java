@@ -141,7 +141,7 @@ public class DndCombat implements Combat
             return new GeneratedCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
         }
 
-        return new GeneratedCombatAction(new StopTurn(), false);
+        return new GeneratedCombatAction(new EndTurn(), false);
     }
 
     private static Optional<SpellAttack> pickMeleeSpell(GameChar monster) {

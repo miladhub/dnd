@@ -13,7 +13,6 @@ import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.meh.dnd.GameMode.EXPLORING;
@@ -240,8 +239,8 @@ public class RestServer
                                 new CombatActionView("MoveBackward", a.info(),
                                         "Move " + a.info() + " feet backward",
                                         a.bonusAction()));
-                        case STOP -> Stream.of(
-                                new CombatActionView("Stop", "", "Stop", false)
+                        case END_TURN -> Stream.of(
+                                new CombatActionView("EndTurn", "", "End Turn", false)
                         );
                     }).toList()
             ));

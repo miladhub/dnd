@@ -143,7 +143,7 @@ public record DnD(
             notifyPlayers(game, newFight);
             if (!newFight.playerTurn())
                 playEnemyCombatTurn(gameId);
-        } else if (action instanceof StopTurn) {
+        } else if (action instanceof EndTurn) {
             Fight newFight = new Fight(
                     false,
                     fight.opponent(),
@@ -217,7 +217,7 @@ public record DnD(
                     .withMode(result.gameChar().isDead()? EXPLORING : COMBAT)
             );
             notifyPlayers(game, newFight);
-        } else if (ga.action() instanceof StopTurn) {
+        } else if (ga.action() instanceof EndTurn) {
             Fight newFight = new Fight(
                     true,
                     fight.opponent(),
@@ -318,6 +318,6 @@ public record DnD(
         return Stream.concat(Stream.concat(stdActions,
                 Stream.concat(bonusWeapons,
                         Stream.concat(spells, move))),
-                Stream.of(new AvailableAction(STOP, "", false))).toList();
+                Stream.of(new AvailableAction(END_TURN, "", false))).toList();
     }
 }

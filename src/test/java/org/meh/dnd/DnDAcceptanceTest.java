@@ -27,7 +27,7 @@ class DnDAcceptanceTest
             new AvailableAction(WEAPON, "sword", false),
             new AvailableAction(WEAPON, "sword", true),
             new AvailableAction(MOVE, "5", false),
-            new AvailableAction(STOP, "", false));
+            new AvailableAction(END_TURN, "", false));
     public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
@@ -236,7 +236,7 @@ class DnDAcceptanceTest
                         ),
                         false, false, 10, List.of(
                         new AvailableAction(MOVE, "5", false),
-                        new AvailableAction(STOP, "", false)))));
+                        new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -272,7 +272,7 @@ class DnDAcceptanceTest
                         false, 5, List.of(
                                 new AvailableAction(WEAPON, "sword", true),
                                 new AvailableAction(MOVE, "5", false),
-                                new AvailableAction(STOP, "", false)
+                                new AvailableAction(END_TURN, "", false)
                 )))
         );
         assertEquals(
@@ -289,7 +289,7 @@ class DnDAcceptanceTest
         dnd.playCombatAction(GAME_ID, new SpellAttack(MAGIC_MISSILE.name()), false);
         dnd.playCombatAction(GAME_ID, new WeaponAttack(DAGGER.name()), true);
         dnd.playCombatAction(GAME_ID, new Move(Dir.AWAY_FROM_ENEMY, 5), false);
-        dnd.playCombatAction(GAME_ID, new StopTurn(), false);
+        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -350,7 +350,7 @@ class DnDAcceptanceTest
                         false, false, 5, List.of(
                         new AvailableAction(WEAPON, "sword", true),
                         new AvailableAction(MOVE, "5", false),
-                        new AvailableAction(STOP, "", false)))));
+                        new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -390,7 +390,7 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new StopTurn(), false);
+        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
 
         assertEquals(
                 new Fight(true, goblin,
@@ -443,7 +443,7 @@ class DnDAcceptanceTest
                         false, false, 5, List.of(
                         new AvailableAction(WEAPON, "sword", true),
                         new AvailableAction(MOVE, "5", false),
-                        new AvailableAction(STOP, "", false)))));
+                        new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -487,7 +487,7 @@ class DnDAcceptanceTest
                                 "Foo: killed goblin, melee attack with sword (3 hp damage)"),
                         true, false, 5, List.of(
                         new AvailableAction(MOVE, "5", false),
-                        new AvailableAction(STOP, "", false)))));
+                        new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(EXPLORING),
                 gameRepository.gameById(GAME_ID).map(Game::mode));
@@ -509,7 +509,7 @@ class DnDAcceptanceTest
                         new AvailableActions(4, 1, 30)),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new StopTurn(), false);
+        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
 
         assertEquals(
                 new Fight(false, goblin,
@@ -614,7 +614,7 @@ class DnDAcceptanceTest
                     new WeaponAttack(fight.opponent().weapons().getFirst().name()),
                     false);
             else return new GeneratedCombatAction(
-                    new StopTurn(),
+                    new EndTurn(),
                     false
             );
         }

@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public record StopTurn()
+public record EndTurn()
         implements CombatActions
 {
 }

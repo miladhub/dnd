@@ -79,7 +79,7 @@ class DndCombatTest
 
     @Test
     void stop_if_no_action_useful() {
-        assertEquals(new GeneratedCombatAction(new StopTurn(), false),
+        assertEquals(new GeneratedCombatAction(new EndTurn(), false),
                 c.generateAttack(new Fight(true, everything_heavy, List.of(), 5,
                         IN_PROGRESS, available, new AvailableActions(0, 1, 30))));
     }
