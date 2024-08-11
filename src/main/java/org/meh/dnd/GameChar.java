@@ -1,6 +1,7 @@
 package org.meh.dnd;
 
 import java.util.List;
+import java.util.Objects;
 
 public record GameChar(
         String name,
@@ -18,7 +19,7 @@ public record GameChar(
 )
 {
     public GameChar {
-        if (name == null) throw new IllegalArgumentException("name");
+        Objects.requireNonNull(name, "name");
     }
 
     public GameChar damage(int damage) {
