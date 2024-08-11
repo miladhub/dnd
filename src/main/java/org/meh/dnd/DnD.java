@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.meh.dnd.AvailableActionType.*;
-import static org.meh.dnd.FightStatus.*;
+import static org.meh.dnd.FightOutcome.*;
 import static org.meh.dnd.GameMode.*;
 import static org.meh.dnd.GameMode.EXPLORING;
 
@@ -25,54 +25,56 @@ public record DnD(
     ) {
         PlayerInput input = new PlayerInput(action);
         Game game = gameRepository.gameById(gameId).orElseThrow();
-        if (action instanceof Start) {
-            gameRepository.save(gameId, g -> g.withPlayerChar(
-                    g.playerChar().withHp(g.playerChar().maxHp())));
-            dmChannel.post(gameId, input);
-        }
-        else if (action instanceof Explore e) {
-            gameRepository.save(gameId, g -> g
-                    .withMode(EXPLORING)
-                    .withPlace(e.place()));
-            dmChannel.post(gameId, input);
-        }
-        else if (action instanceof Attack attack) {
-            Fight fight = combat.generateFight(game.playerChar(), attack.target());
-            CombatOutput output = new CombatOutput(
-                    fight.playerTurn(),
-                    fight.playerActions(),
-                    fight.opponentActions(),
-                    fight.opponent(),
-                    List.of(),
-                    false, false, fight.distance(),
-                    computeActions(game.playerChar(), fight.playerActions(), fight.distance()));
-            gameRepository.save(gameId, g -> g
-                    .withMode(COMBAT)
-                    .withFightStatus(fight)
-                    .withLastOutput(output));
-            playersChannel.post(gameId, output);
-            if (!fight.playerTurn())
-                playEnemyCombatTurn(gameId);
-        }
-        else if (action instanceof Rest) {
-            gameRepository.save(gameId, g -> g
-                    .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
-                    .withMode(RESTING)
-                    .withLastOutput(new RestOutput())
-                    .withDialogueTarget(new Nobody()));
-            playersChannel.post(gameId, new RestOutput());
-        }
-        else if (action instanceof Dialogue d) {
-            gameRepository.save(gameId, g -> g
-                    .withMode(DIALOGUE)
-                    .withDialogueTarget(new Somebody(d.target()))
-            );
-            dmChannel.post(gameId, input);
-        } else if (action instanceof Say) {
-            gameRepository.save(gameId, g -> g.withMode(DIALOGUE));
-            dmChannel.post(gameId, input);
-        } else {
-            if (action instanceof EndDialogue) {
+        switch (action) {
+            case Start ignored -> {
+                gameRepository.save(gameId, g -> g.withPlayerChar(
+                        g.playerChar().withHp(g.playerChar().maxHp())));
+                dmChannel.post(gameId, input);
+            }
+            case Explore e -> {
+                gameRepository.save(gameId, g -> g
+                        .withMode(EXPLORING)
+                        .withPlace(e.place()));
+                dmChannel.post(gameId, input);
+            }
+            case Attack attack -> {
+                Fight fight = combat.generateFight(game.playerChar(), attack.target());
+                CombatOutput output = new CombatOutput(
+                        fight.playerTurn(),
+                        fight.playerActions(),
+                        fight.opponentActions(),
+                        fight.opponent(),
+                        List.of(),
+                        false, false, fight.distance(),
+                        computeActions(game.playerChar(), fight.playerActions(), fight.distance()));
+                gameRepository.save(gameId, g -> g
+                        .withMode(COMBAT)
+                        .withFightStatus(fight)
+                        .withLastOutput(output));
+                playersChannel.post(gameId, output);
+                if (!fight.playerTurn())
+                    playEnemyCombatTurn(gameId);
+            }
+            case Rest ignored -> {
+                gameRepository.save(gameId, g -> g
+                        .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
+                        .withMode(RESTING)
+                        .withLastOutput(new RestOutput())
+                        .withDialogueTarget(new Nobody()));
+                playersChannel.post(gameId, new RestOutput());
+            }
+            case Dialogue d -> {
+                gameRepository.save(gameId, g -> g
+                        .withMode(DIALOGUE)
+                        .withDialogueTarget(new Somebody(d.target()))
+                );
+                dmChannel.post(gameId, input);
+            }
+            case Say ignored -> {
+                gameRepository.save(gameId, g -> g.withMode(DIALOGUE));
+                dmChannel.post(gameId, input);
+            }
+            case EndDialogue ignored -> {
                 gameRepository.save(gameId, g -> g
                         .withMode(EXPLORING)
                         .withDialogueTarget(new Nobody())
@@ -153,9 +155,7 @@ public record DnD(
                     fight.playerActions(),
                     fight.opponent().availableActions()
             );
-            gameRepository.save(gameId, g -> g
-                    .withFightStatus(newFight)
-            );
+            gameRepository.save(gameId, g -> g.withFightStatus(newFight));
             notifyPlayers(game, newFight);
             playEnemyCombatTurn(gameId);
         }
@@ -279,7 +279,7 @@ public record DnD(
     private void playEnemyCombatTurn(String gameId) {
         Game game = gameRepository.gameById(gameId).orElseThrow();
         Fight fight = (Fight) game.combatStatus();
-        while (fight.outcome() == FightStatus.IN_PROGRESS &&
+        while (fight.outcome() == FightOutcome.IN_PROGRESS &&
                 fight.opponentActions().hasActionsLeft() &&
                 !fight.playerTurn()
         ) {

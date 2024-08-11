@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.Random;
 
 import static org.meh.dnd.CharClass.*;
-import static org.meh.dnd.FightStatus.IN_PROGRESS;
+import static org.meh.dnd.FightOutcome.IN_PROGRESS;
 
 public class DndCombat implements Combat
 {
@@ -192,12 +192,12 @@ public class DndCombat implements Combat
             GameChar defender
     ) {
         int maxDmg = switch (attack) {
-            case WeaponAttack m -> WEAPONS.stream()
-                    .filter(w -> w.name().equals(m.weapon()))
+            case WeaponAttack wa -> WEAPONS.stream()
+                    .filter(w -> w.name().equals(wa.weapon()))
                     .map(Weapon::damage)
                     .findFirst().orElseThrow();
-            case SpellAttack ss -> SPELLS.stream()
-                    .filter(s -> s.name().equals(ss.spell()))
+            case SpellAttack sa -> SPELLS.stream()
+                    .filter(s -> s.name().equals(sa.spell()))
                     .map(Spell::damage)
                     .findFirst().orElseThrow();
         };

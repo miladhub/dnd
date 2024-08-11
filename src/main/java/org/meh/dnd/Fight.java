@@ -7,13 +7,7 @@ public record Fight(
         GameChar opponent,
         List<String> log,
         int distance,
-        FightStatus outcome,
+        FightOutcome outcome,
         AvailableActions playerActions,
         AvailableActions opponentActions
-)
-        implements CombatStatus
-{
-    public Fight withOpponentActions(AvailableActions opponentActions) {
-        return new Fight(playerTurn, opponent, log, distance, outcome, playerActions, opponentActions);
-    }
-}
+) implements CombatStatus {}

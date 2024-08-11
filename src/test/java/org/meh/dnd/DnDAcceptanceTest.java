@@ -16,7 +16,7 @@ import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.DndCombat.*;
 import static org.meh.dnd.DndCombat.DAGGER;
 import static org.meh.dnd.DndCombat.STATS_FIGHTER;
-import static org.meh.dnd.FightStatus.*;
+import static org.meh.dnd.FightOutcome.*;
 import static org.meh.dnd.GameMode.*;
 
 class DnDAcceptanceTest
