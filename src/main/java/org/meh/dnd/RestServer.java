@@ -31,9 +31,9 @@ public class RestServer
 
     @PostConstruct
     public void initialize() {
-        dmChannel.subscribe("42", pi -> {
+        dmChannel.subscribe(pi -> {
             try {
-                dm.process("42", pi);
+                dm.process(pi);
             } catch (Exception e) {
                 LOG.error(e);
             }
@@ -41,10 +41,9 @@ public class RestServer
     }
 
     @POST
-    @Path("/character/{gameId}")
+    @Path("/character")
     @Produces(MediaType.TEXT_HTML)
     public Response createCharacter(
-            @PathParam("gameId") String gameId,
             @FormParam("name") String name,
             @FormParam("class") String clazz,
             @FormParam("level") int level,
@@ -92,7 +91,6 @@ public class RestServer
                 new AvailableActions(actions, bonusActions, speed)
         );
         Game game = new Game(
-                gameId,
                 EXPLORING,
                 List.of(new ExploreOutput(
                         place,
@@ -119,50 +117,44 @@ public class RestServer
     }
 
     @GET
-    @Path("/game/{gameId}")
+    @Path("/game")
     @Produces(MediaType.TEXT_HTML)
-    public Response enter(
-            @PathParam("gameId") String gameId
-    ) {
-        return dnd.enter(gameId)
-                .map(o -> toHtml(gameId, o))
+    public Response enter() {
+        return dnd.enter()
+                .map(this::toHtml)
                 .map(Response::ok)
                 .orElse(Response.seeOther(URI.create("/create.html")))
                 .build();
     }
 
     @POST
-    @Path("/updates/{gameId}")
+    @Path("/actions")
     public void doAction(
-            @PathParam("gameId") String gameId,
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        dnd.doAction(gameId, ActionParser.actionFrom(action, info));
+        dnd.doAction(ActionParser.actionFrom(action, info));
     }
 
     @POST
-    @Path("/combat/{gameId}")
+    @Path("/combat")
     public void combat(
-            @PathParam("gameId") String gameId,
             @FormParam("action") String action,
             @FormParam("info") String info,
             @FormParam("bonus") boolean bonusAction
     ) {
         CombatActions combatAction = ActionParser.combatActionFrom(action, info);
-        dnd.playCombatAction(gameId, combatAction, bonusAction);
+        dnd.playCombatAction(combatAction, bonusAction);
     }
 
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    @Path("/updates/{gameId}")
+    @Path("/updates")
     @RestStreamElementType("text/html")
-    public Multi<String> updatesStream(
-            @PathParam("gameId") String gameId) {
+    public Multi<String> updatesStream() {
         return Multi.createFrom().<String>emitter(
                         me -> playersChannel.subscribe(
-                                gameId,
-                                po -> me.emit(toHtml(gameId, po))))
+                                po -> me.emit(toHtml(po))))
                 .onItem().call(i ->
                         // Delay the emission until the returned uni emits its item
                         Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
@@ -171,10 +163,9 @@ public class RestServer
     }
 
     private String toHtml(
-            String gameId,
             PlayerOutput output
     ) {
-        Game game = gameRepository.gameById(gameId).orElseThrow();
+        Game game = gameRepository.game().orElseThrow();
         GameChar pc = game.playerChar();
         return switch (output) {
             case DialogueOutput d -> Templates.template(new GameView(

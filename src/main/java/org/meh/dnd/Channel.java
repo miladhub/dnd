@@ -4,6 +4,6 @@ import java.util.function.Consumer;
 
 public interface Channel<T>
 {
-    void subscribe(String topic, Consumer<T> consumer);
-    void post(String topic, T message);
+    void subscribe(Consumer<T> consumer);
+    void post(T message);
 }

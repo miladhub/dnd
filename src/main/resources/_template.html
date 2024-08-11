@@ -1,4 +1,4 @@
-<div id="game" hx-ext="sse" sse-connect="/updates/42" sse-swap="message"
+<div id="game" hx-ext="sse" sse-connect="/updates" sse-swap="message"
      class="container mx-auto px-4 max-w-2xl">
 
     <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
@@ -9,7 +9,7 @@
 
     <section class="space-y-4">
     {{#choices}}
-    <form hx-post="/updates/42" hx-swap="none"
+    <form hx-post="/actions" hx-swap="none"
           class="bg-blue-600 p-4 rounded-lg shadow-lg hover:bg-blue-700">
         <label for="action-{{name}}" hidden="hidden">{{name}}</label>
         <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">

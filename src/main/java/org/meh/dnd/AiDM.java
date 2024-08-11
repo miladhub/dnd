@@ -130,10 +130,9 @@ public record AiDM(DMChannel dmChannel,
 
     @Override
     public void process(
-            String gameId,
             PlayerInput input
     ) throws Exception {
-        Game game = gameRepository.gameById(gameId).orElseThrow();
+        Game game = gameRepository.game().orElseThrow();
         if (input.action() instanceof Start) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
@@ -148,8 +147,8 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
-            gameRepository.save(gameId, g -> g.withLastOutput(output));
-            playersChannel.post(gameId, output);
+            gameRepository.save(g -> g.withLastOutput(output));
+            playersChannel.post(output);
         }
         if (input.action() instanceof Explore e) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
@@ -167,8 +166,8 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
-            gameRepository.save(gameId, g -> g.withLastOutput(output));
-            playersChannel.post(gameId, output);
+            gameRepository.save(g -> g.withLastOutput(output));
+            playersChannel.post(output);
         }
         if (input.action() instanceof Dialogue d) {
             String prompt = String.format(game.background() + """
@@ -185,11 +184,11 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content, d.target());
-            gameRepository.save(gameId, g -> g
+            gameRepository.save(g -> g
                     .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
                     .withLastOutput(output)
             );
-            playersChannel.post(gameId, output);
+            playersChannel.post(output);
         }
         if (input.action() instanceof Say s) {
             String prompt = String.format(game.background() + """
@@ -201,7 +200,7 @@ public record AiDM(DMChannel dmChannel,
             List<OpenAiRequestMessage> messages = new ArrayList<>(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT)
             ));
-            messages.addAll(gameRepository.gameById(gameId).orElseThrow().chat().messages().stream()
+            messages.addAll(gameRepository.game().orElseThrow().chat().messages().stream()
                     .map(m -> new OpenAiRequestMessage(
                             switch (m.role()) {
                                 case DM -> Role.assistant;
@@ -217,12 +216,12 @@ public record AiDM(DMChannel dmChannel,
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output = parseDialogueOutput(content,
                     ((Somebody) game.dialogueTarget()).who());
-            gameRepository.save(gameId, g -> g
+            gameRepository.save(g -> g
                     .withChat(g.chat().add(
                             new ChatMessage(ChatRole.PLAYER, s.what()),
                             new ChatMessage(ChatRole.DM, output.phrase())))
             );
-            playersChannel.post(gameId, output);
+            playersChannel.post(output);
         }
         if (input.action() instanceof EndDialogue) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
@@ -238,11 +237,11 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
-            gameRepository.save(gameId, g -> g
+            gameRepository.save(g -> g
                     .withChat(new Chat(List.of()))
                     .withLastOutput(output)
             );
-            playersChannel.post(gameId, output);
+            playersChannel.post(output);
         }
     }
 

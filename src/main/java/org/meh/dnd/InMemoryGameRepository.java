@@ -1,30 +1,27 @@
 package org.meh.dnd;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class InMemoryGameRepository
     implements GameRepository
 {
-    private final Map<String, Game> games = new ConcurrentHashMap<>();
+    private Game game = null;
 
     @Override
-    public Optional<Game> gameById(String gameId) {
-        return Optional.ofNullable(games.get(gameId));
+    public Optional<Game> game() {
+        return Optional.ofNullable(game);
     }
 
     @Override
     public void save(Game game) {
-        games.put(game.id(), game);
+        this.game = game;
     }
 
     @Override
     public void save(
-            String gameId,
             Function<Game, Game> mutator
     ) {
-        gameById(gameId).ifPresent(g -> save(mutator.apply(g)));
+        game().ifPresent(g -> save(mutator.apply(g)));
     }
 }

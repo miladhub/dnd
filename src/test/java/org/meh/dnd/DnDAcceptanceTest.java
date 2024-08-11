@@ -19,7 +19,6 @@ import static org.meh.dnd.GameMode.*;
 
 class DnDAcceptanceTest
 {
-    private static final String GAME_ID = "42";
     private static final Weapon SWORD = DndCombat.SWORD;
     private static final List<AvailableAction> AVAILABLE_ACTIONS = List.of(
             new AvailableAction(WEAPON, "sword", false),
@@ -72,13 +71,13 @@ class DnDAcceptanceTest
 
     @BeforeEach
     void setUp() {
-        playersChannel.subscribe(GAME_ID, playerOutputs::add);
+        playersChannel.subscribe(playerOutputs::add);
     }
 
     @Test
     void player_sees_last_output_when_entering() {
         startWith(exploring, new Peace(), EXPLORING, foo);
-        Optional<PlayerOutput> output = dnd.enter(GAME_ID);
+        Optional<PlayerOutput> output = dnd.enter();
         assertEquals(Optional.of(exploring), output);
     }
 
@@ -87,26 +86,26 @@ class DnDAcceptanceTest
         startWith(exploring, new Peace(), EXPLORING, foo);
 
         dmOutcome(seeGoblin);
-        dnd.doAction(GAME_ID, new Explore("Dark Forest"));
+        dnd.doAction(new Explore("Dark Forest"));
 
         assertThat(playerOutputs, contains(seeGoblin));
 
         assertEquals(
                 Optional.of(EXPLORING),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
     void explore_then_rest() {
         startWith(exploring, new Peace(), EXPLORING, foo);
 
-        dnd.doAction(GAME_ID, new Rest());
+        dnd.doAction(new Rest());
 
         assertThat(playerOutputs, contains(rest));
 
         assertEquals(
                 Optional.of(RESTING),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -114,13 +113,13 @@ class DnDAcceptanceTest
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(speakWithGoblin);
 
-        dnd.doAction(GAME_ID, new Dialogue("goblin"));
+        dnd.doAction(new Dialogue("goblin"));
 
         assertThat(playerOutputs, contains(speakWithGoblin));
 
         assertEquals(
                 Optional.of(DIALOGUE),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -128,13 +127,13 @@ class DnDAcceptanceTest
         startWith(speakWithGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(answerByGoblin);
 
-        dnd.doAction(GAME_ID, new Say("goblin"));
+        dnd.doAction(new Say("goblin"));
 
         assertThat(playerOutputs, contains(answerByGoblin));
 
         assertEquals(
                 Optional.of(DIALOGUE),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -142,20 +141,20 @@ class DnDAcceptanceTest
         startWith(answerByGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(exploring);
 
-        dnd.doAction(GAME_ID, new EndDialogue());
+        dnd.doAction(new EndDialogue());
 
         assertThat(playerOutputs, contains(exploring));
 
         assertEquals(
                 Optional.of(EXPLORING),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
     void explore_attack_player_first() {
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
 
-        dnd.doAction(GAME_ID, new Attack("goblin"));
+        dnd.doAction(new Attack("goblin"));
 
         assertTrue(playerOutputs.stream().anyMatch(o ->
                 o instanceof CombatOutput c &&
@@ -168,7 +167,7 @@ class DnDAcceptanceTest
         assertEquals(STANDARD_ACTIONS, fight.opponentActions());
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -178,7 +177,7 @@ class DnDAcceptanceTest
 
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
 
-        dnd.doAction(GAME_ID, new Attack("goblin"));
+        dnd.doAction(new Attack("goblin"));
 
         assertTrue(playerOutputs.stream().anyMatch(o ->
                 o instanceof CombatOutput c &&
@@ -192,7 +191,7 @@ class DnDAcceptanceTest
         assertEquals(new AvailableActions(0, 1, 30), fight.opponentActions());
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -202,9 +201,9 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new WeaponAttack("sword"), false);
-        dnd.playCombatAction(GAME_ID, new WeaponAttack("dagger"), true);
-        dnd.playCombatAction(GAME_ID, new Move(Dir.AWAY_FROM_ENEMY, 5), false);
+        dnd.playCombatAction(new WeaponAttack("sword"), false);
+        dnd.playCombatAction(new WeaponAttack("dagger"), true);
+        dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -237,7 +236,7 @@ class DnDAcceptanceTest
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -246,7 +245,7 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS), COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new WeaponAttack("sword"), false);
+        dnd.playCombatAction(new WeaponAttack("sword"), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -275,7 +274,7 @@ class DnDAcceptanceTest
         );
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -284,10 +283,10 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS), COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new SpellAttack(MAGIC_MISSILE.name()), false);
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(DAGGER.name()), true);
-        dnd.playCombatAction(GAME_ID, new Move(Dir.AWAY_FROM_ENEMY, 5), false);
-        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
+        dnd.playCombatAction(new WeaponAttack(DAGGER.name()), true);
+        dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
+        dnd.playCombatAction(new EndTurn(), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -313,7 +312,7 @@ class DnDAcceptanceTest
                 game().combatStatus());
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -323,7 +322,7 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new SpellAttack(MAGIC_MISSILE.name()), false);
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -351,7 +350,7 @@ class DnDAcceptanceTest
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -360,7 +359,7 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS), COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new Move(Dir.TOWARDS_ENEMY, 5), false);
+        dnd.playCombatAction(new Move(Dir.TOWARDS_ENEMY, 5), false);
 
         assertEquals(
                 new Fight(true, goblin, List.of("Foo: move 5 feet towards " +
@@ -376,7 +375,7 @@ class DnDAcceptanceTest
                         false, false, 5, AVAILABLE_ACTIONS)));
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -388,7 +387,7 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
+        dnd.playCombatAction(new EndTurn(), false);
 
         assertEquals(
                 new Fight(true, goblin,
@@ -407,7 +406,7 @@ class DnDAcceptanceTest
                         false, false, 5, AVAILABLE_ACTIONS)));
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -417,7 +416,7 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
 
         GameChar damaged =
                 new GameChar("goblin",
@@ -444,7 +443,7 @@ class DnDAcceptanceTest
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(COMBAT),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -454,10 +453,10 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(GAME_ID, new WeaponAttack(SWORD.name()), true);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
 
         GameChar killed =
                 new GameChar("goblin", 3,
@@ -488,7 +487,7 @@ class DnDAcceptanceTest
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
                 Optional.of(EXPLORING),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -507,7 +506,7 @@ class DnDAcceptanceTest
                         new AvailableActions(4, 1, 30)),
                 COMBAT, foo);
 
-        dnd.playCombatAction(GAME_ID, new EndTurn(), false);
+        dnd.playCombatAction(new EndTurn(), false);
 
         assertEquals(
                 new Fight(false, goblin,
@@ -532,7 +531,7 @@ class DnDAcceptanceTest
                         false, true, 5, AVAILABLE_ACTIONS)));
         assertEquals(
                 Optional.of(EXPLORING),
-                gameRepository.gameById(GAME_ID).map(Game::mode));
+                gameRepository.game().map(Game::mode));
     }
 
     @Test
@@ -542,22 +541,22 @@ class DnDAcceptanceTest
                 1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
                 List.of(), STANDARD_ACTIONS));
 
-        dnd.doAction(GAME_ID, new Rest());
+        dnd.doAction(new Rest());
 
         assertEquals(
                 10,
-                gameRepository.gameById(GAME_ID).orElseThrow().playerChar().hp()
+                gameRepository.game().orElseThrow().playerChar().hp()
         );
     }
 
     private void dmOutcome(
             PlayerOutput output
     ) {
-        dmChannel.subscribe(GAME_ID, pi -> playersChannel.post(GAME_ID, output));
+        dmChannel.subscribe(pi -> playersChannel.post(output));
     }
 
     private Game game() {
-        return gameRepository.gameById(GAME_ID).orElseThrow();
+        return gameRepository.game().orElseThrow();
     }
 
     private void startWith(
@@ -567,7 +566,6 @@ class DnDAcceptanceTest
             GameChar playerChar
     ) {
         Game game = new Game(
-                GAME_ID,
                 gameMode,
                 List.of(lastOutput),
                 playerChar,

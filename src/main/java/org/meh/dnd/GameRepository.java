@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 public interface GameRepository
 {
-    Optional<Game> gameById(String gameId);
+    Optional<Game> game();
     void save(Game game);
-    void save(String gameId, Function<Game, Game> mutator);
+    void save(Function<Game, Game> mutator);
 }

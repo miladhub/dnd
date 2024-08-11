@@ -1,5 +1,5 @@
 <!--suppress ALL -->
-<div id="game" hx-ext="sse" sse-connect="/updates/42" sse-swap="message"
+<div id="game" hx-ext="sse" sse-connect="/updates" sse-swap="message"
      class="container mx-auto px-4 max-w-2xl">
 
 <!-- Status -->
@@ -105,7 +105,7 @@
     {{^fightOver}}
     {{#actions}}
     {{^bonusAction}}
-    <form hx-post="/combat/42" hx-swap="none"
+    <form hx-post="/combat" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
         <input name="action" type="text" hidden="hidden" value="{{name}}">
         <input name="info" type="text" hidden="hidden" value="{{info}}">
@@ -113,7 +113,7 @@
     </form>
     {{/bonusAction}}
     {{#bonusAction}}
-    <form hx-post="/combat/42" hx-swap="none"
+    <form hx-post="/combat" hx-swap="none"
           class="bg-orange-600 p-4 rounded-lg shadow-lg hover:bg-orange-700">
         <input name="action" type="text" hidden="hidden" value="{{name}}">
         <input name="info" type="text" hidden="hidden" value="{{info}}">
@@ -125,7 +125,7 @@
     {{/fightOver}}
     {{#fightOver}}
     {{#playerWon}}
-    <form hx-post="/updates/42" hx-swap="none"
+    <form hx-post="/actions" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
         <label for="action-Explore" hidden="hidden"></label>
         <input id="action-Explore" name="action" type="text" hidden="hidden" value="Explore">
@@ -135,7 +135,7 @@
     </form>
     {{/playerWon}}
     {{#enemyWon}}
-    <form hx-post="/updates/42" hx-swap="none"
+    <form hx-post="/actions" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
         <label for="action-Start" hidden="hidden"></label>
         <input id="action-Start" name="action" type="text" hidden="hidden" value="Start">
