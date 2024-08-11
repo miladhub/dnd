@@ -2,7 +2,9 @@ package org.meh.dnd;
 
 public interface Combat
 {
-    Fight generateFight(String opponentName);
+    Fight generateFight(
+            GameChar gameChar,
+            String opponentName);
     GeneratedCombatAction generateAttack(Fight fight);
     AttackResult computeAttack(
             Attacks attack,

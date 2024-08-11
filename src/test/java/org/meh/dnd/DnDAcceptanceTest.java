@@ -587,7 +587,10 @@ class DnDAcceptanceTest
             int damage
     ) implements Combat {
         @Override
-        public Fight generateFight(String opponentName) {
+        public Fight generateFight(
+                GameChar gameChar,
+                String opponentName
+        ) {
             GameChar opponent = new GameChar(
                     opponentName,
                     3,

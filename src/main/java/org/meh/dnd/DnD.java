@@ -37,7 +37,7 @@ public record DnD(
             dmChannel.post(gameId, input);
         }
         else if (action instanceof Attack attack) {
-            Fight fight = combat.generateFight(attack.target());
+            Fight fight = combat.generateFight(game.playerChar(), attack.target());
             CombatOutput output = new CombatOutput(
                     fight.playerTurn(),
                     fight.playerActions(),

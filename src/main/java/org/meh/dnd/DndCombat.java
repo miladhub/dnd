@@ -84,12 +84,14 @@ public class DndCombat implements Combat
     }
 
     @Override
-    public Fight generateFight(String opponentName) {
+    public Fight generateFight(
+            GameChar gameChar,
+            String opponentName) {
         boolean playersTurn = new Random().nextBoolean();
         GameChar opponent = generateOpponent(opponentName);
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,
-                new AvailableActions(1, 1, 30),
-                new AvailableActions(1, 1, 30));
+                gameChar.availableActions(),
+                opponent.availableActions());
     }
 
     @Override
