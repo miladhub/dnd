@@ -165,7 +165,7 @@ public class RestServer
                                 po -> me.emit(toHtml(gameId, po))))
                 .onItem().call(i ->
                         // Delay the emission until the returned uni emits its item
-                        Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofSeconds(1))
+                        Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
                 )
                 .onFailure().retry().withBackOff(Duration.ofMillis(100)).indefinitely();
     }
