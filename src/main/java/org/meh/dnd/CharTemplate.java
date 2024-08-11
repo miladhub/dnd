@@ -9,7 +9,8 @@ public record CharTemplate(
         CharClass charClass,
         Stats stats,
         List<Weapon> weapons,
-        List<Spell> spells
+        List<Spell> spells,
+        AvailableActions availableActions
 )
 {
 }

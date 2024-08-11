@@ -39,6 +39,7 @@ public class ActionParser
             case "Spell" -> new SpellAttack(info);
             case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
             case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
+            case "Stop" -> new StopTurn();
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };

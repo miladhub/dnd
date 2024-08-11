@@ -7,11 +7,12 @@ public record CombatView(
         boolean playerWon,
         boolean enemyWon,
         boolean fightOver,
+        AvailableActions availableActions,
         CharacterView character,
         CharacterView enemy,
-        String lastAction,
+        String combatLog,
         int distance,
-        List<ActionView> actions
+        List<CombatActionView> actions
 )
 {
 }

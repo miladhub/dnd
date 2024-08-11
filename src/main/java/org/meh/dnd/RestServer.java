@@ -1,6 +1,7 @@
 package org.meh.dnd;
 
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,11 +12,10 @@ import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.net.URI;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.meh.dnd.GameMode.COMBAT;
 import static org.meh.dnd.GameMode.EXPLORING;
 
 @Path("/")
@@ -59,7 +59,10 @@ public class RestServer
             @FormParam("wisdom") int wisdom,
             @FormParam("charisma") int charisma,
             @FormParam("background") String background,
-            @FormParam("place") String place
+            @FormParam("place") String place,
+            @FormParam("actions") int actions,
+            @FormParam("bonus_actions") int bonusActions,
+            @FormParam("speed") int speed
     ) {
         CharClass charClass = CharClass.valueOf(clazz.toUpperCase());
         GameChar gameChar = new GameChar(
@@ -86,7 +89,8 @@ public class RestServer
                 switch (charClass) {
                     case FIGHTER -> List.of();
                     case WIZARD -> DndCombat.WIZARD_SPELLS;
-                }
+                },
+                new AvailableActions(actions, bonusActions, speed)
         );
         Game game = new Game(
                 gameId,
@@ -134,19 +138,21 @@ public class RestServer
             @PathParam("gameId") String gameId,
             @FormParam("action") String action,
             @FormParam("info") String info
+    ) {
+        dnd.doAction(gameId, ActionParser.actionFrom(action, info));
+    }
+
+    @POST
+    @Path("/combat/{gameId}")
+    public void combat(
+            @PathParam("gameId") String gameId,
+            @FormParam("action") String action,
+            @FormParam("info") String info,
+            @FormParam("bonus") boolean bonusAction
     )
     throws InterruptedException {
-        if (gameRepository.gameById(gameId).orElseThrow().mode() == COMBAT) {
-            dnd.playCombatTurn(gameId, ActionParser.combatActionFrom(action, info));
-            Game game = gameRepository.gameById(gameId).orElseThrow();
-            Fight fight = (Fight) game.combatStatus();
-            if (fight.outcome() == FightStatus.IN_PROGRESS) {
-                Thread.sleep(Duration.of(1, ChronoUnit.SECONDS));
-                dnd.enemyCombatTurn(gameId, combat.generateAttack(fight));
-            }
-        } else {
-            dnd.doAction(gameId, ActionParser.actionFrom(action, info));
-        }
+        CombatActions combatAction = ActionParser.combatActionFrom(action, info);
+        dnd.playCombatAction(gameId, combatAction, bonusAction);
     }
 
     @GET
@@ -159,6 +165,10 @@ public class RestServer
                         me -> playersChannel.subscribe(
                                 gameId,
                                 po -> me.emit(toHtml(gameId, po))))
+                .onItem().call(i ->
+                        // Delay the emission until the returned uni emits its item
+                        Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofSeconds(1))
+                )
                 .onFailure().retry().withBackOff(Duration.ofMillis(100)).indefinitely();
     }
 
@@ -185,6 +195,7 @@ public class RestServer
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),
+                    co.playerTurn()? co.playerAvailableActions() : co.opponentAvailableActions(),
                     new CharacterView(pc.name(),
                             pc.level(),
                             pc.charClass().toString().toLowerCase(),
@@ -213,24 +224,26 @@ public class RestServer
                             co.opponent().stats().intelligence(),
                             co.opponent().stats().wisdom(),
                             co.opponent().stats().charisma()),
-                    co.lastAction(),
+                    String.join("\n", co.log()).trim(),
                     co.distance(),
-                    Stream.concat(
-                            Stream.concat(
-                            pc.weapons().stream().map(
-                                            w -> new ActionView("Melee",
-                                                    w.name(),
-                                                    "Attack with " + w.name())),
-                            pc.spells().stream().map(
-                                    s -> new ActionView("Spell",
-                                            s.name(),
-                                            "Cast " + s.name()))
-                            ),
-                            Stream.of(new ActionView("MoveForward", "5",
-                                            "Move 5 feet forward"),
-                                    new ActionView("MoveBackward", "5",
-                                            "Move 5 feet backward"))
-                    ).toList()
+                    co.availableActions().stream().flatMap(a -> switch (a.type()) {
+                        case WEAPON -> Stream.of(
+                                new CombatActionView("Melee", a.info(),
+                                        "Attack with " + a.info(), a.bonusAction()));
+                        case SPELL -> Stream.of(
+                                new CombatActionView("Spell", a.info(),
+                                        "Cast " + a.info(), a.bonusAction()));
+                        case MOVE -> Stream.of(
+                                new CombatActionView("MoveForward", a.info(),
+                                        "Move " + a.info() + " feet forward",
+                                        a.bonusAction()),
+                                new CombatActionView("MoveBackward", a.info(),
+                                        "Move " + a.info() + " feet backward",
+                                        a.bonusAction()));
+                        case STOP -> Stream.of(
+                                new CombatActionView("Stop", "", "Stop", false)
+                        );
+                    }).toList()
             ));
         };
     }
