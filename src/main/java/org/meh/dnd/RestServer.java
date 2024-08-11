@@ -148,8 +148,7 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info,
             @FormParam("bonus") boolean bonusAction
-    )
-    throws InterruptedException {
+    ) {
         CombatActions combatAction = ActionParser.combatActionFrom(action, info);
         dnd.playCombatAction(gameId, combatAction, bonusAction);
     }

@@ -6,7 +6,7 @@ import com.github.mustachejava.MustacheFactory;
 
 import java.io.*;
 
-public record Templates()
+public class Templates
 {
     public static String template(GameView view) {
         return render("/_template.html", view);

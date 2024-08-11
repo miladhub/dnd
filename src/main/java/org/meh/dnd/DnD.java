@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.FightOutcome.*;
 import static org.meh.dnd.GameMode.*;
-import static org.meh.dnd.GameMode.EXPLORING;
 
 public record DnD(
             GameRepository gameRepository,

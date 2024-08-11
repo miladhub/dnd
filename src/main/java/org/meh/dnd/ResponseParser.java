@@ -3,7 +3,7 @@ package org.meh.dnd;
 import java.util.Arrays;
 import java.util.List;
 
-public record ResponseParser()
+public class ResponseParser
 {
     public record ParsedResponse(String description, List<NPC> npcs, List<Place> places) {}
     public record NPC(String name, Race race, boolean hostile) {}
