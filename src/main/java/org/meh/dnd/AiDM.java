@@ -269,6 +269,7 @@ public record AiDM(DMChannel dmChannel,
                     .map(npc -> new Attack(npc.name(), npc.type()))
                     .toList());
             actions.addAll(parsed.npcs().stream()
+                    .filter(npc -> npc.type() != NpcType.BEAST)
                     .map(npc -> new Dialogue(npc.name(), npc.type()))
                     .toList());
             actions.addAll(parsed.places().stream()

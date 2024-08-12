@@ -71,7 +71,6 @@ class AiDMTest
                         new Dialogue("Villager", NpcType.MAGIC),
                         new Dialogue("Bandit", NpcType.WARRIOR),
                         new Dialogue("Herbalist", NpcType.MAGIC),
-                        new Dialogue("Dire Wolf", NpcType.BEAST),
                         new Explore("Village Square"),
                         new Explore("Herbalist's Hut"),
                         new Explore("Darkwood Forest"),
