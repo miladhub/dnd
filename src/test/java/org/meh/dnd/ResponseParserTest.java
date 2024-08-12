@@ -29,7 +29,13 @@ class ResponseParserTest
                 * Village Square
                 * Herbalist's Hut
                 * Darkwood Forest
-                * Abandoned Bandit Camp""";
+                * Abandoned Bandit Camp
+                
+                <new line>
+                *** STORYLINE ***
+                <new line>
+                
+                Something happened.""";
 
         ParsedResponse parsedResponse = new ParsedResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
@@ -44,7 +50,8 @@ class ResponseParserTest
                         new Place("Herbalist's Hut"),
                         new Place("Darkwood Forest"),
                         new Place("Abandoned Bandit Camp")
-                )
+                ),
+                "Something happened."
         );
         assertEquals(parsedResponse, parseExploreResponse(response));
     }
@@ -65,6 +72,12 @@ class ResponseParserTest
                 <new line>
                 *** PLACES ***
                 <new line>
+                
+                <new line>
+                *** STORYLINE ***
+                <new line>
+                
+                Something happened.
                 """;
 
         ParsedResponse parsedResponse = new ParsedResponse(
@@ -75,8 +88,8 @@ class ResponseParserTest
                         new NPC("Herbalist", NpcType.MAGIC, false),
                         new NPC("Dire Wolf", NpcType.BEAST, true)
                 ),
-                List.of(
-                )
+                List.of(),
+                "Something happened."
         );
         assertEquals(parsedResponse, parseExploreResponse(response));
     }
@@ -96,7 +109,14 @@ class ResponseParserTest
                 * Village Square
                 * Herbalist's Hut
                 * Darkwood Forest
-                * Abandoned Bandit Camp""";
+                * Abandoned Bandit Camp
+                
+                <new line>
+                *** STORYLINE ***
+                <new line>
+                
+                Something happened.
+                """;
 
         ParsedResponse parsedResponse = new ParsedResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
@@ -107,7 +127,8 @@ class ResponseParserTest
                         new Place("Herbalist's Hut"),
                         new Place("Darkwood Forest"),
                         new Place("Abandoned Bandit Camp")
-                )
+                ),
+                "Something happened."
         );
         assertEquals(parsedResponse, parseExploreResponse(response));
     }

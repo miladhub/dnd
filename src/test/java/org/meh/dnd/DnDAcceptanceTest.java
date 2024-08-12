@@ -34,12 +34,15 @@ class DnDAcceptanceTest
     private final PlayerOutput exploring = new ExploreOutput(
             "Dark Forest",
             "You are exploring the Dark Forest, what do you do?",
-            List.of(new Explore("Dark Forest"), new Rest()));
+            List.of(new Explore("Dark Forest"), new Rest()),
+            "Something happened");
     private final List<PlayerOutput> playerOutputs = new ArrayList<>();
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "Dark Forest",
             "You see a goblin, what do you do?",
-            List.of(new Attack("goblin", NpcType.WARRIOR), new Dialogue("goblin", NpcType.WARRIOR)));
+            List.of(new Attack("goblin", NpcType.WARRIOR), new Dialogue(
+                    "goblin", NpcType.WARRIOR)),
+            "Something happened");
     private final GameChar goblin = new GameChar(
             "goblin",
             3,
@@ -573,7 +576,8 @@ class DnDAcceptanceTest
                 new Chat(List.of()),
                 "Once upon a time in the west...",
                 "Dark Forest",
-                new Nobody()
+                new Nobody(),
+                List.of()
         );
         gameRepository.save(game);
     }

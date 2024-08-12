@@ -5,7 +5,8 @@ import java.util.List;
 public record ExploreOutput(
         String place,
         String description,
-        List<Actions> choices
+        List<Actions> choices,
+        String storyLine
 )
         implements PlayerOutput
 {

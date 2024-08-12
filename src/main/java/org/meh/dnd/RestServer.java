@@ -95,13 +95,15 @@ public class RestServer
                 List.of(new ExploreOutput(
                         place,
                         "Ready.",
-                        List.of(new Start(place)))),
+                        List.of(new Start(place)),
+                        "")),
                 gameChar,
                 new Peace(),
                 new Chat(List.of()),
                 background,
                 place,
-                new Nobody()
+                new Nobody(),
+                List.of()
         );
         gameRepository.save(game);
         return Response.ok()

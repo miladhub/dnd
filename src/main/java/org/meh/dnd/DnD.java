@@ -24,8 +24,10 @@ public record DnD(
         Game game = gameRepository.game().orElseThrow();
         switch (action) {
             case Start ignored -> {
-                gameRepository.save(g -> g.withPlayerChar(
-                        g.playerChar().withHp(g.playerChar().maxHp())));
+                gameRepository.save(g -> g
+                        .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
+                        .withDiary(List.of())
+                );
                 dmChannel.post(input);
             }
             case Explore e -> {

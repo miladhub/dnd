@@ -7,6 +7,7 @@ import org.meh.dnd.openai.Role;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.meh.dnd.ResponseParser.*;
 
@@ -25,8 +26,10 @@ public record AiDM(DMChannel dmChannel,
             """;
     private static final String EXPLORE_PROMPT_POSTFIX = """
             Your response must be made of a description,
-            followed by a list of non-playing characters (NPCs) and finally
-            a list of places to explore.
+            followed by a list of non-playing characters (NPCs), and
+            a list of places to explore. Finally, if you deem the description
+            relevant enough in the context of the character's story,
+            add a storyline at the end.
             
             To mark the beginning of the NPCs section, place the following
             text before them:
@@ -57,13 +60,25 @@ public record AiDM(DMChannel dmChannel,
             Present the places with a bullet list, for example:
             * Forest
             * Dungeon
+            
+            To mark the beginning of the storyline, place the following text
+            before it:
+            
+            <new line>
+            *** STORYLINE ***
+            <new line>
+            
+            Present the storyline immediately after, only if noteworthy. It
+            must consist of 10 words at most.
 
             You cannot add anything beyond the format above.
             """;
     private static final String EXPLORE_PROMPT_POSTFIX_NO_COMBAT = """
             Your response must be made of a description,
-            followed by a list of non-playing characters (NPCs) and finally
-            a list of places to explore.
+            followed by a list of non-playing characters (NPCs), and
+            a list of places to explore. Finally, if you deem the description
+            relevant enough in the context of the character's story,
+            add a storyline at the end.
             
             To mark the beginning of the NPCs section, place the following
             text before them:
@@ -93,6 +108,16 @@ public record AiDM(DMChannel dmChannel,
             Present the places with a bullet list, for example:
             * Forest
             * Dungeon
+            
+            To mark the beginning of the storyline, place the following text
+            before it:
+            
+            <new line>
+            *** STORYLINE ***
+            <new line>
+            
+            Present the storyline immediately after, only if noteworthy. It
+            must consist of 10 words at most.
 
             You cannot add anything beyond the format above.
             """;
@@ -125,12 +150,12 @@ public record AiDM(DMChannel dmChannel,
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
                             start.place() != null && !start.place().isBlank()
-                                ? game.background() + String.format("""
+                                ? context(game) + String.format("""
                                 
                                 Let's begin. The characters are currently exploring %s, what happens?
                                 
                                 """, start.place()) + getExplorePromptPostfix(game)
-                                : game.background() + """
+                                : context(game) + """
                                 
                                 Let's begin, what happens?
                                 
@@ -140,14 +165,16 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
-            gameRepository.save(g -> g.withLastOutput(output));
+            gameRepository.save(g -> g
+                    .withLastOutput(output)
+                    .withStoryLine(output.storyLine()));
             playersChannel.post(output);
         }
         if (input.action() instanceof Explore e) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
-                            String.format(game.background() +
+                            String.format(context(game) +
                                     """
                                     
                                     The characters are currently exploring %s, what happens?
@@ -159,11 +186,13 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
-            gameRepository.save(g -> g.withLastOutput(output));
+            gameRepository.save(g -> g
+                    .withLastOutput(output)
+                    .withStoryLine(output.storyLine()));
             playersChannel.post(output);
         }
         if (input.action() instanceof Dialogue d) {
-            String prompt = String.format(game.background() + """
+            String prompt = String.format(context(game) + """
                     
                     The characters choose to speak to '%s', what does '%s' say to start the dialogue?
                     
@@ -185,7 +214,7 @@ public record AiDM(DMChannel dmChannel,
             playersChannel.post(output);
         }
         if (input.action() instanceof Say s) {
-            String prompt = String.format(game.background() + """
+            String prompt = String.format(context(game) + """
                     
                     The characters say '%s', what's the answer?
                     
@@ -222,7 +251,7 @@ public record AiDM(DMChannel dmChannel,
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
-                            game.background() + """
+                            context(game) + chat(game) + """
                             
                             The characters are currently exploring, what happens?
                             
@@ -235,9 +264,31 @@ public record AiDM(DMChannel dmChannel,
             gameRepository.save(g -> g
                     .withChat(new Chat(List.of()))
                     .withLastOutput(output)
+                    .withStoryLine(output.storyLine())
             );
             playersChannel.post(output);
         }
+    }
+
+    private static String context(Game game) {
+        return game.background() + describeDiary(game);
+    }
+
+    private static String describeDiary(Game game) {
+        return game.diary().isEmpty()
+                ? ""
+                : "\n\nHere's a list of noteworthy events happened so far:\n" +
+                game.diary().stream()
+                        .map(d -> "* " + d)
+                        .collect(Collectors.joining("\n"));
+    }
+
+    private static String chat(Game game) {
+        return "\n\nHere's how the dialogue went, see if you find anything" +
+                " useful for the story line:\n" +
+                game.chat().messages().stream()
+                        .map(d -> "* " + d.message())
+                        .collect(Collectors.joining("\n"));
     }
 
     private static String getExplorePromptPostfix(Game game) {
@@ -269,7 +320,8 @@ public record AiDM(DMChannel dmChannel,
                             .filter(NPC::hostile)
                             .map(npc -> new Attack(npc.name(), npc.type()))
                             .map(a -> (Actions) a)
-                            .toList()
+                            .toList(),
+                    parsed.storyLine()
             );
         } else {
             List<Actions> actions = new ArrayList<>();
@@ -287,7 +339,8 @@ public record AiDM(DMChannel dmChannel,
             return new ExploreOutput(
                     place,
                     parsed.description(),
-                    actions
+                    actions,
+                    parsed.storyLine()
             );
         }
     }

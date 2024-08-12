@@ -14,15 +14,22 @@ public class ActionParser
             case "Attack" -> parseAttack(info);
             case "Dialogue" -> parseDialogue(info);
             case "Rest" -> new Rest();
-            case "Explore" -> new Explore(info);
+            case "Explore" -> new Explore(parsePlace(info, game));
             case "Say" -> new Say(cleanString(info));
             case "EndDialogue" -> new EndDialogue();
-            case "Start" -> new Start(info != null && !info.isBlank()
-                    ? info
-                    : game.place());
+            case "Start" -> new Start(parsePlace(info, game));
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
+    }
+
+    private static String parsePlace(
+            String info,
+            Game game
+    ) {
+        return info != null && !info.isBlank()
+                ? info
+                : game.place();
     }
 
     private static Dialogue parseDialogue(String info) {

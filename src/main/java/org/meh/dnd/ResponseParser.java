@@ -8,7 +8,7 @@ import static org.meh.dnd.ActionParser.cleanString;
 
 public class ResponseParser
 {
-    public record ParsedResponse(String description, List<NPC> npcs, List<Place> places) {}
+    public record ParsedResponse(String description, List<NPC> npcs, List<Place> places, String storyLine) {}
 
     public record NPC(String name, NpcType type, boolean hostile) {}
     public record Place(String name) {}
@@ -19,7 +19,11 @@ public class ResponseParser
         String[] npcsPlaces = descrTail[1]
                 .split("\\Q*** PLACES ***\\E");
         String npcsText = npcsPlaces[0];
-        String placesText = npcsPlaces[1];
+        String placesTextTail = npcsPlaces[1];
+        String[] placesStoryLine = placesTextTail
+                .split("\\Q*** STORYLINE ***\\E");
+        String placesText = placesStoryLine[0];
+        String storyLine = placesStoryLine[1].replaceAll("\n", "").trim();
         String description = descrTail[0].trim();
         List<NPC> npcs = Arrays.stream(npcsText.split("\n"))
                 .filter(l -> !l.isBlank())
@@ -34,7 +38,8 @@ public class ResponseParser
         return new ParsedResponse(
                 description,
                 npcs,
-                places
+                places,
+                storyLine
         );
     }
 
