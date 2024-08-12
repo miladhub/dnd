@@ -41,6 +41,7 @@ public record AiDM(DMChannel dmChannel,
             where
             - <friendliness> can either be 'hostile' or 'friendly'
             - <type> can be either 'warrior' or 'magic' or 'beast'
+            - <name> is the name of the NPC, nothing more (no description here)
             
             Present the NPCs with a bullet list, for example:
             * hostile beast Wolf
@@ -76,6 +77,7 @@ public record AiDM(DMChannel dmChannel,
             
             where
             - <type> can be either 'warrior' or 'magic' or 'beast'
+            - <name> is the name of the NPC, nothing more (no description here)
             
             Present the NPCs with a bullet list, for example:
             * friendly beast Owl
