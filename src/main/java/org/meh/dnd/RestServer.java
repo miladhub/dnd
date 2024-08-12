@@ -243,7 +243,8 @@ public class RestServer
                     attack.type() + "_" + attack.target(),
                     "Attack " + attack.target());
             case Rest ignored -> new ActionView("Rest", "", "Rest");
-            case Dialogue d -> new ActionView("Dialogue", d.target(),
+            case Dialogue d -> new ActionView("Dialogue",
+                    d.type() + "_" + d.target(),
                     "Talk to " + d.target());
             case Explore e -> new ActionView("Explore", e.place(),
                     "Explore " + e.place());

@@ -6,7 +6,6 @@ import org.meh.dnd.openai.OpenAiRequestMessage;
 import org.meh.dnd.openai.Role;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.meh.dnd.ResponseParser.*;
@@ -108,24 +107,10 @@ public record AiDM(DMChannel dmChannel,
             *** CHOICES ***
             <new line>
             
-            Each choice must be either of these:
-            - Say:
-                - format: 'Dialogue <target>'
-                - meaning: speak with somebody, e.g., 'Dialogue goblin'; the target match exactly someone that you mention in your description; this is only applicable if the target is not hostile; if there is no target, don't present this option
-            - Attack:
-                - format: 'Attack <target>'
-                - meaning: attack a target; the target must be mentioned in your description; if there is no target, don't present this option
-            - EndDialogue:
-                - format: 'EndDialogue'
-                - meaning: to end the dialogue
-            
-            You cannot add anything beyond the format above.
-            
             Present the choices with a bullet list, for example:
             
-            * Say Hello there!
-            * Attack goblin
-            * EndDialogue
+            * Hello there!
+            * Bye
             """;
 
     @Override
@@ -183,7 +168,8 @@ public record AiDM(DMChannel dmChannel,
                     List.of());
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
-            DialogueOutput output = parseDialogueOutput(content, d.target());
+            DialogueOutput output =
+                    parseDialogueOutput(content, d.target(), d.type());
             gameRepository.save(g -> g
                     .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
                     .withLastOutput(output)
@@ -214,8 +200,9 @@ public record AiDM(DMChannel dmChannel,
                     List.of());
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
-            DialogueOutput output = parseDialogueOutput(content,
-                    ((Somebody) game.dialogueTarget()).who());
+            Somebody somebody = (Somebody) game.dialogueTarget();
+            DialogueOutput output =
+                    parseDialogueOutput(content, somebody.who(), somebody.type());
             gameRepository.save(g -> g
                     .withChat(g.chat().add(
                             new ChatMessage(ChatRole.PLAYER, s.what()),
@@ -282,7 +269,7 @@ public record AiDM(DMChannel dmChannel,
                     .map(npc -> new Attack(npc.name(), npc.type()))
                     .toList());
             actions.addAll(parsed.npcs().stream()
-                    .map(npc -> new Dialogue(npc.name()))
+                    .map(npc -> new Dialogue(npc.name(), npc.type()))
                     .toList());
             actions.addAll(parsed.places().stream()
                     .map(p -> new Explore(p.name()))
@@ -294,26 +281,5 @@ public record AiDM(DMChannel dmChannel,
                     actions
             );
         }
-    }
-
-    static DialogueOutput parseDialogueOutput(
-            String content,
-            String target
-    ) {
-        String[] split = content
-                .replaceAll("\\Q<new line>\\E", "")
-                .split("\\Q*** CHOICES ***\\E");
-        String phrase = split[0];
-        String answersContent = split[1];
-        List<Actions> answers = Arrays.stream(answersContent.split("\n"))
-                .filter(c -> !c.trim().isBlank())
-                .map(c -> c.substring(2).trim())
-                .map(c ->
-                        !c.contains(" ")
-                                ? ActionParser.actionFrom(c, "")
-                                : ActionParser.actionFrom(c.substring(0, c.indexOf(" ")).trim(),
-                                c.substring(c.indexOf(" ")).trim()))
-                .toList();
-        return new DialogueOutput(target, phrase.trim(), answers);
     }
 }

@@ -39,7 +39,7 @@ class DnDAcceptanceTest
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "Dark Forest",
             "You see a goblin, what do you do?",
-            List.of(new Attack("goblin", NpcType.WARRIOR), new Dialogue("goblin")));
+            List.of(new Attack("goblin", NpcType.WARRIOR), new Dialogue("goblin", NpcType.WARRIOR)));
     private final GameChar goblin = new GameChar(
             "goblin",
             3,
@@ -113,7 +113,7 @@ class DnDAcceptanceTest
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(speakWithGoblin);
 
-        dnd.doAction(new Dialogue("goblin"));
+        dnd.doAction(new Dialogue("goblin", NpcType.WARRIOR));
 
         assertThat(playerOutputs, contains(speakWithGoblin));
 

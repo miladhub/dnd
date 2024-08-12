@@ -63,7 +63,7 @@ public record DnD(
             case Dialogue d -> {
                 gameRepository.save(g -> g
                         .withMode(DIALOGUE)
-                        .withDialogueTarget(new Somebody(d.target()))
+                        .withDialogueTarget(new Somebody(d.target(), d.type()))
                 );
                 dmChannel.post(input);
             }

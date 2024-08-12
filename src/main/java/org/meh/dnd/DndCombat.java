@@ -25,7 +25,8 @@ public class DndCombat implements Combat
             SWORD,
             BATTLEAXE,
             UNARMED,
-            DAGGER
+            DAGGER,
+            BOW
     );
     private static final List<Spell> SPELLS = List.of(
             SHOCKING_GRASP,

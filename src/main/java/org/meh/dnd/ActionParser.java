@@ -11,15 +11,21 @@ public class ActionParser
     ) {
         return switch (cleanAction(action)) {
             case "Attack" -> parseAttack(info);
-            case "Dialogue" -> new Dialogue(info);
+            case "Dialogue" -> parseDialogue(info);
             case "Rest" -> new Rest();
             case "Explore" -> new Explore(info);
-            case "Say" -> new Say(cleanSay(info));
+            case "Say" -> new Say(cleanString(info));
             case "EndDialogue" -> new EndDialogue();
             case "Start" -> new Start();
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
+    }
+
+    private static Dialogue parseDialogue(String info) {
+        String typeStr = info.split("_")[0];
+        String name = info.split("_")[1];
+        return new Dialogue(name, NpcType.valueOf(typeStr.toUpperCase()));
     }
 
     private static Attack parseAttack(String info) {
@@ -28,7 +34,7 @@ public class ActionParser
         return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()));
     }
 
-    private static String cleanSay(String what) {
+    public static String cleanString(String what) {
         String clean = what.trim();
         if (clean.startsWith("\"") && clean.endsWith("\""))
             return clean.substring(1, clean.length() - 1).trim();
