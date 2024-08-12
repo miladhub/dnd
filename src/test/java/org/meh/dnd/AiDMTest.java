@@ -16,9 +16,9 @@ class AiDMTest
                 <new line>
                 *** NPCs ***
                 <new line>
-                * friendly humanoid Villager
-                * hostile humanoid Bandit
-                * friendly humanoid Herbalist
+                * friendly magic Villager
+                * hostile warrior Bandit
+                * friendly magic Herbalist
                 * hostile beast Dire Wolf
 
                 <new line>
@@ -33,8 +33,8 @@ class AiDMTest
                 "village of Eldergrove",
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
-                        new Attack("Bandit"),
-                        new Attack("Dire Wolf"))
+                        new Attack("Bandit", NpcType.WARRIOR),
+                        new Attack("Dire Wolf", NpcType.BEAST))
         );
         assertEquals(exploreOutput, AiDM.parseExploreOutput(response, "village of Eldergrove"));
     }
@@ -47,9 +47,9 @@ class AiDMTest
                 <new line>
                 *** NPCs ***
                 <new line>
-                * friendly humanoid Villager
-                * friendly humanoid Bandit
-                * friendly humanoid Herbalist
+                * friendly magic Villager
+                * friendly warrior Bandit
+                * friendly magic Herbalist
                 * friendly beast Dire Wolf
 
                 <new line>
@@ -64,10 +64,10 @@ class AiDMTest
                 "village of Eldergrove",
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
-                        new Attack("Villager"),
-                        new Attack("Bandit"),
-                        new Attack("Herbalist"),
-                        new Attack("Dire Wolf"),
+                        new Attack("Villager", NpcType.MAGIC),
+                        new Attack("Bandit", NpcType.WARRIOR),
+                        new Attack("Herbalist", NpcType.MAGIC),
+                        new Attack("Dire Wolf", NpcType.BEAST),
                         new Dialogue("Villager"),
                         new Dialogue("Bandit"),
                         new Dialogue("Herbalist"),

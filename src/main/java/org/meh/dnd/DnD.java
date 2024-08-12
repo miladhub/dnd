@@ -35,7 +35,7 @@ public record DnD(
                 dmChannel.post(input);
             }
             case Attack attack -> {
-                Fight fight = combat.generateFight(game.playerChar(), attack.target());
+                Fight fight = combat.generateFight(game.playerChar(), attack);
                 CombatOutput output = new CombatOutput(
                         fight.playerTurn(),
                         fight.playerActions(),

@@ -17,9 +17,9 @@ class ResponseParserTest
                 <new line>
                 *** NPCs ***
                 <new line>
-                * friendly humanoid Villager
-                * hostile humanoid Bandit
-                * friendly humanoid Herbalist
+                * friendly warrior Villager
+                * hostile warrior Bandit
+                * friendly magic Herbalist
                 * hostile beast Dire Wolf
 
                 <new line>
@@ -33,10 +33,10 @@ class ResponseParserTest
         ParsedResponse parsedResponse = new ParsedResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
-                        new NPC("Villager", Race.HUMANOID, false),
-                        new NPC("Bandit", Race.HUMANOID, true),
-                        new NPC("Herbalist", Race.HUMANOID, false),
-                        new NPC("Dire Wolf", Race.BEAST, true)
+                        new NPC("Villager", NpcType.WARRIOR, false),
+                        new NPC("Bandit", NpcType.WARRIOR, true),
+                        new NPC("Herbalist", NpcType.MAGIC, false),
+                        new NPC("Dire Wolf", NpcType.BEAST, true)
                 ),
                 List.of(
                         new Place("Village Square"),
@@ -56,9 +56,9 @@ class ResponseParserTest
                 <new line>
                 *** NPCs ***
                 <new line>
-                * friendly humanoid Villager
-                * hostile humanoid Bandit
-                * friendly humanoid Herbalist
+                * friendly magic Villager
+                * hostile warrior Bandit
+                * friendly magic Herbalist
                 * hostile beast Dire Wolf
 
                 <new line>
@@ -69,10 +69,10 @@ class ResponseParserTest
         ParsedResponse parsedResponse = new ParsedResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
-                        new NPC("Villager", Race.HUMANOID, false),
-                        new NPC("Bandit", Race.HUMANOID, true),
-                        new NPC("Herbalist", Race.HUMANOID, false),
-                        new NPC("Dire Wolf", Race.BEAST, true)
+                        new NPC("Villager", NpcType.MAGIC, false),
+                        new NPC("Bandit", NpcType.WARRIOR, true),
+                        new NPC("Herbalist", NpcType.MAGIC, false),
+                        new NPC("Dire Wolf", NpcType.BEAST, true)
                 ),
                 List.of(
                 )

@@ -6,7 +6,7 @@ import java.util.List;
 public class ResponseParser
 {
     public record ParsedResponse(String description, List<NPC> npcs, List<Place> places) {}
-    public record NPC(String name, Race race, boolean hostile) {}
+    public record NPC(String name, NpcType type, boolean hostile) {}
     public record Place(String name) {}
 
     public static ParsedResponse parseExploreResponse(String response) {
@@ -41,6 +41,6 @@ public class ResponseParser
         String rest = raw.substring(hostileStr.length() + 1);
         String raceStr = rest.substring(0, rest.indexOf(" "));
         String name = rest.substring(raceStr.length() + 1);
-        return new NPC(name, Race.valueOf(raceStr.toUpperCase()), hostileStr.toLowerCase().contains("hostile"));
+        return new NPC(name, NpcType.valueOf(raceStr.toUpperCase()), hostileStr.toLowerCase().contains("hostile"));
     }
 }

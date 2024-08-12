@@ -39,7 +39,7 @@ class DnDAcceptanceTest
     private final PlayerOutput seeGoblin = new ExploreOutput(
             "Dark Forest",
             "You see a goblin, what do you do?",
-            List.of(new Attack("goblin"), new Dialogue("goblin")));
+            List.of(new Attack("goblin", NpcType.WARRIOR), new Dialogue("goblin")));
     private final GameChar goblin = new GameChar(
             "goblin",
             3,
@@ -154,7 +154,7 @@ class DnDAcceptanceTest
     void explore_attack_player_first() {
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
 
-        dnd.doAction(new Attack("goblin"));
+        dnd.doAction(new Attack("goblin", NpcType.WARRIOR));
 
         assertTrue(playerOutputs.stream().anyMatch(o ->
                 o instanceof CombatOutput c &&
@@ -177,7 +177,7 @@ class DnDAcceptanceTest
 
         startWith(seeGoblin, new Peace(), EXPLORING, foo);
 
-        dnd.doAction(new Attack("goblin"));
+        dnd.doAction(new Attack("goblin", NpcType.WARRIOR));
 
         assertTrue(playerOutputs.stream().anyMatch(o ->
                 o instanceof CombatOutput c &&
@@ -585,10 +585,10 @@ class DnDAcceptanceTest
         @Override
         public Fight generateFight(
                 GameChar gameChar,
-                String opponentName
+                Attack attack
         ) {
             GameChar opponent = new GameChar(
-                    opponentName,
+                    attack.target(),
                     3,
                     CharClass.FIGHTER,
                     10,

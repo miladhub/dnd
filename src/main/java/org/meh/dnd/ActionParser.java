@@ -10,7 +10,7 @@ public class ActionParser
                                      String info
     ) {
         return switch (cleanAction(action)) {
-            case "Attack" -> new Attack(info);
+            case "Attack" -> parseAttack(info);
             case "Dialogue" -> new Dialogue(info);
             case "Rest" -> new Rest();
             case "Explore" -> new Explore(info);
@@ -20,6 +20,12 @@ public class ActionParser
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
+    }
+
+    private static Attack parseAttack(String info) {
+        String typeStr = info.split("_")[0];
+        String name = info.split("_")[1];
+        return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()));
     }
 
     private static String cleanSay(String what) {

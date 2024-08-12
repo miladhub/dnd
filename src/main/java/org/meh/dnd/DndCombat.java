@@ -15,6 +15,7 @@ public class DndCombat implements Combat
     public static final Weapon SWORD = new Weapon("sword", false, 8, false, true);
     public static final Weapon BATTLEAXE = new Weapon("battleaxe", false, 10, true, false);
     public static final Weapon BOW = new Weapon("bow", true, 6, true, false);
+    public static final Weapon UNARMED = new Weapon("unarmed", false, 4, false, true);
     public static final Weapon DAGGER = new Weapon("dagger", false, 6, false, true);
     public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, 8);
     public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, 8);
@@ -23,7 +24,7 @@ public class DndCombat implements Combat
     private static final List<Weapon> WEAPONS = List.of(
             SWORD,
             BATTLEAXE,
-            BOW,
+            UNARMED,
             DAGGER
     );
     private static final List<Spell> SPELLS = List.of(
@@ -34,26 +35,33 @@ public class DndCombat implements Combat
     public static final List<Weapon> FIGHTER_WEAPONS = List.of(SWORD, DAGGER, BOW);
     public static final List<Weapon> WIZARD_WEAPONS = List.of(BOW, DAGGER);
     public static final List<Spell> WIZARD_SPELLS = List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT);
-    private static final List<CharTemplate> TEMPLATES = List.of(
-            new CharTemplate(
-                    10,
-                    13,
-                    3,
-                    FIGHTER,
-                    STATS_FIGHTER,
-                    FIGHTER_WEAPONS,
-                    List.of(),
-                    STANDARD_ACTIONS),
-            new CharTemplate(
-                    10,
-                    13,
-                    3,
-                    WIZARD,
-                    STATS_WIZARD,
-                    WIZARD_WEAPONS,
-                    WIZARD_SPELLS,
-                    STANDARD_ACTIONS)
-    );
+    public static final CharTemplate WARRIOR_TEMPLATE = new CharTemplate(
+            10,
+            13,
+            3,
+            FIGHTER,
+            STATS_FIGHTER,
+            FIGHTER_WEAPONS,
+            List.of(),
+            STANDARD_ACTIONS);
+    public static final CharTemplate WIZARD_TEMPLATE = new CharTemplate(
+            10,
+            13,
+            3,
+            WIZARD,
+            STATS_WIZARD,
+            WIZARD_WEAPONS,
+            WIZARD_SPELLS,
+            STANDARD_ACTIONS);
+    public static final CharTemplate BEAST_TEMPLATE = new CharTemplate(
+            10,
+            13,
+            3,
+            FIGHTER,
+            STATS_FIGHTER,
+            List.of(UNARMED),
+            List.of(),
+            STANDARD_ACTIONS);
 
     public static String combatActionDescription(
             Attacks attack,
@@ -86,9 +94,10 @@ public class DndCombat implements Combat
     @Override
     public Fight generateFight(
             GameChar gameChar,
-            String opponentName) {
+            Attack attack
+    ) {
         boolean playersTurn = new Random().nextBoolean();
-        GameChar opponent = generateOpponent(opponentName);
+        GameChar opponent = generateOpponent(attack.target(), attack.type());
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,
                 gameChar.availableActions(),
                 opponent.availableActions());
@@ -205,9 +214,15 @@ public class DndCombat implements Combat
         return new AttackResult(defender.damage(damage), damage);
     }
 
-    private static GameChar generateOpponent(String name) {
-        int templateIndex = new Random().nextInt(TEMPLATES.size());
-        CharTemplate template = TEMPLATES.get(templateIndex);
+    private static GameChar generateOpponent(
+            String name,
+            NpcType type
+    ) {
+        CharTemplate template = switch (type) {
+            case WARRIOR -> WARRIOR_TEMPLATE;
+            case MAGIC -> WIZARD_TEMPLATE;
+            case BEAST -> BEAST_TEMPLATE;
+        };
         return new GameChar(
                 name,
                 template.level(),

@@ -37,11 +37,11 @@ public record AiDM(DMChannel dmChannel,
             <new line>
             
             Each NPC must be listed with this format:
-            - <friendliness> <race> <name>
+            - <friendliness> <type> <name>
             
             where
             - <friendliness> can either be 'hostile' or 'friendly'
-            - <race> can either be 'humanoid' or 'beast'
+            - <type> can be either 'warrior' or 'magic' or 'beast'
             
             Present the NPCs with a bullet list, for example:
             * hostile beast Wolf
@@ -272,14 +272,14 @@ public record AiDM(DMChannel dmChannel,
                     parsed.description(),
                     parsed.npcs().stream()
                             .filter(NPC::hostile)
-                            .map(npc -> new Attack(npc.name()))
+                            .map(npc -> new Attack(npc.name(), npc.type()))
                             .map(a -> (Actions) a)
                             .toList()
             );
         } else {
             List<Actions> actions = new ArrayList<>();
             actions.addAll(parsed.npcs().stream()
-                    .map(npc -> new Attack(npc.name()))
+                    .map(npc -> new Attack(npc.name(), npc.type()))
                     .toList());
             actions.addAll(parsed.npcs().stream()
                     .map(npc -> new Dialogue(npc.name()))

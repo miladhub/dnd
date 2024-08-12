@@ -239,7 +239,8 @@ public class RestServer
 
     private static ActionView actionView(Actions a) {
         return switch (a) {
-            case Attack attack -> new ActionView("Attack", attack.target(),
+            case Attack attack -> new ActionView("Attack",
+                    attack.type() + "_" + attack.target(),
                     "Attack " + attack.target());
             case Rest ignored -> new ActionView("Rest", "", "Rest");
             case Dialogue d -> new ActionView("Dialogue", d.target(),

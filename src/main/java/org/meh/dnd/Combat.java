@@ -4,7 +4,8 @@ public interface Combat
 {
     Fight generateFight(
             GameChar gameChar,
-            String opponentName);
+            Attack attack
+    );
     GeneratedCombatAction generateAttack(Fight fight);
     AttackResult computeAttack(
             Attacks attack,
