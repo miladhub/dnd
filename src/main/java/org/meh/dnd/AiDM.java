@@ -45,7 +45,7 @@ public record AiDM(DMChannel dmChannel,
             
             Present the NPCs with a bullet list, for example:
             * hostile beast Wolf
-            * friendly humanoid Elf
+            * friendly warrior Elf
             
             To mark the beginning of the places to explore section, place the
             following text before them:
@@ -73,14 +73,14 @@ public record AiDM(DMChannel dmChannel,
             <new line>
             
             Each NPC must be listed with this format (all must be friendly):
-            - friendly <race> <name>
+            - friendly <type> <name>
             
             where
-            - <race> can either be 'humanoid' or 'beast'
+            - <type> can be either 'warrior' or 'magic' or 'beast'
             
             Present the NPCs with a bullet list, for example:
             * friendly beast Owl
-            * friendly humanoid Elf
+            * friendly magic Elf
             
             To mark the beginning of the places to explore section, place the
             following text before them:
