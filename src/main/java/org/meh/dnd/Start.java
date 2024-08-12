@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public record Start()
+public record Start(String place)
         implements Actions
 {
 }

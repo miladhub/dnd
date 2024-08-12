@@ -95,7 +95,7 @@ public class RestServer
                 List.of(new ExploreOutput(
                         place,
                         "Ready.",
-                        List.of(new Start()))),
+                        List.of(new Start(place)))),
                 gameChar,
                 new Peace(),
                 new Chat(List.of()),
@@ -133,7 +133,8 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        dnd.doAction(ActionParser.actionFrom(action, info));
+        Game game = gameRepository.game().orElseThrow();
+        dnd.doAction(ActionParser.actionFrom(action, info, game));
     }
 
     @POST
@@ -250,7 +251,7 @@ public class RestServer
                     "Explore " + e.place());
             case EndDialogue ignored -> new ActionView("EndDialogue", "", "End Dialogue");
             case Say say -> new ActionView("Say", say.what(), say.what());
-            case Start start -> new ActionView("Start", "", "Play");
+            case Start start -> new ActionView("Start", start.place(), "Play");
         };
     }
 }

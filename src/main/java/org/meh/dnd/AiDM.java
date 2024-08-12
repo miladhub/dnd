@@ -120,15 +120,21 @@ public record AiDM(DMChannel dmChannel,
             PlayerInput input
     ) throws Exception {
         Game game = gameRepository.game().orElseThrow();
-        if (input.action() instanceof Start) {
+        if (input.action() instanceof Start start) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
-                            game.background() + """
-                            
-                            Let's begin, what happens?
-                            
-                            """ + getExplorePromptPostfix(game))
+                            start.place() != null && !start.place().isBlank()
+                                ? game.background() + String.format("""
+                                
+                                Let's begin. The characters are currently exploring %s, what happens?
+                                
+                                """, start.place()) + getExplorePromptPostfix(game)
+                                : game.background() + """
+                                
+                                Let's begin, what happens?
+                                
+                                """ + getExplorePromptPostfix(game))
             ), List.of());
 
             String content =

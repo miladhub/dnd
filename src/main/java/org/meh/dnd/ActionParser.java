@@ -7,7 +7,8 @@ import static org.meh.dnd.Dir.TOWARDS_ENEMY;
 public class ActionParser
 {
     public static Actions actionFrom(String action,
-                                     String info
+                                     String info,
+                                     Game game
     ) {
         return switch (cleanAction(action)) {
             case "Attack" -> parseAttack(info);
@@ -16,7 +17,9 @@ public class ActionParser
             case "Explore" -> new Explore(info);
             case "Say" -> new Say(cleanString(info));
             case "EndDialogue" -> new EndDialogue();
-            case "Start" -> new Start();
+            case "Start" -> new Start(info != null && !info.isBlank()
+                    ? info
+                    : game.place());
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
         };
