@@ -78,6 +78,25 @@ class DnDAcceptanceTest
     }
 
     @Test
+    void restarting_heals() {
+        startWith(exploring, new Peace(), EXPLORING, new GameChar("Foo", 3,
+                CharClass.FIGHTER,
+                1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
+                List.of(), STANDARD_ACTIONS));
+
+        dmOutcome(seeGoblin);
+        dnd.doAction(new Start("forest"));
+
+        assertEquals(
+                10,
+                gameRepository.game().orElseThrow().playerChar().hp());
+        assertEquals(
+                List.of(),
+                gameRepository.game().orElseThrow().diary());
+        assertThat(playerOutputs, contains(seeGoblin));
+    }
+
+    @Test
     void player_sees_last_output_when_entering() {
         startWith(exploring, new Peace(), EXPLORING, foo);
         Optional<PlayerOutput> output = dnd.enter();
