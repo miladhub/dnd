@@ -71,4 +71,15 @@ public class ResponseParser
         String name = rest.substring(raceStr.length() + 1);
         return new NPC(name, NpcType.valueOf(raceStr.toUpperCase()), hostileStr.toLowerCase().contains("hostile"));
     }
+
+    public static List<QuestGoal> parseQuest(String content) {
+        return Arrays.stream(content.split("\n"))
+                .map(r -> r.substring(2))
+                .map(r -> new QuestGoal(
+                        QuestGoalType.valueOf(r.substring(0, r.indexOf(" ")).toUpperCase().trim()),
+                        r.substring(r.substring(0, r.indexOf(" ")).trim().length() + 1),
+                        false
+                ))
+                .toList();
+    }
 }

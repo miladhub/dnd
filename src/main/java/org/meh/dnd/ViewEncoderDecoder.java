@@ -84,15 +84,24 @@ public class ViewEncoderDecoder
                     d.phrase(),
                     d.answers().stream()
                             .map(ViewEncoderDecoder::encodeAction)
-                            .toList()));
+                            .toList(),
+                    game.background(),
+                    ViewEncoderDecoder.encodeQuest(game.quest()),
+                    game.place()));
             case ExploreOutput e -> Templates.template(new GameView(
                     e.description(),
                     e.choices().stream()
                             .map(ViewEncoderDecoder::encodeAction)
-                            .toList()));
+                            .toList(),
+                    game.background(),
+                    ViewEncoderDecoder.encodeQuest(game.quest()),
+                    game.place()));
             case RestOutput ignored -> Templates.template(new GameView(
                     "You are resting.",
-                    List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place())))));
+                    List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()))),
+                    game.background(),
+                    ViewEncoderDecoder.encodeQuest(game.quest()),
+                    game.place()));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),
@@ -170,5 +179,15 @@ public class ViewEncoderDecoder
             case Say say -> new ActionView("Say", say.what(), say.what());
             case Start start -> new ActionView("Start", start.place(), "Play");
         };
+    }
+
+    public static List<QuestGoalView> encodeQuest(List<QuestGoal> goals) {
+        return goals.stream()
+                .map(g -> new QuestGoalView(
+                        switch (g.type()) {
+                            case KILL -> "Kill";
+                            case EXPLORE -> "Explore";
+                        } + " " + g.target(), g.reached()))
+                .toList();
     }
 }

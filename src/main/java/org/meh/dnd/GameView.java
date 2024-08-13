@@ -4,7 +4,10 @@ import java.util.List;
 
 public record GameView(
         String description,
-        List<ActionView> choices
+        List<ActionView> choices,
+        String background,
+        List<QuestGoalView> goals,
+        String location
 )
 {
 }

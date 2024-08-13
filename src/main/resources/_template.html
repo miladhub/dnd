@@ -1,22 +1,53 @@
+<!--suppress ALL -->
 <div id="game" hx-ext="sse" sse-connect="/updates" sse-swap="message"
-     class="container mx-auto px-4 max-w-2xl">
+     class="container mx-auto px-4 max-w-5xl p-4">
 
-    <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
-        <p class="text-lg leading-relaxed">
-            {{description}}
-        </p>
-    </section>
+    <section class="w-full grid grid-cols-3 gap-6">
+        <div class="col-span-1 bg-gray-800 p-4 rounded-lg shadow-lg">
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Location</h3>
+                <p class="text-sm mb-4">{{location}}</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Background</h3>
+                <p class="text-sm mb-4">{{background}}</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Quest Progress</h3>
+                {{#goals}}
+                <ul class="list-disc list-inside text-sm">
+                    {{#reached}}
+                    <li class="line-through text-green-400">{{description}}</li>
+                    {{/reached}}
+                    {{^reached}}
+                    <li class="text-red-400">{{description}}</li>
+                    {{/reached}}
+                </ul>
+                {{/goals}}
+                {{^goals}}
+                <p class="text-sm mb-4">No goals yet.</p>
+                {{/goals}}
+            </div>
+        </div>
+        <div class="col-span-2">
+            <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+                <p class="text-lg leading-relaxed">
+                    {{description}}
+                </p>
+            </section>
 
-    <section class="space-y-4">
-    {{#choices}}
-    <form hx-post="/actions" hx-swap="none"
-          class="bg-blue-600 p-4 rounded-lg shadow-lg hover:bg-blue-700">
-        <label for="action-{{name}}" hidden="hidden">{{name}}</label>
-        <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">
-        <label for="info-{{name}}" hidden="hidden">{{info}}</label>
-        <input id="info-{{name}}" name="info" type="text" hidden="hidden" value="{{info}}">
-        <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
-    </form>
-    {{/choices}}
+            <section class="space-y-4">
+                {{#choices}}
+                <form hx-post="/actions" hx-swap="none"
+                      class="bg-blue-600 p-4 rounded-lg shadow-lg hover:bg-blue-700">
+                    <label for="action-{{name}}" hidden="hidden">{{name}}</label>
+                    <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">
+                    <label for="info-{{name}}" hidden="hidden">{{info}}</label>
+                    <input id="info-{{name}}" name="info" type="text" hidden="hidden" value="{{info}}">
+                    <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
+                </form>
+                {{/choices}}
+            </section>
+        </div>
     </section>
 </div>

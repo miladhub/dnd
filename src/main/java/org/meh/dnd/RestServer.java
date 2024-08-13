@@ -102,6 +102,7 @@ public class RestServer
                 background,
                 place,
                 new Nobody(),
+                List.of(),
                 List.of()
         );
         gameRepository.save(game);
@@ -124,7 +125,7 @@ public class RestServer
         return dnd.enter()
                 .map(this::toHtml)
                 .map(Response::ok)
-                .orElse(Response.seeOther(URI.create("/create.html")))
+                .orElse(Response.ok().header("HX-Redirect", "/create.html"))
                 .build();
     }
 

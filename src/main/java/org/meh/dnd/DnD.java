@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.FightOutcome.*;
 import static org.meh.dnd.GameMode.*;
+import static org.meh.dnd.QuestGoalType.*;
 
 public record DnD(
             GameRepository gameRepository,
@@ -22,17 +23,18 @@ public record DnD(
     public void doAction(Actions action) {
         Game game = gameRepository.game().orElseThrow();
         switch (action) {
-            case Start ignored -> {
+            case Start s -> {
                 gameRepository.save(g -> g
                         .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
                         .withDiary(List.of())
-                );
+                        .withQuest(updateQuestFromExploring(g.quest(), s.place())));
                 dmChannel.post(action);
             }
             case Explore e -> {
                 gameRepository.save(g -> g
                         .withMode(EXPLORING)
-                        .withPlace(e.place()));
+                        .withPlace(e.place())
+                        .withQuest(updateQuestFromExploring(g.quest(), e.place())));
                 dmChannel.post(action);
             }
             case Attack attack -> {
@@ -138,6 +140,7 @@ public record DnD(
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
+                    .withQuest(updateQuestFromFight(game.quest(), newFight))
             );
             notifyPlayersFight(game, newFight);
             if (!newFight.playerTurn())
@@ -156,6 +159,48 @@ public record DnD(
             notifyPlayersFight(game, newFight);
             playEnemyCombatTurn();
         }
+    }
+
+    private List<QuestGoal> updateQuestFromFight(
+            List<QuestGoal> q,
+            Fight f
+    ) {
+        if (f.outcome() == ENEMY_WON)
+            return q;
+        else
+            return q.stream()
+                    .map(g -> {
+                        if (g.type() != KILL || !g.target().equals(f.opponent().name())) {
+                            return g;
+                        } else {
+                            return new QuestGoal(KILL, f.opponent().name(), true);
+                        }
+                    })
+                    .toList();
+    }
+
+    private List<QuestGoal> updateQuestFromExploring(
+            List<QuestGoal> q,
+            String place
+    ) {
+        return q.stream()
+                .map(g -> {
+                    if (g.type() != EXPLORE || !placeMatches(place, g)) {
+                        return g;
+                    } else {
+                        return new QuestGoal(EXPLORE, g.target(), true);
+                    }
+                })
+                .toList();
+    }
+
+    private static boolean placeMatches(
+            String place,
+            QuestGoal g
+    ) {
+        String target = g.target().toLowerCase().trim().replaceAll("\\Qthe \\E", "");
+        String cleanedPlace = place.toLowerCase().trim().replaceAll("\\Qthe \\E", "");
+        return target.equals(cleanedPlace);
     }
 
     private void playEnemyCombatTurn() {

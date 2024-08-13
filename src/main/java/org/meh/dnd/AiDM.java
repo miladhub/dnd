@@ -149,6 +149,34 @@ public record AiDM(DMChannel dmChannel,
     ) throws Exception {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
+            ChatResponse questResponse = openAiClient.chatCompletion(List.of(
+                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
+                    new OpenAiRequestMessage(Role.user, String.format(
+                            """
+                            Given this background:
+                            
+                            "%s"
+                            
+                            Lay out a set of objectives that would lead the
+                            character to reaching their goal. Create a bullet list
+                            of goals, each of either of these types:
+                            
+                            - explore <place>
+                            - kill <who or what>
+                            
+                            For example, this is a valid response:
+                            
+                            * explore Dark Dungeon
+                            * kill The Red Dragon
+                            
+                            Don't add anything but the list in the response. Each
+                            element must be either an 'explore' or a 'kill'.
+                            """, game.background()))
+            ), List.of());
+            String questContent =
+                    ((ChatResponse.MessageChatResponse) questResponse).content();
+            List<QuestGoal> quest = ResponseParser.parseQuest(questContent);
+
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
@@ -170,7 +198,8 @@ public record AiDM(DMChannel dmChannel,
             ExploreOutput output = parseExploreOutput(content, game.place());
             gameRepository.save(g -> g
                     .withLastOutput(output)
-                    .withStoryLine(output.storyLine()));
+                    .withStoryLine(output.storyLine())
+                    .withQuest(quest));
             playerChannel.post(output);
         }
         if (action instanceof Explore e) {

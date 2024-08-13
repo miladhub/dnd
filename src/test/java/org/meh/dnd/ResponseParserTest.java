@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.meh.dnd.QuestGoalType.*;
 import static org.meh.dnd.ResponseParser.parseDialogueOutput;
 import static org.meh.dnd.ResponseParser.*;
 
@@ -157,5 +158,19 @@ class ResponseParserTest
         assertEquals(output, parseDialogueOutput(response, "Ranger", NpcType.WARRIOR));
     }
 
-
+    @Test
+    void parse_quest() {
+        String response = """
+                * explore Dark Dungeon
+                * kill The Red Dragon
+                """;
+        List<QuestGoal> goals = ResponseParser.parseQuest(response);
+        assertEquals(
+                List.of(
+                        new QuestGoal(EXPLORE, "Dark Dungeon", false),
+                        new QuestGoal(KILL, "The Red Dragon", false)
+                ),
+                goals
+        );
+    }
 }

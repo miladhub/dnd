@@ -571,6 +571,78 @@ class DnDAcceptanceTest
         );
     }
 
+    @Test
+    void killing_solves_quest_goal() {
+        gameRepository.save(new Game(
+                COMBAT,
+                List.of(combatGoblin),
+                foo,
+                new Fight(
+                        true, goblin, List.of(), 5, IN_PROGRESS,
+                        new AvailableActions(3, 1, 30),
+                        STANDARD_ACTIONS),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new QuestGoal(QuestGoalType.KILL, "goblin", false))
+        ));
+
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
+
+        assertEquals(
+                List.of(new QuestGoal(QuestGoalType.KILL, "goblin", true)),
+                game().quest());
+    }
+
+    @Test
+    void explore_solves_quest_goal() {
+        gameRepository.save(new Game(
+                EXPLORING,
+                List.of(exploring),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dungeon", false))
+        ));
+
+        dnd.doAction(new Explore("The Dungeon"));
+
+        assertEquals(
+                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dungeon", true)),
+                game().quest());
+    }
+
+    @Test
+    void starting_can_solve_quest_goal() {
+        gameRepository.save(new Game(
+                EXPLORING,
+                List.of(exploring),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dark Forest", false))
+        ));
+
+        dnd.doAction(new Start("Dark Forest"));
+
+        assertEquals(
+                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dark Forest", true)),
+                game().quest());
+    }
+
     private void dmOutcome(
             PlayerOutput output
     ) {
@@ -596,6 +668,7 @@ class DnDAcceptanceTest
                 "Once upon a time in the west...",
                 "Dark Forest",
                 new Nobody(),
+                List.of(),
                 List.of()
         );
         gameRepository.save(game);
