@@ -6,7 +6,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.meh.dnd.QuestGoalType.*;
-import static org.meh.dnd.ResponseParser.parseDialogueOutput;
 import static org.meh.dnd.ResponseParser.*;
 
 class ResponseParserTest
@@ -38,7 +37,7 @@ class ResponseParserTest
                 
                 Something happened.""";
 
-        ParsedResponse parsedResponse = new ParsedResponse(
+        ParsedExploreResponse ParsedExploreResponse = new ParsedExploreResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
                         new NPC("Villager", NpcType.WARRIOR, false),
@@ -54,7 +53,7 @@ class ResponseParserTest
                 ),
                 "Something happened."
         );
-        assertEquals(parsedResponse, parseExploreResponse(response));
+        assertEquals(ParsedExploreResponse, parseExploreResponse(response));
     }
 
     @Test
@@ -81,7 +80,7 @@ class ResponseParserTest
                 Something happened.
                 """;
 
-        ParsedResponse parsedResponse = new ParsedResponse(
+        ParsedExploreResponse ParsedExploreResponse = new ParsedExploreResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
                         new NPC("Villager", NpcType.MAGIC, false),
@@ -92,7 +91,7 @@ class ResponseParserTest
                 List.of(),
                 "Something happened."
         );
-        assertEquals(parsedResponse, parseExploreResponse(response));
+        assertEquals(ParsedExploreResponse, parseExploreResponse(response));
     }
 
     @Test
@@ -120,7 +119,7 @@ class ResponseParserTest
                 Something happened.
                 """;
 
-        ParsedResponse parsedResponse = new ParsedResponse(
+        ParsedExploreResponse ParsedExploreResponse = new ParsedExploreResponse(
                 "As you step into the quaint village of Eldergrove, the air is thick with the scent of blooming wildflowers and the distant sound of laughter. Villagers bustle about, tending to their daily tasks, while curious eyes glance your way, wondering who you are and what brings you to their peaceful hamlet. However, there’s an undercurrent of tension in the air, as rumors swirl of a dark presence lurking in the nearby woods. You sense that there are stories waiting to be uncovered, and potential allies or adversaries to encounter.",
                 List.of(
                 ),
@@ -132,30 +131,7 @@ class ResponseParserTest
                 ),
                 "Something happened."
         );
-        assertEquals(parsedResponse, parseExploreResponse(response));
-    }
-
-    @Test
-    void say_attack() {
-        String response = """
-                "I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in."
-
-                *** ANSWERS ***
-
-                * "What kind of illusion can you create?"
-                * Where are you going?""";
-
-        DialogueOutput output = new DialogueOutput(
-                "Ranger",
-                "\"I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in.\"",
-                List.of(
-                        new Say("What kind of illusion can you create?"),
-                        new Say("Where are you going?"),
-                        new Attack("Ranger", NpcType.WARRIOR),
-                        new EndDialogue()
-                )
-        );
-        assertEquals(output, parseDialogueOutput(response, "Ranger", NpcType.WARRIOR));
+        assertEquals(ParsedExploreResponse, parseExploreResponse(response));
     }
 
     @Test

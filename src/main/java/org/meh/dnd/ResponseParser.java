@@ -8,11 +8,12 @@ import static org.meh.dnd.ViewEncoderDecoder.cleanString;
 
 public class ResponseParser
 {
-    public record ParsedResponse(String description, List<NPC> npcs, List<Place> places, String storyLine) {}
-
+    public record ParsedExploreResponse(String description, List<NPC> npcs, List<Place> places, String storyLine) {}
+    public record ParsedDialogueResponse(String phrase, List<Actions> answers) {}
     public record NPC(String name, NpcType type, boolean hostile) {}
     public record Place(String name) {}
-    public static ParsedResponse parseExploreResponse(String response) {
+
+    public static ParsedExploreResponse parseExploreResponse(String response) {
         String[] descrTail = response
                 .replaceAll("\\Q<new line>\\E", "")
                 .split("\\Q*** NPCs ***\\E");
@@ -35,7 +36,7 @@ public class ResponseParser
                 .map(s -> s.substring(2))
                 .map(Place::new)
                 .toList();
-        return new ParsedResponse(
+        return new ParsedExploreResponse(
                 description,
                 npcs,
                 places,
@@ -43,11 +44,7 @@ public class ResponseParser
         );
     }
 
-    public static DialogueOutput parseDialogueOutput(
-            String content,
-            String target,
-            NpcType type
-    ) {
+    public static ParsedDialogueResponse parseDialogueResponse(String content) {
         String[] split = content
                 .replaceAll("\\Q<new line>\\E", "")
                 .split("\\Q*** ANSWERS ***\\E");
@@ -58,9 +55,7 @@ public class ResponseParser
                 .map(c -> cleanString(c.substring(2)))
                 .map(c -> (Actions) new Say(c))
                 .toList());
-        answers.add(new Attack(target, type));
-        answers.add(new EndDialogue());
-        return new DialogueOutput(target, phrase.trim(), answers);
+        return new ParsedDialogueResponse(phrase.trim(), answers);
     }
 
     private static NPC parseNpc(String raw) {

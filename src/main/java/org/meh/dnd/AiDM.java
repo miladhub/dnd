@@ -341,9 +341,8 @@ public record AiDM(DMChannel dmChannel,
             String content,
             String place
     ) {
-        ParsedResponse parsed =
+        ParsedExploreResponse parsed =
                 parseExploreResponse(content);
-
         if (parsed.npcs().stream().anyMatch(NPC::hostile)) {
             return new ExploreOutput(
                     place,
@@ -375,5 +374,16 @@ public record AiDM(DMChannel dmChannel,
                     parsed.storyLine()
             );
         }
+    }
+
+    static DialogueOutput parseDialogueOutput(
+            String content,
+            String target,
+            NpcType type
+    ) {
+        ParsedDialogueResponse parsed = parseDialogueResponse(content);
+        parsed.answers().add(new Attack(target, type));
+        parsed.answers().add(new EndDialogue());
+        return new DialogueOutput(target, parsed.phrase(), parsed.answers());
     }
 }
