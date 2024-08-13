@@ -271,16 +271,16 @@ public record AiDM(DMChannel dmChannel,
     }
 
     private static String context(Game game) {
-        return game.background() + describeDiary(game);
+        return game.background() + "\n" + describeDiary(game);
     }
 
     private static String describeDiary(Game game) {
         return game.diary().isEmpty()
                 ? ""
-                : "\n\nHere's a list of noteworthy events happened so far:\n" +
+                : "\nHere's a list of noteworthy events happened so far:\n" +
                 game.diary().stream()
                         .map(d -> "* " + d)
-                        .collect(Collectors.joining("\n"));
+                        .collect(Collectors.joining("\n")) + "\n\n";
     }
 
     private static String chat(Game game) {

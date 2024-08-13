@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.meh.dnd.ActionParser.cleanString;
+import static org.meh.dnd.ViewEncoderDecoder.cleanString;
 
 public class ResponseParser
 {

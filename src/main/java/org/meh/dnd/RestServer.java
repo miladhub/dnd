@@ -13,7 +13,6 @@ import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.meh.dnd.GameMode.EXPLORING;
 
@@ -136,7 +135,7 @@ public class RestServer
             @FormParam("info") String info
     ) {
         Game game = gameRepository.game().orElseThrow();
-        dnd.doAction(ActionParser.actionFrom(action, info, game));
+        dnd.doAction(ViewEncoderDecoder.decodeAction(action, info, game));
     }
 
     @POST
@@ -146,7 +145,7 @@ public class RestServer
             @FormParam("info") String info,
             @FormParam("bonus") boolean bonusAction
     ) {
-        CombatActions combatAction = ActionParser.combatActionFrom(action, info);
+        CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info);
         dnd.playCombatAction(combatAction, bonusAction);
     }
 
@@ -169,91 +168,6 @@ public class RestServer
             PlayerOutput output
     ) {
         Game game = gameRepository.game().orElseThrow();
-        GameChar pc = game.playerChar();
-        return switch (output) {
-            case DialogueOutput d -> Templates.template(new GameView(
-                    d.phrase(),
-                    d.answers().stream()
-                            .map(RestServer::actionView)
-                            .toList()));
-            case ExploreOutput e -> Templates.template(new GameView(
-                    e.description(),
-                    e.choices().stream()
-                            .map(RestServer::actionView)
-                            .toList()));
-            case RestOutput ignored -> Templates.template(new GameView(
-                    "You are resting.",
-                    List.of(actionView(new Explore(game.place())))));
-            case CombatOutput co -> Templates.combat(new CombatView(
-                    co.playerTurn(), co.playerWon(), co.enemyWon(),
-                    co.playerWon() || co.enemyWon(),
-                    co.playerTurn()? co.playerAvailableActions() : co.opponentAvailableActions(),
-                    new CharacterView(pc.name(),
-                            pc.level(),
-                            pc.charClass().toString().toLowerCase(),
-                            pc.ac(),
-                            pc.xp(),
-                            pc.maxHp(),
-                            pc.hp(),
-                            pc.maxHp(),
-                            pc.stats().strength(),
-                            pc.stats().dexterity(),
-                            pc.stats().constitution(),
-                            pc.stats().intelligence(),
-                            pc.stats().wisdom(),
-                            pc.stats().charisma()),
-                    new CharacterView(co.opponent().name(),
-                            co.opponent().level(),
-                            co.opponent().charClass().toString().toLowerCase(),
-                            co.opponent().ac(),
-                            co.opponent().xp(),
-                            co.opponent().nextXp(),
-                            co.opponent().hp(),
-                            co.opponent().maxHp(),
-                            co.opponent().stats().strength(),
-                            co.opponent().stats().dexterity(),
-                            co.opponent().stats().constitution(),
-                            co.opponent().stats().intelligence(),
-                            co.opponent().stats().wisdom(),
-                            co.opponent().stats().charisma()),
-                    String.join("\n", co.log().reversed()).trim(),
-                    co.distance(),
-                    co.availableActions().stream().flatMap(a -> switch (a.type()) {
-                        case WEAPON -> Stream.of(
-                                new CombatActionView("Melee", a.info(),
-                                        "Attack with " + a.info(), a.bonusAction()));
-                        case SPELL -> Stream.of(
-                                new CombatActionView("Spell", a.info(),
-                                        "Cast " + a.info(), a.bonusAction()));
-                        case MOVE -> Stream.of(
-                                new CombatActionView("MoveForward", a.info(),
-                                        "Move " + a.info() + " feet forward",
-                                        a.bonusAction()),
-                                new CombatActionView("MoveBackward", a.info(),
-                                        "Move " + a.info() + " feet backward",
-                                        a.bonusAction()));
-                        case END_TURN -> Stream.of(
-                                new CombatActionView("EndTurn", "", "End Turn", false)
-                        );
-                    }).toList()
-            ));
-        };
-    }
-
-    private static ActionView actionView(Actions a) {
-        return switch (a) {
-            case Attack attack -> new ActionView("Attack",
-                    attack.type() + "_" + attack.target(),
-                    "Attack " + attack.target());
-            case Rest ignored -> new ActionView("Rest", "", "Rest");
-            case Dialogue d -> new ActionView("Dialogue",
-                    d.type() + "_" + d.target(),
-                    "Talk to " + d.target());
-            case Explore e -> new ActionView("Explore", e.place(),
-                    "Explore " + e.place());
-            case EndDialogue ignored -> new ActionView("EndDialogue", "", "End Dialogue");
-            case Say say -> new ActionView("Say", say.what(), say.what());
-            case Start start -> new ActionView("Start", start.place(), "Play");
-        };
+        return ViewEncoderDecoder.encodeOutput(output, game);
     }
 }
