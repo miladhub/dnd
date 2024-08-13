@@ -127,25 +127,31 @@ public class ViewEncoderDecoder
                             co.opponent().stats().charisma()),
                     String.join("\n", co.log().reversed()).trim(),
                     co.distance(),
-                    co.availableActions().stream().flatMap(a -> switch (a.type()) {
-                        case WEAPON -> Stream.of(
-                                new CombatActionView("Melee", a.info(),
-                                        "Attack with " + a.info(), a.bonusAction()));
-                        case SPELL -> Stream.of(
-                                new CombatActionView("Spell", a.info(),
-                                        "Cast " + a.info(), a.bonusAction()));
-                        case MOVE -> Stream.of(
-                                new CombatActionView("MoveForward", a.info(),
-                                        "Move " + a.info() + " feet forward",
-                                        a.bonusAction()),
-                                new CombatActionView("MoveBackward", a.info(),
-                                        "Move " + a.info() + " feet backward",
-                                        a.bonusAction()));
-                        case END_TURN -> Stream.of(
-                                new CombatActionView("EndTurn", "", "End Turn", false)
-                        );
-                    }).toList()
+                    co.availableActions().stream()
+                            .flatMap(ViewEncoderDecoder::encodeCombatAction)
+                            .toList()
             ));
+        };
+    }
+
+    private static Stream<CombatActionView> encodeCombatAction(AvailableAction a) {
+        return switch (a.type()) {
+            case WEAPON -> Stream.of(
+                    new CombatActionView("Melee", a.info(),
+                            "Attack with " + a.info(), a.bonusAction()));
+            case SPELL -> Stream.of(
+                    new CombatActionView("Spell", a.info(),
+                            "Cast " + a.info(), a.bonusAction()));
+            case MOVE -> Stream.of(
+                    new CombatActionView("MoveForward", a.info(),
+                            "Move " + a.info() + " feet forward",
+                            a.bonusAction()),
+                    new CombatActionView("MoveBackward", a.info(),
+                            "Move " + a.info() + " feet backward",
+                            a.bonusAction()));
+            case END_TURN -> Stream.of(
+                    new CombatActionView("EndTurn", "", "End Turn", false)
+            );
         };
     }
 
