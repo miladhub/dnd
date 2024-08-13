@@ -106,6 +106,7 @@ class ResponseParserTest
                 <new line>
                 *** PLACES ***
                 <new line>
+                
                 * Village Square
                 * Herbalist's Hut
                 * Darkwood Forest
@@ -138,7 +139,7 @@ class ResponseParserTest
         String response = """
                 "I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in."
 
-                *** CHOICES ***
+                *** ANSWERS ***
 
                 * "What kind of illusion can you create?"
                 * Where are you going?""";

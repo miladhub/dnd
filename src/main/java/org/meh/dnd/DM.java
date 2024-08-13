@@ -3,6 +3,6 @@ package org.meh.dnd;
 public interface DM
 {
     void process(
-            PlayerInput input
+            Actions input
     ) throws Exception;
 }

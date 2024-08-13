@@ -20,7 +20,6 @@ public record DnD(
     private static final int WEAPONS_REACH = 5;
 
     public void doAction(Actions action) {
-        PlayerInput input = new PlayerInput(action);
         Game game = gameRepository.game().orElseThrow();
         switch (action) {
             case Start ignored -> {
@@ -28,13 +27,13 @@ public record DnD(
                         .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
                         .withDiary(List.of())
                 );
-                dmChannel.post(input);
+                dmChannel.post(action);
             }
             case Explore e -> {
                 gameRepository.save(g -> g
                         .withMode(EXPLORING)
                         .withPlace(e.place()));
-                dmChannel.post(input);
+                dmChannel.post(action);
             }
             case Attack attack -> {
                 Fight fight = combat.generateFight(game.playerChar(), attack);
@@ -67,18 +66,18 @@ public record DnD(
                         .withMode(DIALOGUE)
                         .withDialogueTarget(new Somebody(d.target(), d.type()))
                 );
-                dmChannel.post(input);
+                dmChannel.post(action);
             }
             case Say ignored -> {
                 gameRepository.save(g -> g.withMode(DIALOGUE));
-                dmChannel.post(input);
+                dmChannel.post(action);
             }
             case EndDialogue ignored -> {
                 gameRepository.save(g -> g
                         .withMode(EXPLORING)
                         .withDialogueTarget(new Nobody())
                 );
-                dmChannel.post(input);
+                dmChannel.post(action);
             }
         }
     }

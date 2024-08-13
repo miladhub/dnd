@@ -12,14 +12,14 @@ import java.util.stream.Collectors;
 import static org.meh.dnd.ResponseParser.*;
 
 public record AiDM(DMChannel dmChannel,
-                   PlayerChannel playersChannel,
+                   PlayerChannel playerChannel,
                    OpenAiClient openAiClient,
                    GameRepository gameRepository
 ) implements DM {
     private static final int NO_COMBAT_ZONE = 3;
     private static final String SYSTEM_PROMPT = """
             You are a Dungeons and Dragons master, and I'm going
-            to provide to you what the players are doing.
+            to provide to you what the player is doing.
             You have to briefly describe to them what's happening,
             and then you must provide them with choices on how
             to move forward in their story.
@@ -124,35 +124,38 @@ public record AiDM(DMChannel dmChannel,
     private static final String DIALOGUE_PROMPT_POSTFIX = """
             It is important to keep the dialogue brief.
             
-            Your response must be a phrase, followed by a list of choices
-            that the characters must choose from.
+            Your response must be a phrase, followed by a list of possible
+            answers that the player must choose from.
             
-            To mark the beginning of the choices section, place the
+            To mark the beginning of the answers section, place the
             following text before them:
             
             <new line>
-            *** CHOICES ***
+            *** ANSWERS ***
             <new line>
             
-            Present the choices with a bullet list, for example:
+            Present the answers with a bullet list, for example:
             
             * Hello there!
             * Bye
+            
+            Each answer must consist of a phrase that the character would say,
+            it must not be an action.
             """;
 
     @Override
     public void process(
-            PlayerInput input
+            Actions action
     ) throws Exception {
         Game game = gameRepository.game().orElseThrow();
-        if (input.action() instanceof Start start) {
+        if (action instanceof Start start) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
                             start.place() != null && !start.place().isBlank()
                                 ? context(game) + String.format("""
                                 
-                                Let's begin. The characters are currently exploring %s, what happens?
+                                Let's begin. The character is currently exploring %s, what happens?
                                 
                                 """, start.place()) + getExplorePromptPostfix(game)
                                 : context(game) + """
@@ -168,16 +171,16 @@ public record AiDM(DMChannel dmChannel,
             gameRepository.save(g -> g
                     .withLastOutput(output)
                     .withStoryLine(output.storyLine()));
-            playersChannel.post(output);
+            playerChannel.post(output);
         }
-        if (input.action() instanceof Explore e) {
+        if (action instanceof Explore e) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
                             String.format(context(game) +
                                     """
                                     
-                                    The characters are currently exploring %s, what happens?
+                                    The character is currently exploring %s, what happens?
                                     
                                     """ + getExplorePromptPostfix(game),
                                     e.place()))
@@ -189,12 +192,12 @@ public record AiDM(DMChannel dmChannel,
             gameRepository.save(g -> g
                     .withLastOutput(output)
                     .withStoryLine(output.storyLine()));
-            playersChannel.post(output);
+            playerChannel.post(output);
         }
-        if (input.action() instanceof Dialogue d) {
+        if (action instanceof Dialogue d) {
             String prompt = String.format(context(game) + """
                     
-                    The characters choose to speak to '%s', what does '%s' say to start the dialogue?
+                    The character wants to speak to '%s', what does '%s' say to start the dialogue?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     d.target(),
@@ -211,12 +214,12 @@ public record AiDM(DMChannel dmChannel,
                     .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
                     .withLastOutput(output)
             );
-            playersChannel.post(output);
+            playerChannel.post(output);
         }
-        if (input.action() instanceof Say s) {
+        if (action instanceof Say s) {
             String prompt = String.format(context(game) + """
                     
-                    The characters say '%s', what's the answer?
+                    The character says '%s', what's the answer?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     s.what());
@@ -245,15 +248,15 @@ public record AiDM(DMChannel dmChannel,
                             new ChatMessage(ChatRole.PLAYER, s.what()),
                             new ChatMessage(ChatRole.DM, output.phrase())))
             );
-            playersChannel.post(output);
+            playerChannel.post(output);
         }
-        if (input.action() instanceof EndDialogue) {
+        if (action instanceof EndDialogue) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
                             context(game) + chat(game) + """
                             
-                            The characters are currently exploring, what happens?
+                            The character is currently exploring, what happens?
                             
                             """ + getExplorePromptPostfix(game))
             ), List.of());
@@ -266,7 +269,7 @@ public record AiDM(DMChannel dmChannel,
                     .withLastOutput(output)
                     .withStoryLine(output.storyLine())
             );
-            playersChannel.post(output);
+            playerChannel.post(output);
         }
     }
 

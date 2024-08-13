@@ -50,7 +50,7 @@ public class ResponseParser
     ) {
         String[] split = content
                 .replaceAll("\\Q<new line>\\E", "")
-                .split("\\Q*** CHOICES ***\\E");
+                .split("\\Q*** ANSWERS ***\\E");
         String phrase = split[0];
         String answersContent = split[1];
         List<Actions> answers = new ArrayList<>(Arrays.stream(answersContent.split("\n"))

@@ -1,7 +1,7 @@
 package org.meh.dnd;
 
 public class InMemoryDMChannel
-        extends InMemoryChannel<PlayerInput>
+        extends InMemoryChannel<Actions>
         implements DMChannel
 {
 }
