@@ -163,14 +163,18 @@ public record AiDM(DMChannel dmChannel,
                             of either of these types:
                             
                             - explore <place>
-                            - kill <who or what>
-                            - talk <to whom>
+                            - kill <type> <who or what>
+                            - talk <type> <to whom>
+                            
+                            where:
+                            
+                            - <type> can be either 'warrior' or 'magic' or 'beast'
                             
                             For example:
                             
                             * explore Dark Dungeon
-                            * kill The Red Dragon
-                            * talk Elf Sage
+                            * kill beast The Red Dragon
+                            * talk magic Elf Sage
                             
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
@@ -199,12 +203,16 @@ public record AiDM(DMChannel dmChannel,
 
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
+            List<QuestGoal> newQuest =
+                    updateQuestFromExploring(quest, start.place());
             ExploreOutput output = parseExploreOutput(content, game.place());
+            ExploreOutput newOutput =
+                    output.withChoices(Quests.addQuestGoal(output.choices(), newQuest));
             gameRepository.save(g -> g
-                    .withLastOutput(output)
-                    .withStoryLine(output.storyLine())
-                    .withQuest(updateQuestFromExploring(quest, start.place())));
-            playerChannel.post(output);
+                    .withLastOutput(newOutput)
+                    .withStoryLine(newOutput.storyLine())
+                    .withQuest(newQuest));
+            playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
             ChatResponse response = openAiClient.chatCompletion(List.of(
@@ -222,10 +230,12 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
+            ExploreOutput newOutput =
+                    output.withChoices(Quests.addQuestGoal(output.choices(), game.quest()));
             gameRepository.save(g -> g
-                    .withLastOutput(output)
-                    .withStoryLine(output.storyLine()));
-            playerChannel.post(output);
+                    .withLastOutput(newOutput)
+                    .withStoryLine(newOutput.storyLine()));
+            playerChannel.post(newOutput);
         }
         if (action instanceof Dialogue d) {
             String prompt = String.format(context(game) + """
@@ -306,14 +316,18 @@ public record AiDM(DMChannel dmChannel,
                             of these types:
                             
                             - explore <place>
-                            - kill <who or what>
-                            - talk <to whom>
+                            - kill <type> <who or what>
+                            - talk <type> <to whom>
+                            
+                            where:
+                            
+                            - <type> can be either 'warrior' or 'magic' or 'beast'
                             
                             For example:
                             
                             * explore Dark Dungeon
-                            * kill The Red Dragon
-                            * talk Elf Sage
+                            * kill beast The Red Dragon
+                            * talk magic Elf Sage
                             
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
@@ -344,12 +358,15 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
+            ExploreOutput newOutput =
+                    output.withChoices(Quests.addQuestGoal(output.choices(), newGoals));
+
             gameRepository.save(g -> g
                     .withChat(new Chat(List.of()))
-                    .withLastOutput(output)
-                    .withStoryLine(output.storyLine())
+                    .withLastOutput(newOutput)
+                    .withStoryLine(newOutput.storyLine())
             );
-            playerChannel.post(output);
+            playerChannel.post(newOutput);
         }
     }
 
@@ -369,10 +386,10 @@ public record AiDM(DMChannel dmChannel,
 
     private String printGoals(List<QuestGoal> quest) {
         return quest.stream()
-                .map(g -> switch (g.type()) {
-                    case KILL -> "Kill " + g.target();
-                    case EXPLORE -> "Explore " + g.target();
-                    case TALK -> "Talk to " + g.target();
+                .map(g -> switch (g) {
+                    case KillGoal kg -> "Kill " + kg.target();
+                    case ExploreGoal eg -> "Explore " + eg.target();
+                    case TalkGoal tg -> "Talk to " + tg.target();
                 })
                 .map(m -> "* " + m)
                 .collect(Collectors.joining("\n"));

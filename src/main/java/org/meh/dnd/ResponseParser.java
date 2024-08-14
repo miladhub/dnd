@@ -64,17 +64,44 @@ public class ResponseParser
         String rest = raw.substring(hostileStr.length() + 1);
         String raceStr = rest.substring(0, rest.indexOf(" "));
         String name = rest.substring(raceStr.length() + 1);
-        return new NPC(name, NpcType.valueOf(raceStr.toUpperCase()), hostileStr.toLowerCase().contains("hostile"));
+        return new NPC(
+                name, NpcType.valueOf(raceStr.toUpperCase()),
+                hostileStr.toLowerCase().contains("hostile"));
     }
 
     public static List<QuestGoal> parseQuest(String content) {
         return Arrays.stream(content.split("\n"))
                 .map(r -> r.substring(2))
-                .map(r -> new QuestGoal(
-                        QuestGoalType.valueOf(r.substring(0, r.indexOf(" ")).toUpperCase().trim()),
-                        r.substring(r.substring(0, r.indexOf(" ")).trim().length() + 1).trim(),
-                        false
-                ))
+                .map(ResponseParser::parseQuestGoal)
                 .toList();
+    }
+
+    private static QuestGoal parseQuestGoal(String content) {
+        String actionStr = content.substring(0, content.indexOf(" ")).toLowerCase().trim();
+        String info = content.substring(actionStr.length() + 1).trim();
+        switch (actionStr) {
+            case "kill" -> {
+                String typeStr =
+                        info.substring(0, info.indexOf(" ")).toLowerCase().trim();
+                String target = info.substring(typeStr.length()).trim();
+                return new KillGoal(
+                        NpcType.valueOf(typeStr.toUpperCase()),
+                        target,
+                        false
+                );
+            }
+            case "talk" -> {
+                String typeStr =
+                        info.substring(0, info.indexOf(" ")).toLowerCase().trim();
+                String target = info.substring(typeStr.length()).trim();
+                return new TalkGoal(
+                        NpcType.valueOf(typeStr.toUpperCase()),
+                        target,
+                        false);
+            }
+            default -> {
+                return new ExploreGoal(info, false);
+            }
+        }
     }
 }

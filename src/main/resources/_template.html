@@ -38,6 +38,17 @@
 
             <section class="space-y-4">
                 {{#choices}}
+                {{#quest}}
+                <form hx-post="/actions" hx-swap="none"
+                      class="bg-orange-600 p-4 rounded-lg shadow-lg hover:bg-orange-700">
+                    <label for="action-{{name}}" hidden="hidden">{{name}}</label>
+                    <input id="action-{{name}}" name="action" type="text" hidden="hidden" value="{{name}}">
+                    <label for="info-{{name}}" hidden="hidden">{{info}}</label>
+                    <input id="info-{{name}}" name="info" type="text" hidden="hidden" value="{{info}}">
+                    <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
+                </form>
+                {{/quest}}
+                {{^quest}}
                 <form hx-post="/actions" hx-swap="none"
                       class="bg-blue-600 p-4 rounded-lg shadow-lg hover:bg-blue-700">
                     <label for="action-{{name}}" hidden="hidden">{{name}}</label>
@@ -46,6 +57,7 @@
                     <input id="info-{{name}}" name="info" type="text" hidden="hidden" value="{{info}}">
                     <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
                 </form>
+                {{/quest}}
                 {{/choices}}
             </section>
         </div>

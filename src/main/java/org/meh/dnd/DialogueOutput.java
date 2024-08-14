@@ -9,4 +9,7 @@ public record DialogueOutput(
 )
         implements PlayerOutput
 {
+    public DialogueOutput withChoices(List<Actions> answers) {
+        return null;
+    }
 }

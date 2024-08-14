@@ -83,7 +83,7 @@ public class ViewEncoderDecoder
             case DialogueOutput d -> Templates.template(new GameView(
                     d.phrase(),
                     d.answers().stream()
-                            .map(ViewEncoderDecoder::encodeAction)
+                            .map(a -> encodeAction(a, game.quest()))
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
@@ -91,14 +91,14 @@ public class ViewEncoderDecoder
             case ExploreOutput e -> Templates.template(new GameView(
                     e.description(),
                     e.choices().stream()
-                            .map(ViewEncoderDecoder::encodeAction)
+                            .map(a -> encodeAction(a, game.quest()))
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place()));
             case RestOutput ignored -> Templates.template(new GameView(
                     "You are resting.",
-                    List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()))),
+                    List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()), game.quest())),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place()));
@@ -165,30 +165,40 @@ public class ViewEncoderDecoder
         };
     }
 
-    private static ActionView encodeAction(Actions a) {
+    private static ActionView encodeAction(
+            Actions a,
+            List<QuestGoal> quest
+    ) {
+        boolean questRelated = Quests.matchesQuestGoal(a, quest);
         return switch (a) {
             case Attack attack -> new ActionView("Attack",
                     attack.type() + "_" + attack.target(),
-                    "Attack " + attack.target());
-            case Rest ignored -> new ActionView("Rest", "", "Rest");
+                    "Attack " + attack.target(),
+                    questRelated);
+            case Rest ignored -> new ActionView("Rest", "", "Rest", questRelated);
             case Dialogue d -> new ActionView("Dialogue",
                     d.type() + "_" + d.target(),
-                    "Talk to " + d.target());
+                    "Talk to " + d.target(),
+                    questRelated);
             case Explore e -> new ActionView("Explore", e.place(),
-                    "Explore " + e.place());
-            case EndDialogue ed -> new ActionView("EndDialogue", ed.target(), "End Dialogue");
-            case Say say -> new ActionView("Say", say.what(), say.what());
-            case Start start -> new ActionView("Start", start.place(), "Play");
+                    "Explore " + e.place(),
+                    questRelated);
+            case EndDialogue ed -> new ActionView("EndDialogue", ed.target(),
+                    "End Dialogue",
+                    questRelated);
+            case Say say -> new ActionView("Say", say.what(), say.what(), questRelated);
+            case Start start -> new ActionView("Start", start.place(), "Play"
+                    , questRelated);
         };
     }
 
     public static List<QuestGoalView> encodeQuest(List<QuestGoal> goals) {
         return goals.stream()
                 .map(g -> new QuestGoalView(
-                        switch (g.type()) {
-                            case KILL -> "Kill";
-                            case EXPLORE -> "Explore";
-                            case TALK -> "Talk to";
+                        switch (g) {
+                            case KillGoal ignored -> "Kill";
+                            case ExploreGoal ignored -> "Explore";
+                            case TalkGoal ignored -> "Talk to";
                         } + " " + g.target(), g.reached()))
                 .toList();
     }

@@ -10,4 +10,7 @@ public record ExploreOutput(
 )
         implements PlayerOutput
 {
+    ExploreOutput withChoices(List<Actions> choices) {
+        return new ExploreOutput(place, description, choices, storyLine);
+    }
 }

@@ -3,7 +3,8 @@ package org.meh.dnd;
 public record ActionView(
         String name,
         String info,
-        String label
+        String label,
+        boolean quest
 )
 {
 }

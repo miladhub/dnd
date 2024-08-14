@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.meh.dnd.QuestGoalType.*;
 import static org.meh.dnd.ResponseParser.*;
 
 class ResponseParserTest
@@ -138,13 +137,17 @@ class ResponseParserTest
     void parse_quest() {
         String response = """
                 * explore Dark Dungeon
-                * kill The Red Dragon
+                * kill beast The Red Dragon
+                * talk magic Elf Sage
+                * kill warrior Orc Chief
                 """;
         List<QuestGoal> goals = ResponseParser.parseQuest(response);
         assertEquals(
                 List.of(
-                        new QuestGoal(EXPLORE, "Dark Dungeon", false),
-                        new QuestGoal(KILL, "The Red Dragon", false)
+                        new ExploreGoal("Dark Dungeon", false),
+                        new KillGoal(NpcType.BEAST, "The Red Dragon", false),
+                        new TalkGoal(NpcType.MAGIC, "Elf Sage", false),
+                        new KillGoal(NpcType.WARRIOR, "Orc Chief", false)
                 ),
                 goals
         );

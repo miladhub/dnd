@@ -1,9 +1,8 @@
 package org.meh.dnd;
 
-public record QuestGoal(
-        QuestGoalType type,
-        String target,
-        boolean reached
-)
+public sealed interface QuestGoal
+    permits KillGoal, ExploreGoal, TalkGoal
 {
+    boolean reached();
+    String target();
 }

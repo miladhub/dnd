@@ -586,7 +586,7 @@ class DnDAcceptanceTest
                 "Dark Forest",
                 new Nobody(),
                 List.of(),
-                List.of(new QuestGoal(QuestGoalType.KILL, "goblin", false))
+                List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
         ));
 
         dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
@@ -595,7 +595,7 @@ class DnDAcceptanceTest
         dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
 
         assertEquals(
-                List.of(new QuestGoal(QuestGoalType.KILL, "goblin", true)),
+                List.of(new KillGoal(NpcType.WARRIOR, "goblin", true)),
                 game().quest());
     }
 
@@ -611,13 +611,13 @@ class DnDAcceptanceTest
                 "Dark Forest",
                 new Nobody(),
                 List.of(),
-                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dungeon", false))
+                List.of(new ExploreGoal("Dungeon", false))
         ));
 
         dnd.doAction(new Explore("The Dungeon"));
 
         assertEquals(
-                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dungeon", true)),
+                List.of(new ExploreGoal("Dungeon", true)),
                 game().quest());
     }
 
@@ -633,13 +633,13 @@ class DnDAcceptanceTest
                 "Dark Forest",
                 new Nobody(),
                 List.of(),
-                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dark Forest", false))
+                List.of(new ExploreGoal("Dark Forest", false))
         ));
 
         dnd.doAction(new Start("Dark Forest"));
 
         assertEquals(
-                List.of(new QuestGoal(QuestGoalType.EXPLORE, "Dark Forest", true)),
+                List.of(new ExploreGoal("Dark Forest", true)),
                 game().quest());
     }
 
@@ -655,13 +655,13 @@ class DnDAcceptanceTest
                 "Dark Forest",
                 new Nobody(),
                 List.of(),
-                List.of(new QuestGoal(QuestGoalType.TALK, "Elf Sage", false))
+                List.of(new TalkGoal(NpcType.MAGIC, "Elf Sage", false))
         ));
 
         dnd.doAction(new Dialogue("Elf Sage", NpcType.MAGIC));
 
         assertEquals(
-                List.of(new QuestGoal(QuestGoalType.TALK, "Elf Sage", true)),
+                List.of(new TalkGoal(NpcType.MAGIC, "Elf Sage", true)),
                 game().quest());
     }
 
