@@ -187,6 +187,7 @@ public class ViewEncoderDecoder
                         switch (g.type()) {
                             case KILL -> "Kill";
                             case EXPLORE -> "Explore";
+                            case TALK -> "Talk to";
                         } + " " + g.target(), g.reached()))
                 .toList();
     }

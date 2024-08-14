@@ -163,11 +163,13 @@ public record AiDM(DMChannel dmChannel,
                             
                             - explore <place>
                             - kill <who or what>
+                            - talk <to whom>
                             
                             For example:
                             
                             * explore Dark Dungeon
                             * kill The Red Dragon
+                            * talk Elf Sage
                             
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill'.

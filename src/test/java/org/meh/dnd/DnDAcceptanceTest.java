@@ -643,6 +643,28 @@ class DnDAcceptanceTest
                 game().quest());
     }
 
+    @Test
+    void talking_can_solve_quest_goal() {
+        gameRepository.save(new Game(
+                EXPLORING,
+                List.of(exploring),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new QuestGoal(QuestGoalType.TALK, "Elf Sage", false))
+        ));
+
+        dnd.doAction(new Dialogue("Elf Sage", NpcType.MAGIC));
+
+        assertEquals(
+                List.of(new QuestGoal(QuestGoalType.TALK, "Elf Sage", true)),
+                game().quest());
+    }
+
     private void dmOutcome(
             PlayerOutput output
     ) {

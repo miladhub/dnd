@@ -67,6 +67,7 @@ public record DnD(
                 gameRepository.save(g -> g
                         .withMode(DIALOGUE)
                         .withDialogueTarget(new Somebody(d.target(), d.type()))
+                        .withQuest(updateQuestFromTalking(g.quest(), d.target()))
                 );
                 dmChannel.post(action);
             }
@@ -170,7 +171,7 @@ public record DnD(
         else
             return q.stream()
                     .map(g -> {
-                        if (g.type() != KILL || !enemyMatches(f, g)) {
+                        if (g.type() != KILL || !targetMatches(f.opponent().name(), g)) {
                             return g;
                         } else {
                             return new QuestGoal(KILL, f.opponent().name(), true);
@@ -179,11 +180,26 @@ public record DnD(
                     .toList();
     }
 
-    private static boolean enemyMatches(
-            Fight f,
+    private List<QuestGoal> updateQuestFromTalking(
+            List<QuestGoal> q,
+            String target
+    ) {
+        return q.stream()
+                .map(g -> {
+                    if (g.type() != TALK || !targetMatches(target, g)) {
+                        return g;
+                    } else {
+                        return new QuestGoal(TALK, g.target(), true);
+                    }
+                })
+                .toList();
+    }
+
+    private static boolean targetMatches(
+            String target,
             QuestGoal g
     ) {
-        return g.target().toLowerCase().trim().equals(f.opponent().name().toLowerCase().trim());
+        return g.target().toLowerCase().trim().equals(target.toLowerCase().trim());
     }
 
     private List<QuestGoal> updateQuestFromExploring(
