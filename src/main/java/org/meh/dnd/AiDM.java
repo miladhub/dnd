@@ -172,7 +172,8 @@ public record AiDM(DMChannel dmChannel,
                             * talk Elf Sage
                             
                             Don't add anything but the list in the response. Each
-                            element must be either an 'explore' or a 'kill'.
+                            element must be either an 'explore' or a 'kill' or a
+                            'talk'.
                             """, game.background()))
             ), List.of());
             String questContent =
