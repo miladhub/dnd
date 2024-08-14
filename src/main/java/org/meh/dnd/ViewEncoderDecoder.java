@@ -138,7 +138,8 @@ public class ViewEncoderDecoder
                     co.distance(),
                     co.availableActions().stream()
                             .flatMap(ViewEncoderDecoder::encodeCombatAction)
-                            .toList()
+                            .toList(),
+                    game.place()
             ));
         };
     }

@@ -12,7 +12,8 @@ public record CombatView(
         CharacterView enemy,
         String combatLog,
         int distance,
-        List<CombatActionView> actions
+        List<CombatActionView> actions,
+        String location
 )
 {
 }
