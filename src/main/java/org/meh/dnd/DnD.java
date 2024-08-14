@@ -171,10 +171,10 @@ public record DnD(
         else
             return q.stream()
                     .map(g -> {
-                        if (g.type() != KILL || !targetMatches(f.opponent().name(), g)) {
-                            return g;
-                        } else {
+                        if (g.type() == KILL && targetMatches(f.opponent().name(), g)) {
                             return new QuestGoal(KILL, f.opponent().name(), true);
+                        } else {
+                            return g;
                         }
                     })
                     .toList();
@@ -186,10 +186,10 @@ public record DnD(
     ) {
         return q.stream()
                 .map(g -> {
-                    if (g.type() != TALK || !targetMatches(target, g)) {
-                        return g;
-                    } else {
+                    if (g.type() == TALK && targetMatches(target, g)) {
                         return new QuestGoal(TALK, g.target(), true);
+                    } else {
+                        return g;
                     }
                 })
                 .toList();
