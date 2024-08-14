@@ -157,14 +157,14 @@ public record AiDM(DMChannel dmChannel,
                             
                             "%s"
                             
-                            Lay out a set of objectives that would lead the
-                            character to reaching their goal. Create a bullet list
-                            of goals, each of either of these types:
+                            Lay out a bullet list of goals that would lead the
+                            character to reaching their goal. Each goal must be
+                            of either of these types:
                             
                             - explore <place>
                             - kill <who or what>
                             
-                            For example, this is a valid response:
+                            For example:
                             
                             * explore Dark Dungeon
                             * kill The Red Dragon

@@ -170,13 +170,20 @@ public record DnD(
         else
             return q.stream()
                     .map(g -> {
-                        if (g.type() != KILL || !g.target().equals(f.opponent().name())) {
+                        if (g.type() != KILL || !enemyMatches(f, g)) {
                             return g;
                         } else {
                             return new QuestGoal(KILL, f.opponent().name(), true);
                         }
                     })
                     .toList();
+    }
+
+    private static boolean enemyMatches(
+            Fight f,
+            QuestGoal g
+    ) {
+        return g.target().toLowerCase().trim().equals(f.opponent().name().toLowerCase().trim());
     }
 
     private List<QuestGoal> updateQuestFromExploring(

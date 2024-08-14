@@ -72,7 +72,7 @@ public class ResponseParser
                 .map(r -> r.substring(2))
                 .map(r -> new QuestGoal(
                         QuestGoalType.valueOf(r.substring(0, r.indexOf(" ")).toUpperCase().trim()),
-                        r.substring(r.substring(0, r.indexOf(" ")).trim().length() + 1),
+                        r.substring(r.substring(0, r.indexOf(" ")).trim().length() + 1).trim(),
                         false
                 ))
                 .toList();
