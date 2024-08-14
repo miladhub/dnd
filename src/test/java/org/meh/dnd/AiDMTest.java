@@ -157,7 +157,7 @@ class AiDMTest
                         new Say("What kind of illusion can you create?"),
                         new Say("Where are you going?"),
                         new Attack("Ranger", NpcType.WARRIOR),
-                        new EndDialogue()
+                        new EndDialogue("Ranger")
                 )
         );
         assertEquals(output, AiDM.parseDialogueOutput(response, "Ranger", NpcType.WARRIOR));

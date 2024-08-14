@@ -59,4 +59,10 @@ public record Game(
     public Game withQuest(List<QuestGoal> quest) {
         return new Game(mode, events, playerChar, combatStatus, chat, background, place, dialogueTarget, diary, quest);
     }
+
+    public Game withNewQuestGoals(List<QuestGoal> newGoals) {
+        List<QuestGoal> goals = new ArrayList<>(quest);
+        goals.addAll(newGoals);
+        return new Game(mode, events, playerChar, combatStatus, chat, background, place, dialogueTarget, diary, goals);
+    }
 }

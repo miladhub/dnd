@@ -19,7 +19,7 @@ public class ViewEncoderDecoder
             case "Rest" -> new Rest();
             case "Explore" -> new Explore(parsePlace(info, game));
             case "Say" -> new Say(cleanString(info));
-            case "EndDialogue" -> new EndDialogue();
+            case "EndDialogue" -> new EndDialogue(info);
             case "Start" -> new Start(parsePlace(info, game));
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
@@ -175,7 +175,7 @@ public class ViewEncoderDecoder
                     "Talk to " + d.target());
             case Explore e -> new ActionView("Explore", e.place(),
                     "Explore " + e.place());
-            case EndDialogue ignored -> new ActionView("EndDialogue", "", "End Dialogue");
+            case EndDialogue ed -> new ActionView("EndDialogue", ed.target(), "End Dialogue");
             case Say say -> new ActionView("Say", say.what(), say.what());
             case Start start -> new ActionView("Start", start.place(), "Play");
         };

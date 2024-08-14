@@ -178,7 +178,7 @@ public record AiDM(DMChannel dmChannel,
             ), List.of());
             String questContent =
                     ((ChatResponse.MessageChatResponse) questResponse).content();
-            List<QuestGoal> quest = ResponseParser.parseQuest(questContent);
+            List<QuestGoal> quest = parseQuest(questContent);
 
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
@@ -282,7 +282,54 @@ public record AiDM(DMChannel dmChannel,
             );
             playerChannel.post(output);
         }
-        if (action instanceof EndDialogue) {
+        if (action instanceof EndDialogue ed) {
+            ChatResponse questResponse = openAiClient.chatCompletion(List.of(
+                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
+                    new OpenAiRequestMessage(Role.user, String.format(
+                            """
+                            Given this background:
+                            
+                            "%s"
+                            
+                            Given how this dialogue went:
+                            
+                            %s
+                            
+                            Given the current quest goals:
+                            
+                            %s
+                            
+                            Tell me if there is any other quest goal that should
+                            be added to the current quest goals. Present the new
+                            goals as a bullet list. Each goal must be of either
+                            of these types:
+                            
+                            - explore <place>
+                            - kill <who or what>
+                            - talk <to whom>
+                            
+                            For example:
+                            
+                            * explore Dark Dungeon
+                            * kill The Red Dragon
+                            * talk Elf Sage
+                            
+                            Don't add anything but the list in the response. Each
+                            element must be either an 'explore' or a 'kill' or a
+                            'talk'.
+                            """,
+                            game.background(),
+                            printChat(
+                                    game.chat(),
+                                    game.playerChar().name(),
+                                    ed.target()),
+                            printGoals(game.quest())))
+            ), List.of());
+            String questContent =
+                    ((ChatResponse.MessageChatResponse) questResponse).content();
+            List<QuestGoal> newGoals = parseQuest(questContent);
+            gameRepository.save(g -> g.withNewQuestGoals(newGoals));
+
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
@@ -303,6 +350,31 @@ public record AiDM(DMChannel dmChannel,
             );
             playerChannel.post(output);
         }
+    }
+
+    private String printChat(
+            Chat chat,
+            String playerChar,
+            String target
+    ) {
+        return chat.messages().stream()
+                .map(m -> switch (m.role()) {
+                    case DM -> target + ": " + m.message();
+                    case PLAYER -> playerChar + ": " + m.message();
+                })
+                .map(m -> "* " + m)
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String printGoals(List<QuestGoal> quest) {
+        return quest.stream()
+                .map(g -> switch (g.type()) {
+                    case KILL -> "Kill " + g.target();
+                    case EXPLORE -> "Explore " + g.target();
+                    case TALK -> "Talk to " + g.target();
+                })
+                .map(m -> "* " + m)
+                .collect(Collectors.joining("\n"));
     }
 
     private static String context(Game game) {
@@ -386,7 +458,7 @@ public record AiDM(DMChannel dmChannel,
     ) {
         ParsedDialogueResponse parsed = parseDialogueResponse(content);
         parsed.answers().add(new Attack(target, type));
-        parsed.answers().add(new EndDialogue());
+        parsed.answers().add(new EndDialogue(target));
         return new DialogueOutput(target, parsed.phrase(), parsed.answers());
     }
 }

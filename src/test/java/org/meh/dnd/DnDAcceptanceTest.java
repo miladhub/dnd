@@ -163,7 +163,7 @@ class DnDAcceptanceTest
         startWith(answerByGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(exploring);
 
-        dnd.doAction(new EndDialogue());
+        dnd.doAction(new EndDialogue("goblin"));
 
         assertThat(playerOutputs, contains(exploring));
 
