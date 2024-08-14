@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.meh.dnd.Quests.*;
 import static org.meh.dnd.ResponseParser.*;
 
 public record AiDM(DMChannel dmChannel,
@@ -202,7 +203,7 @@ public record AiDM(DMChannel dmChannel,
             gameRepository.save(g -> g
                     .withLastOutput(output)
                     .withStoryLine(output.storyLine())
-                    .withQuest(quest));
+                    .withQuest(updateQuestFromExploring(quest, start.place())));
             playerChannel.post(output);
         }
         if (action instanceof Explore e) {
