@@ -19,7 +19,7 @@ public class ViewEncoderDecoder
             case "Rest" -> new Rest();
             case "Explore" -> new Explore(parsePlace(info, game));
             case "Say" -> new Say(cleanString(info));
-            case "EndDialogue" -> new EndDialogue(info);
+            case "EndDialogue" -> infoToEndDialogue(info);
             case "Start" -> new Start(parsePlace(info, game));
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
@@ -183,9 +183,10 @@ public class ViewEncoderDecoder
             case Explore e -> new ActionView("Explore", e.place(),
                     "Explore " + e.place(),
                     questRelated);
-            case EndDialogue ed -> new ActionView("EndDialogue", ed.target(),
-                    "End Dialogue",
-                    questRelated);
+            case EndDialogue ed -> new ActionView("EndDialogue",
+                    infoFromEndDialogue(ed),
+                    ed.phrase(),
+                    true);
             case Say say -> new ActionView("Say", say.what(), say.what(), questRelated);
             case Start start -> new ActionView("Start", start.place(), "Play"
                     , questRelated);
@@ -194,12 +195,49 @@ public class ViewEncoderDecoder
 
     public static List<QuestGoalView> encodeQuest(List<QuestGoal> goals) {
         return goals.stream()
-                .map(g -> new QuestGoalView(
-                        switch (g) {
-                            case KillGoal ignored -> "Kill";
-                            case ExploreGoal ignored -> "Explore";
-                            case TalkGoal ignored -> "Talk to";
-                        } + " " + g.target(), g.reached()))
+                .map(ViewEncoderDecoder::encodeQuestGoal)
                 .toList();
+    }
+
+    private static QuestGoalView encodeQuestGoal(QuestGoal g) {
+        return new QuestGoalView(
+                switch (g) {
+                    case KillGoal ignored -> "Kill";
+                    case ExploreGoal ignored -> "Explore";
+                    case TalkGoal ignored -> "Talk to";
+                } + " " + g.target(), g.reached());
+    }
+
+    private static String infoFromEndDialogue(EndDialogue ed) {
+        String phrase = ed.phrase();
+        String goalInfo = switch (ed.goal()) {
+            case ExploreGoal e -> "explore_" + e.target();
+            case KillGoal k -> "kill_" + k.type() + "_" + k.target();
+            case TalkGoal t -> "talk_" + t.type() + "_" + t.target();
+        };
+        return phrase + "=>" + goalInfo;
+    }
+
+    private static EndDialogue infoToEndDialogue(String info) {
+        String[] phraseTail = info.split("=>");
+        String phrase = phraseTail[0].trim();
+        String[] goalElements = phraseTail[1].split("_");
+        String goalType = goalElements[0];
+        QuestGoal goal = switch (goalType) {
+            case "explore" -> new ExploreGoal(goalElements[1].trim(), false);
+            case "kill" -> new KillGoal(
+                    NpcType.valueOf(goalElements[1].trim().toUpperCase()),
+                    goalElements[2].trim(),
+                    false
+            );
+            case "talk" -> new TalkGoal(
+                    NpcType.valueOf(goalElements[1].trim().toUpperCase()),
+                    goalElements[2].trim(),
+                    false
+            );
+            default ->
+                    throw new IllegalStateException("Unexpected value: " + goalType);
+        };
+        return new EndDialogue(phrase, goal);
     }
 }

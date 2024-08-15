@@ -1,6 +1,8 @@
 package org.meh.dnd;
 
-public record EndDialogue(String target)
-        implements Actions
+public record EndDialogue(
+        String phrase,
+        QuestGoal goal
+) implements Actions
 {
 }

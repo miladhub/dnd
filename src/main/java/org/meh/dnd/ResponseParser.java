@@ -53,9 +53,20 @@ public class ResponseParser
         List<Actions> answers = new ArrayList<>(Arrays.stream(answersContent.split("\n"))
                 .filter(c -> !c.trim().isBlank())
                 .map(c -> cleanString(c.substring(2)))
-                .map(c -> (Actions) new Say(c))
+                .map(ResponseParser::parseDialogueAction)
                 .toList());
         return new ParsedDialogueResponse(phrase.trim(), answers);
+    }
+
+    private static Actions parseDialogueAction(String content) {
+        if (!content.contains("=>")) {
+            return new Say(content);
+        } else {
+            String phraseStr = content.substring(0, content.indexOf("=>"));
+            String goalStr = content.substring(phraseStr.length() + 2).trim();
+            QuestGoal goal = parseQuestGoal(goalStr);
+            return new EndDialogue(phraseStr.trim(), goal);
+        }
     }
 
     private static NPC parseNpc(String raw) {
@@ -71,7 +82,7 @@ public class ResponseParser
 
     public static List<QuestGoal> parseQuest(String content) {
         return Arrays.stream(content.split("\n"))
-                .map(r -> r.substring(2))
+                .map(r -> r.substring(2).trim())
                 .map(ResponseParser::parseQuestGoal)
                 .toList();
     }
@@ -98,6 +109,9 @@ public class ResponseParser
                         NpcType.valueOf(typeStr.toUpperCase()),
                         target,
                         false);
+            }
+            case "explore" -> {
+                return new ExploreGoal(info.trim(), false);
             }
             default -> {
                 return new ExploreGoal(info, false);

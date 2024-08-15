@@ -56,9 +56,9 @@ class DnDAcceptanceTest
             new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS, goblin, List.of(), false, false, 5, AVAILABLE_ACTIONS);
     private final RestOutput rest = new RestOutput();
     private final DialogueOutput speakWithGoblin =
-            new DialogueOutput("goblin", "hey there", List.of(new Say("hi"), new Say("what?")));
+            new DialogueOutput("hey there", List.of(new Say("hi"), new Say("what?")));
     private final DialogueOutput answerByGoblin =
-            new DialogueOutput("goblin", "I said, hey there", List.of(new Say("hi")));
+            new DialogueOutput("I said, hey there", List.of(new Say("hi")));
     private final CombatOutput meleeOutput = new CombatOutput(
             false,
             STANDARD_ACTIONS, STANDARD_ACTIONS, goblin,
@@ -163,7 +163,7 @@ class DnDAcceptanceTest
         startWith(answerByGoblin, new Peace(), EXPLORING, foo);
         dmOutcome(exploring);
 
-        dnd.doAction(new EndDialogue("goblin"));
+        dnd.doAction(new EndDialogue("Bye", new KillGoal(NpcType.BEAST, "Wolf", false)));
 
         assertThat(playerOutputs, contains(exploring));
 

@@ -135,10 +135,29 @@ public record AiDM(DMChannel dmChannel,
             *** ANSWERS ***
             <new line>
             
-            Present the answers with a bullet list, for example:
+            Each answer can either be a phrase to continue the dialogue, or a
+            phrase plus one goal quest to be added as a result
+            of the dialogue, separated by an arrow, "=>":
+            
+            - <phrase>
+            - <phrase> => <goal>
+            
+            The <goal> can be either of:
+            
+            - explore <place>
+            - kill <type> <who or what>
+            - talk <type> <to whom>
+            
+            where:
+            
+            - <type> can be either 'warrior' or 'magic' or 'beast'
+            
+            For example:
             
             * Hello there!
-            * Bye
+            * Farewell, and good luck. => explore Dark Dungeon
+            * Good luck defeating the dragon! => kill beast The Red Dragon
+            * Tell my old Elf friend that I sent you. => talk magic Elf Sage
             
             Each answer must consist of a phrase that the character would say,
             it must not be an action.
@@ -252,7 +271,7 @@ public record AiDM(DMChannel dmChannel,
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
             DialogueOutput output =
-                    parseDialogueOutput(content, d.target(), d.type());
+                    parseDialogueOutput(content);
             gameRepository.save(g -> g
                     .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
                     .withLastOutput(output)
@@ -283,9 +302,8 @@ public record AiDM(DMChannel dmChannel,
                     List.of());
             String content =
                     ((ChatResponse.MessageChatResponse) response).content();
-            Somebody somebody = (Somebody) game.dialogueTarget();
             DialogueOutput output =
-                    parseDialogueOutput(content, somebody.who(), somebody.type());
+                    parseDialogueOutput(content);
             gameRepository.save(g -> g
                     .withChat(g.chat().add(
                             new ChatMessage(ChatRole.PLAYER, s.what()),
@@ -294,56 +312,8 @@ public record AiDM(DMChannel dmChannel,
             playerChannel.post(output);
         }
         if (action instanceof EndDialogue ed) {
-            ChatResponse questResponse = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user, String.format(
-                            """
-                            Given this background:
-                            
-                            "%s"
-                            
-                            Given how this dialogue went:
-                            
-                            %s
-                            
-                            Given the current quest goals:
-                            
-                            %s
-                            
-                            Tell me if there is any other quest goal that should
-                            be added to the current quest goals. Present the new
-                            goals as a bullet list. Each goal must be of either
-                            of these types:
-                            
-                            - explore <place>
-                            - kill <type> <who or what>
-                            - talk <type> <to whom>
-                            
-                            where:
-                            
-                            - <type> can be either 'warrior' or 'magic' or 'beast'
-                            
-                            For example:
-                            
-                            * explore Dark Dungeon
-                            * kill beast The Red Dragon
-                            * talk magic Elf Sage
-                            
-                            Don't add anything but the list in the response. Each
-                            element must be either an 'explore' or a 'kill' or a
-                            'talk'.
-                            """,
-                            game.background(),
-                            printChat(
-                                    game.chat(),
-                                    game.playerChar().name(),
-                                    ed.target()),
-                            printGoals(game.quest())))
-            ), List.of());
-            String questContent =
-                    ((ChatResponse.MessageChatResponse) questResponse).content();
-            List<QuestGoal> newGoals = parseQuest(questContent);
-            gameRepository.save(g -> g.withNewQuestGoals(newGoals));
+            List<QuestGoal> newGoals = new ArrayList<>(game.quest());
+            newGoals.add(ed.goal());
 
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
@@ -365,34 +335,10 @@ public record AiDM(DMChannel dmChannel,
                     .withChat(new Chat(List.of()))
                     .withLastOutput(newOutput)
                     .withStoryLine(newOutput.storyLine())
+                    .withQuest(newGoals)
             );
             playerChannel.post(newOutput);
         }
-    }
-
-    private String printChat(
-            Chat chat,
-            String playerChar,
-            String target
-    ) {
-        return chat.messages().stream()
-                .map(m -> switch (m.role()) {
-                    case DM -> target + ": " + m.message();
-                    case PLAYER -> playerChar + ": " + m.message();
-                })
-                .map(m -> "* " + m)
-                .collect(Collectors.joining("\n"));
-    }
-
-    private String printGoals(List<QuestGoal> quest) {
-        return quest.stream()
-                .map(g -> switch (g) {
-                    case KillGoal kg -> "Kill " + kg.target();
-                    case ExploreGoal eg -> "Explore " + eg.target();
-                    case TalkGoal tg -> "Talk to " + tg.target();
-                })
-                .map(m -> "* " + m)
-                .collect(Collectors.joining("\n"));
     }
 
     private static String context(Game game) {
@@ -470,13 +416,9 @@ public record AiDM(DMChannel dmChannel,
     }
 
     static DialogueOutput parseDialogueOutput(
-            String content,
-            String target,
-            NpcType type
+            String content
     ) {
         ParsedDialogueResponse parsed = parseDialogueResponse(content);
-        parsed.answers().add(new Attack(target, type));
-        parsed.answers().add(new EndDialogue(target));
-        return new DialogueOutput(target, parsed.phrase(), parsed.answers());
+        return new DialogueOutput(parsed.phrase(), parsed.answers());
     }
 }
