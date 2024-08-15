@@ -7,14 +7,17 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestStreamElementType;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
-import java.net.URI;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-
-import static org.meh.dnd.GameMode.EXPLORING;
+import java.util.Optional;
 
 @Path("/")
 public class RestServer
@@ -89,22 +92,7 @@ public class RestServer
                 },
                 new AvailableActions(actions, bonusActions, speed)
         );
-        Game game = new Game(
-                EXPLORING,
-                List.of(new ExploreOutput(
-                        place,
-                        "Ready.",
-                        List.of(new Start(place)),
-                        "")),
-                gameChar,
-                new Peace(),
-                new Chat(List.of()),
-                background,
-                place,
-                new Nobody(),
-                List.of(),
-                List.of()
-        );
+        Game game = GameSaveLoad.createGameFrom(background, place, gameChar);
         gameRepository.save(game);
         return Response.ok()
                 .header("HX-Redirect", "/")
@@ -170,5 +158,39 @@ public class RestServer
     ) {
         Game game = gameRepository.game().orElseThrow();
         return ViewEncoderDecoder.encodeOutput(output, game);
+    }
+
+    @GET
+    @Path("/save")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response save()
+    throws IOException {
+        Optional<Game> game = gameRepository.game();
+        if (game.isEmpty()) {
+            return Response.ok("".getBytes(StandardCharsets.UTF_8))
+                    .header("Content-disposition",
+                            "attachment; filename=game.json")
+                    .build();
+        } else {
+            String save = GameSaveLoad.save(game.get());
+            return Response.ok(save)
+                    .header("Content-disposition",
+                            "attachment; filename=game.json")
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/upload")
+    public Response load(@RestForm("game") FileUpload file)
+    throws Exception {
+        try (FileReader r = new FileReader(file.filePath().toFile())
+        ) {
+            Game game = GameSaveLoad.load(r);
+            gameRepository.save(game);
+            return Response.ok()
+                    .header("HX-Redirect", "/")
+                    .build();
+        }
     }
 }

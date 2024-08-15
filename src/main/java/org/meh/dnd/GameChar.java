@@ -1,5 +1,7 @@
 package org.meh.dnd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +31,7 @@ public record GameChar(
                 weapons, spells, availableActions);
     }
 
+    @JsonIgnore
     public boolean isDead() {
         return hp == 0;
     }
