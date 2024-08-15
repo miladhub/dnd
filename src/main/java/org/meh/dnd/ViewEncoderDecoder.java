@@ -188,8 +188,7 @@ public class ViewEncoderDecoder
                     ed.phrase(),
                     true);
             case Say say -> new ActionView("Say", say.what(), say.what(), questRelated);
-            case Start start -> new ActionView("Start", start.place(), "Play"
-                    , questRelated);
+            case Start start -> new ActionView("Start", start.place(), "Play", questRelated);
         };
     }
 

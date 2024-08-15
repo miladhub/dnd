@@ -61,11 +61,10 @@ public class GameSaveLoad
     private static Game load(GameSave save) {
         return new Game(
                 save.mode(),
-                List.of(new ExploreOutput(
-                        save.place(),
-                        "Ready.",
-                        List.of(new Start(save.place())),
-                        "")),
+                List.of(save.quest().isEmpty()
+                        ? new ExploreOutput(save.place(), "Ready.", List.of(new Start(save.place())), "")
+                        : new ExploreOutput(save.place(), "Ready to continue.", List.of(new Explore(save.place())), "")
+                ),
                 save.playerChar(),
                 new Peace(),
                 new Chat(List.of()),

@@ -8,8 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.DndCombat.*;
-import static org.meh.dnd.FightOutcome.IN_PROGRESS;
-import static org.meh.dnd.GameMode.COMBAT;
+import static org.meh.dnd.GameMode.EXPLORING;
 
 class GameSaveLoadTest
 {
@@ -34,43 +33,76 @@ class GameSaveLoadTest
             CharClass.FIGHTER,
             10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW),
             List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS);
-    private final Game game = new Game(
-            COMBAT,
-            List.of(combatGoblin),
-            foo,
-            new Fight(
-                    true, goblin, List.of(), 5, IN_PROGRESS,
-                    new AvailableActions(3, 1, 30),
-                    STANDARD_ACTIONS),
-            new Chat(List.of()),
-            "Once upon a time in the west...",
-            "Dark Forest",
-            new Nobody(),
-            List.of(),
-            List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
-    );
-    private final Game saved = new Game(
-            COMBAT,
-            List.of(new ExploreOutput(
-                    "Dark Forest",
-                    "Ready.",
-                    List.of(new Start("Dark Forest")),
-                    "")),
-            foo,
-            new Peace(),
-            new Chat(List.of()),
-            "Once upon a time in the west...",
-            "Dark Forest",
-            new Nobody(),
-            List.of(),
-            List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
-    );
 
     @Test
-    void save_load()
+    void save_load_no_quests()
     throws Exception {
+        Game game = new Game(
+                EXPLORING,
+                List.of(combatGoblin),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of()
+        );
         String saveStr = GameSaveLoad.save(game);
         Game g = GameSaveLoad.load(new StringReader(saveStr));
+        Game saved = new Game(
+                EXPLORING,
+                List.of(new ExploreOutput(
+                        "Dark Forest",
+                        "Ready.",
+                        List.of(new Start("Dark Forest")),
+                        "")),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of()
+        );
+        assertEquals(saved, g);
+    }
+
+    @Test
+    void save_load_with_quests()
+    throws Exception {
+        Game game = new Game(
+                EXPLORING,
+                List.of(combatGoblin),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
+        );
+        String saveStr = GameSaveLoad.save(game);
+        Game g = GameSaveLoad.load(new StringReader(saveStr));
+        Game saved = new Game(
+                EXPLORING,
+                List.of(new ExploreOutput(
+                        "Dark Forest",
+                        "Ready to continue.",
+                        List.of(new Explore("Dark Forest")),
+                        "")),
+                foo,
+                new Peace(),
+                new Chat(List.of()),
+                "Once upon a time in the west...",
+                "Dark Forest",
+                new Nobody(),
+                List.of(),
+                List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
+        );
         assertEquals(saved, g);
     }
 }
