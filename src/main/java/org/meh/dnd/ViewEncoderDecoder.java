@@ -79,6 +79,8 @@ public class ViewEncoderDecoder
             Game game
     ) {
         GameChar pc = game.playerChar();
+        boolean questDone = !game.quest().isEmpty() &&
+                game.quest().stream().allMatch(QuestGoal::reached);
         return switch (output) {
             case DialogueOutput d -> Templates.template(new GameView(
                     d.phrase(),
@@ -87,7 +89,7 @@ public class ViewEncoderDecoder
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place()));
+                    game.place(), questDone));
             case ExploreOutput e -> Templates.template(new GameView(
                     e.description(),
                     e.choices().stream()
@@ -95,13 +97,13 @@ public class ViewEncoderDecoder
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place()));
+                    game.place(), questDone));
             case RestOutput ignored -> Templates.template(new GameView(
                     "You are resting.",
                     List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()), game.quest())),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place()));
+                    game.place(), questDone));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),

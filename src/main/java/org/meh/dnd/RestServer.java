@@ -99,6 +99,21 @@ public class RestServer
                 .build();
     }
 
+    @POST
+    @Path("/quest")
+    @Produces(MediaType.TEXT_HTML)
+    public Response createQuest(
+            @FormParam("background") String background,
+            @FormParam("place") String place
+    ) {
+        Game game = gameRepository.game().orElseThrow();
+        Game newGame = GameSaveLoad.createGameFrom(background, place, game.playerChar());
+        gameRepository.save(newGame);
+        return Response.ok()
+                .header("HX-Redirect", "/")
+                .build();
+    }
+
     @GET
     @Path("/hello")
     @Produces(MediaType.TEXT_PLAIN)

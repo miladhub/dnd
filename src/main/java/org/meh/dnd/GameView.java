@@ -7,7 +7,8 @@ public record GameView(
         List<ActionView> choices,
         String background,
         List<QuestGoalView> goals,
-        String location
+        String location,
+        boolean questDone
 )
 {
 }
