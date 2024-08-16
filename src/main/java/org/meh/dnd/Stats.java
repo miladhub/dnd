@@ -9,4 +9,14 @@ public record Stats(
         int charisma
 )
 {
+    public int stat(Stat stat) {
+        return switch (stat) {
+            case STR -> strength;
+            case CON -> constitution;
+            case DEX -> dexterity;
+            case INT -> intelligence;
+            case WIS -> wisdom;
+            case CHA -> charisma;
+        };
+    }
 }

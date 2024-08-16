@@ -1,5 +1,7 @@
 package org.meh.dnd;
 
+import org.jboss.logging.Logger;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -9,6 +11,8 @@ import static org.meh.dnd.FightOutcome.IN_PROGRESS;
 
 public class DndCombat implements Combat
 {
+    private final static Logger LOG = Logger.getLogger(DndCombat.class);
+
     public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
     public static final Stats STATS_FIGHTER = new Stats(15, 13, 14, 8, 12, 10);
     public static final Stats STATS_WIZARD = new Stats(8, 12, 14, 15, 13, 10);
@@ -97,11 +101,22 @@ public class DndCombat implements Combat
             GameChar gameChar,
             Attack attack
     ) {
-        boolean playersTurn = new Random().nextBoolean();
         GameChar opponent = generateOpponent(attack.target(), attack.type());
+        boolean playersTurn = computePlayerTurn(gameChar, opponent);
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,
                 gameChar.availableActions(),
                 opponent.availableActions());
+    }
+
+    private boolean computePlayerTurn(
+            GameChar gameChar,
+            GameChar opponent
+    ) {
+        int playerInitiative = Dice.initiative(gameChar);
+        int opponentInitiative = Dice.initiative(opponent);
+        LOG.infof("initiative roll - player: %d, opponent: %d",
+                playerInitiative, opponentInitiative);
+        return playerInitiative >= opponentInitiative;
     }
 
     @Override
