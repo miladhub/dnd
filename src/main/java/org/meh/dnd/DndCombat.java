@@ -23,9 +23,9 @@ public class DndCombat implements Combat
     public static final Weapon BOW = new Weapon("bow", true, D6, true, false);
     public static final Weapon UNARMED = new Weapon("unarmed", false, D4, false, true);
     public static final Weapon DAGGER = new Weapon("dagger", false, D6, false, true);
-    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8);
-    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8);
-    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12);
+    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8, false);
+    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8, true);
+    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12, true);
 
     private static final List<Weapon> WEAPONS = List.of(
             SWORD,
@@ -242,7 +242,7 @@ public class DndCombat implements Combat
         Die die = damageDie(attack);
         return switch (attack) {
             case SpellAttack ignored ->
-                    new DamageRoll(Dice.rollInt(attacker, die), die, INT);
+                    new DamageRoll(Dice.roll(1, die, 0), die, INT);
             case WeaponAttack ignored -> isRangedAttack(attack)
                     ? new DamageRoll(Dice.rollRanged(attacker, die), die, DEX)
                     : new DamageRoll(Dice.rollMelee(attacker, die), die, STR);
@@ -268,6 +268,8 @@ public class DndCombat implements Combat
             GameChar attacker,
             GameChar defender
     ) {
+        if (needsNoRoll(attack))
+            return true;
         AttackRoll attackRoll = attackRoll(attack, attacker);
         LOG.infof("attack roll (%s) - %s: %d, %s (AC): %d",
                 attackRoll.stat().name().toLowerCase(),
@@ -278,6 +280,13 @@ public class DndCombat implements Combat
         return attackRoll.roll() >= defender.ac();
     }
 
+    private boolean needsNoRoll(Attacks attack) {
+        return attack instanceof SpellAttack sa &&
+                !attackSpell(sa.spell())
+                        .map(Spell::rollsToHit)
+                        .findFirst().orElseThrow();
+    }
+
     private static AttackRoll attackRoll(
             Attacks attack,
             GameChar attacker
@@ -285,7 +294,7 @@ public class DndCombat implements Combat
         int pb = proficiencyBonus(attacker);
         return switch (attack) {
             case SpellAttack ignored ->
-                    new AttackRoll(pb + Dice.rollInt(attacker, D20), INT);
+                    new AttackRoll(pb + Dice.roll(1, D20, Dice.intBonus(attacker)), INT);
             case WeaponAttack ignored -> isRangedAttack(attack)
                     ? new AttackRoll(pb + Dice.rollRanged(attacker, D20), DEX)
                     : new AttackRoll(pb + Dice.rollMelee(attacker, D20), STR);

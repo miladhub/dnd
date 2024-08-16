@@ -162,6 +162,10 @@ public record AiDM(DMChannel dmChannel,
             * Good luck defeating the dragon! => kill beast The Red Dragon
             * Tell my old Elf friend that I sent you. => talk magic Elf Sage
             
+            In these examples, the first one, without a goal, does not end the
+            dialogue. The others, such as "Farewell...", end the dialogue and
+            provide a goal.
+            
             Each answer must consist of a phrase that the character would say,
             it must not be an action.
             """;
