@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import static org.meh.dnd.CharClass.*;
 import static org.meh.dnd.Die.*;
 import static org.meh.dnd.FightOutcome.IN_PROGRESS;
+import static org.meh.dnd.Stat.*;
 
 public class DndCombat implements Combat
 {
@@ -222,18 +223,30 @@ public class DndCombat implements Combat
             GameChar defender
     ) {
         if (hits(attack, attacker, defender)) {
-            Die dmgDie = damageDie(attack);
-            int damage = switch (attack) {
-                case SpellAttack ignored -> Dice.rollInt(attacker, dmgDie);
-                case WeaponAttack ignored -> isRangedAttack(attack)
-                        ? Dice.rollRanged(attacker, dmgDie)
-                        : Dice.rollMelee(attacker, dmgDie);
-            };
-            LOG.infof("damage roll - %s: %d", attacker.name(), damage);
-            return new Hit(defender.damage(damage), damage);
+            DamageRoll roll = damageRoll(attack, attacker);
+            LOG.infof("damage roll (%s, %s) - %s: %d",
+                    roll.die().name().toLowerCase(),
+                    roll.stat().name().toLowerCase(),
+                    attacker.name(),
+                    roll.damage());
+            return new Hit(defender.damage(roll.damage()), roll.damage());
         } else {
             return new Miss(defender);
         }
+    }
+
+    private DamageRoll damageRoll(
+            Attacks attack,
+            GameChar attacker
+    ) {
+        Die die = damageDie(attack);
+        return switch (attack) {
+            case SpellAttack ignored ->
+                    new DamageRoll(Dice.rollInt(attacker, die), die, INT);
+            case WeaponAttack ignored -> isRangedAttack(attack)
+                    ? new DamageRoll(Dice.rollRanged(attacker, die), die, DEX)
+                    : new DamageRoll(Dice.rollMelee(attacker, die), die, STR);
+        };
     }
 
     private static Die damageDie(Attacks attack) {
@@ -247,28 +260,39 @@ public class DndCombat implements Combat
         };
     }
 
+    record AttackRoll(int roll, Stat stat) {}
+    record DamageRoll(int damage, Die die, Stat stat) {}
+
     private boolean hits(
             Attacks attack,
             GameChar attacker,
             GameChar defender
     ) {
-        int profBonus = proficiencyBonus(attacker);
-        int baseAttackRoll = switch (attack) {
-            case SpellAttack ignored -> Dice.rollInt(attacker, D20);
-            case WeaponAttack ignored -> isRangedAttack(attack)
-                    ? Dice.rollRanged(attacker, D20)
-                    : Dice.rollMelee(attacker, D20);
-        };
-        int attackRoll = profBonus + baseAttackRoll;
-        LOG.infof("attack roll - %s: %d, %s (AC): %d",
+        AttackRoll attackRoll = attackRoll(attack, attacker);
+        LOG.infof("attack roll (%s) - %s: %d, %s (AC): %d",
+                attackRoll.stat().name().toLowerCase(),
                 attacker.name(),
-                attackRoll,
+                attackRoll.roll(),
                 defender.name(),
                 defender.ac());
-        return attackRoll >= defender.ac();
+        return attackRoll.roll() >= defender.ac();
     }
 
-    private int proficiencyBonus(GameChar gameChar) {
+    private static AttackRoll attackRoll(
+            Attacks attack,
+            GameChar attacker
+    ) {
+        int pb = proficiencyBonus(attacker);
+        return switch (attack) {
+            case SpellAttack ignored ->
+                    new AttackRoll(pb + Dice.rollInt(attacker, D20), INT);
+            case WeaponAttack ignored -> isRangedAttack(attack)
+                    ? new AttackRoll(pb + Dice.rollRanged(attacker, D20), DEX)
+                    : new AttackRoll(pb + Dice.rollMelee(attacker, D20), STR);
+        };
+    }
+
+    private static int proficiencyBonus(GameChar gameChar) {
         int level = gameChar.level();
         if (level <= 4)
             return 2;

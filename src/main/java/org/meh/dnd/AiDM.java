@@ -135,8 +135,8 @@ public record AiDM(DMChannel dmChannel,
             *** ANSWERS ***
             <new line>
             
-            Each answer can either be a phrase to continue the dialogue, or a
-            phrase plus one goal quest to be added as a result
+            Each answer can either be a phrase to continue the dialogue, or an
+            dialogue-ending phrase plus one goal quest to be added as a result
             of the dialogue, separated by an arrow, "=>":
             
             - <phrase>
@@ -152,9 +152,12 @@ public record AiDM(DMChannel dmChannel,
             
             - <type> can be either 'warrior' or 'magic' or 'beast'
             
+            If a goal is specified, then the corresponding phrase must be one
+            that would end the dialogue.
+            
             For example:
             
-            * Hello there!
+            * Hello there! How are you?
             * Farewell, and good luck. => explore Dark Dungeon
             * Good luck defeating the dragon! => kill beast The Red Dragon
             * Tell my old Elf friend that I sent you. => talk magic Elf Sage
