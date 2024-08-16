@@ -3,12 +3,10 @@ package org.meh.dnd;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static org.meh.dnd.Dice.Die.D20;
+import static org.meh.dnd.Die.D20;
 
 public class Dice
 {
-    public enum Die { D4, D6, D8, D12, D20 }
-
     public static int roll(int n, Die die, int bonus) {
         return Math.max(0, IntStream.of(n)
                 .map(i -> new Random().nextInt(bound(die)) + 1)
@@ -26,7 +24,7 @@ public class Dice
     }
 
     public static int initiative(GameChar gameChar) {
-        return Dice.roll(1, D20, Dice.dexBonus(gameChar));
+        return Dice.roll(1, D20, dexBonus(gameChar));
     }
 
     public static int bonus(
@@ -36,12 +34,13 @@ public class Dice
         return (gameChar.stats().stat(stat) - 10) / 2;
     }
 
-    public static int rollMelee(GameChar attacker) {
-        return Dice.roll(1, D20, strBonus(attacker));
+    public static int rollMelee(GameChar attacker, Die die) {
+        return Dice.roll(1, die, strBonus(attacker));
     }
 
-    public static int rollRanged(GameChar attacker) {
-        return Dice.roll(1, D20, dexBonus(attacker));
+    public static int rollRanged(GameChar attacker, Die die
+    ) {
+        return Dice.roll(1, die, dexBonus(attacker));
     }
 
     public static int strBonus(GameChar gameChar) {

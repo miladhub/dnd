@@ -4,10 +4,10 @@ import org.jboss.logging.Logger;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.meh.dnd.CharClass.*;
+import static org.meh.dnd.Die.*;
 import static org.meh.dnd.FightOutcome.IN_PROGRESS;
 
 public class DndCombat implements Combat
@@ -17,14 +17,14 @@ public class DndCombat implements Combat
     public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
     public static final Stats STATS_FIGHTER = new Stats(15, 13, 14, 8, 12, 10);
     public static final Stats STATS_WIZARD = new Stats(8, 12, 14, 15, 13, 10);
-    public static final Weapon SWORD = new Weapon("sword", false, 8, false, true);
-    public static final Weapon BATTLEAXE = new Weapon("battleaxe", false, 10, true, false);
-    public static final Weapon BOW = new Weapon("bow", true, 6, true, false);
-    public static final Weapon UNARMED = new Weapon("unarmed", false, 4, false, true);
-    public static final Weapon DAGGER = new Weapon("dagger", false, 6, false, true);
-    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, 8);
-    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, 8);
-    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, 10);
+    public static final Weapon SWORD = new Weapon("sword", false, D8, false, true);
+    public static final Weapon BATTLEAXE = new Weapon("battleaxe", false, D12, true, false);
+    public static final Weapon BOW = new Weapon("bow", true, D6, true, false);
+    public static final Weapon UNARMED = new Weapon("unarmed", false, D4, false, true);
+    public static final Weapon DAGGER = new Weapon("dagger", false, D6, false, true);
+    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8);
+    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8);
+    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12);
 
     private static final List<Weapon> WEAPONS = List.of(
             SWORD,
@@ -222,19 +222,30 @@ public class DndCombat implements Combat
             GameChar defender
     ) {
         if (hits(attack, attacker, defender)) {
-            int maxDmg = switch (attack) {
-                case WeaponAttack wa -> attackWeapon(wa.weapon())
-                        .map(Weapon::damage)
-                        .findFirst().orElseThrow();
-                case SpellAttack sa -> attackSpell(sa.spell())
-                        .map(Spell::damage)
-                        .findFirst().orElseThrow();
-            };
-            int damage = new Random().nextInt(maxDmg) + 1;
+            Die dmgDie = damageDie(attack);
+            boolean rangedAttack = isRangedAttack(attack);
+            int damage = rangedAttack
+                    ? Dice.rollRanged(attacker, dmgDie)
+                    : Dice.rollMelee(attacker, dmgDie);
+            LOG.infof("damage roll (%s) - %s: %d",
+                    rangedAttack? "ranged" : "melee",
+                    attacker.name(),
+                    damage);
             return new Hit(defender.damage(damage), damage);
         } else {
             return new Miss(defender);
         }
+    }
+
+    private static Die damageDie(Attacks attack) {
+        return switch (attack) {
+            case WeaponAttack wa -> attackWeapon(wa.weapon())
+                    .map(Weapon::damage)
+                    .findFirst().orElseThrow();
+            case SpellAttack sa -> attackSpell(sa.spell())
+                    .map(Spell::damage)
+                    .findFirst().orElseThrow();
+        };
     }
 
     private boolean hits(
@@ -242,17 +253,11 @@ public class DndCombat implements Combat
             GameChar attacker,
             GameChar defender
     ) {
-        boolean rangedAttack = switch (attack) {
-            case WeaponAttack wa -> attackWeapon(wa.weapon())
-                    .map(Weapon::ranged)
-                    .findFirst().orElseThrow();
-            case SpellAttack sa -> attackSpell(sa.spell())
-                    .map(Spell::ranged)
-                    .findFirst().orElseThrow();
-        };
-        int attackRoll = rangedAttack
-                ? Dice.rollRanged(attacker)
-                : Dice.rollMelee(attacker);
+        boolean rangedAttack = isRangedAttack(attack);
+        int profBonus = proficiencyBonus(attacker);
+        int attackRoll = profBonus + (rangedAttack
+                ? Dice.rollRanged(attacker, D20)
+                : Dice.rollMelee(attacker, D20));
         LOG.infof("attack roll (%s) - %s: %d, %s (AC): %d",
                 rangedAttack? "ranged" : "melee",
                 attacker.name(),
@@ -260,6 +265,31 @@ public class DndCombat implements Combat
                 defender.name(),
                 defender.ac());
         return attackRoll >= defender.ac();
+    }
+
+    private int proficiencyBonus(GameChar gameChar) {
+        int level = gameChar.level();
+        if (level <= 4)
+            return 2;
+        else if (level <= 8)
+            return 3;
+        else if (level <= 12)
+            return 4;
+        else if (level <= 16)
+            return 5;
+        else
+            return 6;
+    }
+
+    private static boolean isRangedAttack(Attacks attack) {
+        return switch (attack) {
+            case WeaponAttack wa -> attackWeapon(wa.weapon())
+                    .map(Weapon::ranged)
+                    .findFirst().orElseThrow();
+            case SpellAttack sa -> attackSpell(sa.spell())
+                    .map(Spell::ranged)
+                    .findFirst().orElseThrow();
+        };
     }
 
     private static Stream<Spell> attackSpell(String name) {

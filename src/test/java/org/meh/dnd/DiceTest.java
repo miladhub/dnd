@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.meh.dnd.Dice.Die.*;
+import static org.meh.dnd.Die.*;
 import static org.meh.dnd.DndCombat.*;
 
 class DiceTest
