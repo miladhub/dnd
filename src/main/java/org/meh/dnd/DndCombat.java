@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import static org.meh.dnd.CharClass.*;
 import static org.meh.dnd.FightOutcome.IN_PROGRESS;
@@ -94,9 +95,7 @@ public class DndCombat implements Combat
     }
 
     private static Weapon weaponByName(String name) {
-        return WEAPONS.stream()
-                .filter(w -> w.name().equals(name))
-                .findFirst().orElseThrow();
+        return attackWeapon(name).findFirst().orElseThrow();
     }
 
     @Override
@@ -117,8 +116,11 @@ public class DndCombat implements Combat
     ) {
         int playerInitiative = Dice.initiative(gameChar);
         int opponentInitiative = Dice.initiative(opponent);
-        LOG.infof("initiative roll - player: %d, opponent: %d",
-                playerInitiative, opponentInitiative);
+        LOG.infof("initiative roll - %s: %d, %s: %d",
+                gameChar.name(),
+                playerInitiative,
+                opponent.name(),
+                opponentInitiative);
         return playerInitiative >= opponentInitiative;
     }
 
@@ -219,21 +221,54 @@ public class DndCombat implements Combat
             GameChar attacker,
             GameChar defender
     ) {
-        if (new Random().nextBoolean()) {
+        if (hits(attack, attacker, defender)) {
+            int maxDmg = switch (attack) {
+                case WeaponAttack wa -> attackWeapon(wa.weapon())
+                        .map(Weapon::damage)
+                        .findFirst().orElseThrow();
+                case SpellAttack sa -> attackSpell(sa.spell())
+                        .map(Spell::damage)
+                        .findFirst().orElseThrow();
+            };
+            int damage = new Random().nextInt(maxDmg) + 1;
+            return new Hit(defender.damage(damage), damage);
+        } else {
             return new Miss(defender);
         }
-        int maxDmg = switch (attack) {
-            case WeaponAttack wa -> WEAPONS.stream()
-                    .filter(w -> w.name().equals(wa.weapon()))
-                    .map(Weapon::damage)
+    }
+
+    private boolean hits(
+            Attacks attack,
+            GameChar attacker,
+            GameChar defender
+    ) {
+        boolean rangedAttack = switch (attack) {
+            case WeaponAttack wa -> attackWeapon(wa.weapon())
+                    .map(Weapon::ranged)
                     .findFirst().orElseThrow();
-            case SpellAttack sa -> SPELLS.stream()
-                    .filter(s -> s.name().equals(sa.spell()))
-                    .map(Spell::damage)
+            case SpellAttack sa -> attackSpell(sa.spell())
+                    .map(Spell::ranged)
                     .findFirst().orElseThrow();
         };
-        int damage = new Random().nextInt(maxDmg) + 1;
-        return new Hit(defender.damage(damage), damage);
+        int attackRoll = rangedAttack
+                ? Dice.rollRanged(attacker)
+                : Dice.rollMelee(attacker);
+        LOG.infof("attack roll (%s) - %s: %d, %s (AC): %d",
+                rangedAttack? "ranged" : "melee",
+                attacker.name(),
+                attackRoll,
+                defender.name(),
+                defender.ac());
+        return attackRoll >= defender.ac();
+    }
+
+    private static Stream<Spell> attackSpell(String name) {
+        return SPELLS.stream().filter(s -> s.name().equals(name));
+    }
+
+    private static Stream<Weapon> attackWeapon(String wa) {
+        return WEAPONS.stream()
+                .filter(w -> w.name().equals(wa));
     }
 
     private static GameChar generateOpponent(
