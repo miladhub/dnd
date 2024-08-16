@@ -1,6 +1,7 @@
 package org.meh.dnd;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public record Game(
@@ -57,6 +58,6 @@ public record Game(
     }
 
     public Game withQuest(List<QuestGoal> quest) {
-        return new Game(mode, events, playerChar, combatStatus, chat, background, place, dialogueTarget, diary, quest);
+        return new Game(mode, events, playerChar, combatStatus, chat, background, place, dialogueTarget, diary, new ArrayList<>(new LinkedHashSet<>(quest)));
     }
 }

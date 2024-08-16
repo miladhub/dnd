@@ -82,6 +82,8 @@ public class Quests
             Actions action,
             QuestGoal g
     ) {
+        if (g.reached())
+            return false;
         return switch (g) {
             case KillGoal ignored ->
                     action instanceof Attack a && targetMatches(a.target(), g);
