@@ -74,7 +74,10 @@ public class DndCombat implements Combat
             AttackResult result
     ) {
         GameChar opponent = result.gameChar();
-        String dmg = " (" + result.damage() + " hp damage)";
+        String dmg = switch (result) {
+            case Hit hit -> " (" + hit.damage() + " hp damage)";
+            case Miss ignored -> " (missed)";
+        };
         String attackDescription = switch (attack) {
             case WeaponAttack m ->
                     (weaponByName(m.weapon()).ranged()? "ranged" : "melee") +
@@ -216,6 +219,9 @@ public class DndCombat implements Combat
             GameChar attacker,
             GameChar defender
     ) {
+        if (new Random().nextBoolean()) {
+            return new Miss(defender);
+        }
         int maxDmg = switch (attack) {
             case WeaponAttack wa -> WEAPONS.stream()
                     .filter(w -> w.name().equals(wa.weapon()))
@@ -227,7 +233,7 @@ public class DndCombat implements Combat
                     .findFirst().orElseThrow();
         };
         int damage = new Random().nextInt(maxDmg) + 1;
-        return new AttackResult(defender.damage(damage), damage);
+        return new Hit(defender.damage(damage), damage);
     }
 
     private static GameChar generateOpponent(

@@ -1,8 +1,7 @@
 package org.meh.dnd;
 
-public record AttackResult(
-        GameChar gameChar,
-        int damage
-)
+public sealed interface AttackResult
+    permits Hit, Miss
 {
+    GameChar gameChar();
 }

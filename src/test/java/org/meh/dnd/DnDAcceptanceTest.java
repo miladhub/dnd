@@ -739,7 +739,7 @@ class DnDAcceptanceTest
                 GameChar attacker,
                 GameChar defender
         ) {
-            return new AttackResult(defender.damage(damage), damage);
+            return new Hit(defender.damage(damage), damage);
         }
     }
 }
