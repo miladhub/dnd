@@ -223,14 +223,13 @@ public class DndCombat implements Combat
     ) {
         if (hits(attack, attacker, defender)) {
             Die dmgDie = damageDie(attack);
-            boolean rangedAttack = isRangedAttack(attack);
-            int damage = rangedAttack
-                    ? Dice.rollRanged(attacker, dmgDie)
-                    : Dice.rollMelee(attacker, dmgDie);
-            LOG.infof("damage roll (%s) - %s: %d",
-                    rangedAttack? "ranged" : "melee",
-                    attacker.name(),
-                    damage);
+            int damage = switch (attack) {
+                case SpellAttack ignored -> Dice.rollInt(attacker, dmgDie);
+                case WeaponAttack ignored -> isRangedAttack(attack)
+                        ? Dice.rollRanged(attacker, dmgDie)
+                        : Dice.rollMelee(attacker, dmgDie);
+            };
+            LOG.infof("damage roll - %s: %d", attacker.name(), damage);
             return new Hit(defender.damage(damage), damage);
         } else {
             return new Miss(defender);
@@ -253,13 +252,15 @@ public class DndCombat implements Combat
             GameChar attacker,
             GameChar defender
     ) {
-        boolean rangedAttack = isRangedAttack(attack);
         int profBonus = proficiencyBonus(attacker);
-        int attackRoll = profBonus + (rangedAttack
-                ? Dice.rollRanged(attacker, D20)
-                : Dice.rollMelee(attacker, D20));
-        LOG.infof("attack roll (%s) - %s: %d, %s (AC): %d",
-                rangedAttack? "ranged" : "melee",
+        int baseAttackRoll = switch (attack) {
+            case SpellAttack ignored -> Dice.rollInt(attacker, D20);
+            case WeaponAttack ignored -> isRangedAttack(attack)
+                    ? Dice.rollRanged(attacker, D20)
+                    : Dice.rollMelee(attacker, D20);
+        };
+        int attackRoll = profBonus + baseAttackRoll;
+        LOG.infof("attack roll - %s: %d, %s (AC): %d",
                 attacker.name(),
                 attackRoll,
                 defender.name(),

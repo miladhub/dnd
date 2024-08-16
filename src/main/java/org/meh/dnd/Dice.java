@@ -43,11 +43,19 @@ public class Dice
         return Dice.roll(1, die, dexBonus(attacker));
     }
 
+    public static int rollInt(GameChar attacker, Die die) {
+        return Dice.roll(1, die, intBonus(attacker));
+    }
+
     public static int strBonus(GameChar gameChar) {
         return bonus(gameChar, Stat.STR);
     }
 
     public static int dexBonus(GameChar gameChar) {
         return bonus(gameChar, Stat.DEX);
+    }
+
+    public static int intBonus(GameChar gameChar) {
+        return bonus(gameChar, Stat.INT);
     }
 }
