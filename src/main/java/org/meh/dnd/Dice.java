@@ -18,6 +18,7 @@ public class Dice
             case D4 -> 4;
             case D6 -> 6;
             case D8 -> 8;
+            case D10 -> 10;
             case D12 -> 12;
             case D20 -> 20;
         };
@@ -53,5 +54,9 @@ public class Dice
 
     public static int intBonus(GameChar gameChar) {
         return bonus(gameChar, Stat.INT);
+    }
+
+    public static int conBonus(GameChar gameChar) {
+        return bonus(gameChar, Stat.CON);
     }
 }

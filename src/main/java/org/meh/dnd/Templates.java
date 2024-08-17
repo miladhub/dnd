@@ -16,6 +16,10 @@ public class Templates
         return render("/_combat.html", view);
     }
 
+    public static String template(LevelUpView view) {
+        return render("/_levelup.html", view);
+    }
+
     private static String render(
             String html,
             Object view

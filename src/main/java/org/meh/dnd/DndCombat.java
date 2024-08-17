@@ -133,6 +133,60 @@ public class DndCombat implements Combat
             };
     }
 
+    public static int xpAtLevel(int level) {
+        return switch (level) {
+            case 1 ->  0;
+            case 2 ->  300;
+            case 3 ->  900;
+            case 4 ->  2_700;
+            case 5 ->  6_500;
+            case 6 ->  14_000;
+            case 7 ->  23_000;
+            case 8 ->  34_000;
+            case 9 ->  48_000;
+            case 10 -> 64_000;
+            case 11 -> 85_000;
+            case 12 -> 100_000;
+            case 13 -> 120_000;
+            case 14 -> 140_000;
+            case 15 -> 165_000;
+            case 16 -> 195_000;
+            case 17 -> 225_000;
+            case 18 -> 265_000;
+            case 19 -> 305_000;
+            default -> 355_000;
+        };
+    }
+
+    public static GameChar levelUp(GameChar gc) {
+        if (gc.xp() < xpAtLevel(gc.level() + 1))
+            return gc;
+        int incHp = Dice.roll(1, hitDice(gc.charClass()), Dice.conBonus(gc));
+        int newLevel = gc.level() + 1;
+        return new GameChar(
+                gc.name(),
+                newLevel,
+                gc.charClass(),
+                gc.maxHp() + incHp,
+                gc.maxHp() + incHp,
+                gc.ac(),
+                gc.xp(),
+                DndCombat.xpAtLevel(newLevel + 1),
+                gc.stats(),
+                gc.weapons(),
+                gc.spells(),
+                gc.availableActions(),
+                spellSlots(gc.charClass(), newLevel)
+        );
+    }
+
+    private static Die hitDice(CharClass charClass) {
+        return switch (charClass) {
+            case FIGHTER -> D10;
+            case WIZARD -> D6;
+        };
+    }
+
     @Override
     public Fight generateFight(
             GameChar gameChar,
@@ -335,7 +389,7 @@ public class DndCombat implements Combat
         };
     }
 
-    private static int proficiencyBonus(GameChar gameChar) {
+    public static int proficiencyBonus(GameChar gameChar) {
         int level = gameChar.level();
         if (level <= 4)
             return 2;

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Level Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
+</head>
+
+<body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center p-4">
+
+<!-- Level Up Information Container -->
+<section class="w-full max-w-4xl p-6 bg-gray-800 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-bold mb-6 text-center">Character Leveled Up!</h1>
+
+    <!-- New Level -->
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">New Level:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{level}}</p>
+    </div>
+
+    <!-- New XP -->
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">New XP:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{xp}}</p>
+    </div>
+
+    <!-- XP for Next Level -->
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">XP for Next Level:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{nextXp}}</p>
+    </div>
+
+    <!-- Increased HP -->
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">Increased HP:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{hp}}</p>
+    </div>
+
+    <!-- Improved Spell Slots -->
+    {{#hasSpellSlots}}
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">Improved Spell Slots:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{spellSlots.level1}} / {{spellSlots.level2}} / {{spellSlots.level3}} / {{spellSlots.level4}} / {{spellSlots.level5}} / {{spellSlots.level6}} / {{spellSlots.level7}} / {{spellSlots.level8}} / {{spellSlots.level9}}</p>
+    </div>
+    {{/hasSpellSlots}}
+
+    <!-- New Proficiency Bonus -->
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold">New Proficiency Bonus:</h2>
+        <p class="mt-1 text-lg bg-gray-700 p-2 rounded">{{profBonus}}</p>
+    </div>
+
+    <!-- Proceed Button -->
+    <div class="mt-6 text-center">
+        <button hx-post="/level-up" hx-swap="none"
+                class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-200">
+            Proceed with Level Up
+        </button>
+    </div>
+</section>
+
+</body>
+
+</html>

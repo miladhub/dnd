@@ -83,27 +83,39 @@ public class ViewEncoderDecoder
                 game.quest().stream().allMatch(QuestGoal::reached);
         return switch (output) {
             case DialogueOutput d -> Templates.template(new GameView(
+                    pc.name(),
+                    pc.level(),
+                    pc.charClass().toString().toLowerCase(),
                     d.phrase(),
                     d.answers().stream()
                             .map(a -> encodeAction(a, game.quest()))
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place(), questDone));
+                    game.place(), questDone,
+                    pc.xp() >= pc.nextXp()));
             case ExploreOutput e -> Templates.template(new GameView(
+                    pc.name(),
+                    pc.level(),
+                    pc.charClass().toString().toLowerCase(),
                     e.description(),
                     e.choices().stream()
                             .map(a -> encodeAction(a, game.quest()))
                             .toList(),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place(), questDone));
+                    game.place(), questDone,
+                    pc.xp() >= pc.nextXp()));
             case RestOutput ignored -> Templates.template(new GameView(
+                    pc.name(),
+                    pc.level(),
+                    pc.charClass().toString().toLowerCase(),
                     "You are resting.",
                     List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()), game.quest())),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
-                    game.place(), questDone));
+                    game.place(), questDone,
+                    pc.xp() >= pc.nextXp()));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(), co.playerWon(), co.enemyWon(),
                     co.playerWon() || co.enemyWon(),

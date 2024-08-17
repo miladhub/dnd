@@ -51,7 +51,6 @@ public class RestServer
             @FormParam("level") int level,
             @FormParam("max_hp") int maxHp,
             @FormParam("armor_class") int ac,
-            @FormParam("experience_points") int xp,
             @FormParam("strength") int strength,
             @FormParam("constitution") int constitution,
             @FormParam("dexterity") int dexterity,
@@ -72,8 +71,8 @@ public class RestServer
                 maxHp,
                 maxHp,
                 ac,
-                xp,
-                xp,
+                DndCombat.xpAtLevel(level),
+                DndCombat.xpAtLevel(level + 1),
                 new Stats(
                         strength,
                         dexterity,
@@ -208,5 +207,35 @@ public class RestServer
                     .header("HX-Redirect", "/")
                     .build();
         }
+    }
+
+    @GET
+    @Path("/level-up")
+    @Produces(MediaType.TEXT_HTML)
+    public String viewLevelUp() {
+        Game game = gameRepository.game().orElseThrow();
+        GameChar gc = game.playerChar();
+        GameChar newGc = DndCombat.levelUp(gc);
+        return Templates.template(new LevelUpView(
+                newGc.level(),
+                newGc.xp(),
+                newGc.nextXp(),
+                newGc.maxHp(),
+                newGc.charClass() == CharClass.WIZARD,
+                newGc.spellSlots(),
+                DndCombat.proficiencyBonus(newGc)
+        ));
+    }
+
+    @POST
+    @Path("/level-up")
+    public Response saveLevelUp() {
+        Game game = gameRepository.game().orElseThrow();
+        GameChar gc = game.playerChar();
+        GameChar newGc = DndCombat.levelUp(gc);
+        gameRepository.save(g -> g.withPlayerChar(newGc));
+        return Response.ok()
+                .header("HX-Redirect", "/")
+                .build();
     }
 }
