@@ -125,7 +125,7 @@ public class ViewEncoderDecoder
                             pc.charClass().toString().toLowerCase(),
                             pc.ac(),
                             pc.xp(),
-                            pc.maxHp(),
+                            pc.nextXp(),
                             pc.hp(),
                             pc.maxHp(),
                             pc.stats().strength(),
