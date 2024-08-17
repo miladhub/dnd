@@ -596,7 +596,8 @@ class DnDAcceptanceTest
                         "Foo: melee attack with sword (3 hp damage)",
                         "Foo: melee attack with sword (3 hp damage)",
                         "Foo: melee attack with sword (3 hp damage)",
-                        "Foo: killed goblin, melee attack with sword (3 hp damage)"),
+                        "Foo: killed goblin, melee attack with sword (3 hp damage)",
+                        "Gained " + XP_GAIN + " xp"),
                         5, PLAYER_WON,
                         new AvailableActions(0, 0, 30),
                         STANDARD_ACTIONS,
@@ -609,7 +610,8 @@ class DnDAcceptanceTest
                                 "Foo: melee attack with sword (3 hp damage)",
                                 "Foo: melee attack with sword (3 hp damage)",
                                 "Foo: melee attack with sword (3 hp damage)",
-                                "Foo: killed goblin, melee attack with sword (3 hp damage)"),
+                                "Foo: killed goblin, melee attack with sword (3 hp damage)",
+                                "Gained " + XP_GAIN + " xp"),
                         true, false, 5, List.of(
                         new AvailableAction(MOVE, "5", false),
                         new AvailableAction(END_TURN, "", false)))));

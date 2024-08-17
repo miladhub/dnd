@@ -138,9 +138,11 @@ public record DnD(
                         .subtractAtLevel(sa.spell().level());
                 case WeaponAttack ignored -> game.playerChar().spellSlots();
             };
+            boolean killedEnemy = result.gameChar().isDead();
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.add(description);
-            boolean killedEnemy = result.gameChar().isDead();
+            if (killedEnemy)
+                newLog.add(String.format("Gained %d xp", fight.xp()));
             GameChar newPlayerChar = game.playerChar()
                     .withSpellSlots(newSlots)
                     .withXp(killedEnemy
