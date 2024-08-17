@@ -71,6 +71,7 @@ public class DndCombat implements Combat
             List.of(UNARMED),
             List.of(),
             STANDARD_ACTIONS);
+    public static final int XP_GAIN = 100;
 
     public static String combatActionDescription(
             Attacks attack,
@@ -140,7 +141,8 @@ public class DndCombat implements Combat
         boolean playersTurn = computePlayerTurn(gameChar, opponent);
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,
                 gameChar.availableActions(),
-                opponent.availableActions());
+                opponent.availableActions(),
+                XP_GAIN);
     }
 
     private boolean computePlayerTurn(

@@ -26,6 +26,7 @@ class DnDAcceptanceTest
             new AvailableAction(END_TURN, "", false));
     private static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
     private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
+    private static final int XP_GAIN = 100;
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
@@ -220,7 +221,8 @@ class DnDAcceptanceTest
     void attack_melee_move_and_2nd_hand_players_turn() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack("sword"), false);
@@ -245,7 +247,8 @@ class DnDAcceptanceTest
                         "Foo: move 5 feet away from goblin"
                 ), 10, IN_PROGRESS,
                         new AvailableActions(0, 0, 25),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, new AvailableActions(0, 0, 25), STANDARD_ACTIONS, newGoblin,
@@ -266,7 +269,8 @@ class DnDAcceptanceTest
     void attack_melee_players_turn() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                 STANDARD_ACTIONS,
-                STANDARD_ACTIONS), COMBAT, foo);
+                STANDARD_ACTIONS,
+                XP_GAIN), COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack("sword"), false);
 
@@ -284,7 +288,8 @@ class DnDAcceptanceTest
         assertEquals(
                 new Fight(true, newGoblin, meleeOutput.log(), 5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
@@ -305,7 +310,8 @@ class DnDAcceptanceTest
     void player_uses_action_bonus_and_movement() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                 STANDARD_ACTIONS,
-                STANDARD_ACTIONS), COMBAT, foo);
+                STANDARD_ACTIONS,
+                XP_GAIN), COMBAT, foo);
 
         dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
         dnd.playCombatAction(new WeaponAttack(DAGGER.name()), true);
@@ -333,7 +339,8 @@ class DnDAcceptanceTest
                         10,
                         IN_PROGRESS,
                         new AvailableActions(1, 1, 30),
-                        new AvailableActions(0, 1, 30)),
+                        new AvailableActions(0, 1, 30),
+                        XP_GAIN),
                 game().combatStatus());
         assertEquals(
                 Optional.of(COMBAT),
@@ -344,7 +351,8 @@ class DnDAcceptanceTest
     void attack_spell_players_turn() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
@@ -365,7 +373,8 @@ class DnDAcceptanceTest
                         List.of("Foo: cast Magic Missile (3 hp damage)"), 5,
                         IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
@@ -442,7 +451,8 @@ class DnDAcceptanceTest
         startWith(combatGoblin,
                 new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(2, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT,
                 wizard);
 
@@ -468,7 +478,8 @@ class DnDAcceptanceTest
     void attack_movement_players_turn() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 10, IN_PROGRESS,
                 STANDARD_ACTIONS,
-                STANDARD_ACTIONS), COMBAT, foo);
+                STANDARD_ACTIONS,
+                XP_GAIN), COMBAT, foo);
 
         dnd.playCombatAction(new Move(Dir.TOWARDS_ENEMY, 5), false);
 
@@ -477,7 +488,8 @@ class DnDAcceptanceTest
                         "goblin"),
                         5, IN_PROGRESS,
                         new AvailableActions(1, 1, 25),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(1, 1, 25),
@@ -495,7 +507,8 @@ class DnDAcceptanceTest
                 new Fight(false, goblin, List.of("Foo: melee attack with sword"),
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new EndTurn(), false);
@@ -507,7 +520,8 @@ class DnDAcceptanceTest
                                 "goblin: melee attack with sword (3 hp damage)"),
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        new AvailableActions(0, 1, 30)),
+                        new AvailableActions(0, 1, 30),
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
@@ -524,7 +538,8 @@ class DnDAcceptanceTest
     void attack_does_damage() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
@@ -542,7 +557,8 @@ class DnDAcceptanceTest
                         "sword (3 hp damage)"),
                         5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30),
@@ -561,7 +577,8 @@ class DnDAcceptanceTest
     void killing_player_won() {
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(3, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
@@ -583,7 +600,8 @@ class DnDAcceptanceTest
                         "Foo: killed goblin, melee attack with sword (3 hp damage)"),
                         5, PLAYER_WON,
                         new AvailableActions(0, 0, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 game().combatStatus());
         assertEquals(PLAYER_WON, ((Fight) game().combatStatus()).outcome());
         assertThat(playerOutputs, hasItem(
@@ -614,7 +632,8 @@ class DnDAcceptanceTest
                 new AvailableActions(4, 1, 30), SPELL_SLOTS);
         startWith(combatGoblin, new Fight(false, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
-                        new AvailableActions(4, 1, 30)),
+                        new AvailableActions(4, 1, 30),
+                        XP_GAIN),
                 COMBAT, foo);
 
         dnd.playCombatAction(new EndTurn(), false);
@@ -629,7 +648,8 @@ class DnDAcceptanceTest
                         ),
                         5, ENEMY_WON,
                         STANDARD_ACTIONS,
-                        new AvailableActions(0, 1, 30)),
+                        new AvailableActions(0, 1, 30),
+                        XP_GAIN),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(false, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
@@ -692,7 +712,8 @@ class DnDAcceptanceTest
                 new Fight(
                         true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(3, 1, 30),
-                        STANDARD_ACTIONS),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
                 new Chat(List.of()),
                 "Once upon a time in the west...",
                 "Dark Forest",
@@ -777,6 +798,31 @@ class DnDAcceptanceTest
                 game().quest());
     }
 
+    @Test
+    void killing_givex_xp() {
+        GameChar gc = new GameChar("Foo", 3,
+                CharClass.FIGHTER,
+                10, 10, 15,
+                1000,
+                1500,
+                STATS_FIGHTER, List.of(SWORD),
+                List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
+
+        startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
+                        new AvailableActions(3, 1, 30),
+                        STANDARD_ACTIONS,
+                        XP_GAIN),
+                COMBAT, gc);
+
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
+
+        Game game = gameRepository.game().orElseThrow();
+        assertTrue(game.playerChar().xp() > 1000);
+    }
+
     private void dmOutcome(
             PlayerOutput output
     ) {
@@ -830,7 +876,8 @@ class DnDAcceptanceTest
             );
             return new Fight(playerActsFirst, opponent, List.of(), 5, IN_PROGRESS,
                     STANDARD_ACTIONS,
-                    STANDARD_ACTIONS);
+                    STANDARD_ACTIONS,
+                    XP_GAIN);
         }
 
         @Override

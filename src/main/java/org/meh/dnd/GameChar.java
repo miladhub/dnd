@@ -45,4 +45,8 @@ public record GameChar(
     public GameChar withSpellSlots(SpellSlots spellSlots) {
         return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells, availableActions, spellSlots);
     }
+
+    public GameChar withXp(int xp) {
+        return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells, availableActions, spellSlots);
+    }
 }

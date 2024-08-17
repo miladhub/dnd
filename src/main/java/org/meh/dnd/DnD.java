@@ -113,7 +113,8 @@ public record DnD(
                     newDistance,
                     fight.outcome(),
                     newPlayerActions,
-                    fight.opponentActions()
+                    fight.opponentActions(),
+                    fight.xp()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -137,17 +138,23 @@ public record DnD(
                         .subtractAtLevel(DndCombat.spellByName(sa.spell()).map(Spell::level).findFirst().orElseThrow());
                 case WeaponAttack ignored -> game.playerChar().spellSlots();
             };
-            GameChar newPlayerChar = game.playerChar().withSpellSlots(newSlots);
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.add(description);
+            boolean killedEnemy = result.gameChar().isDead();
+            GameChar newPlayerChar = game.playerChar()
+                    .withSpellSlots(newSlots)
+                    .withXp(killedEnemy
+                            ? game.playerChar().xp() + fight.xp()
+                            : game.playerChar().xp());
             Fight newFight = new Fight(
                     newPlayerActions.hasActionsLeft(),
                     result.gameChar(),
                     newLog,
                     fight.distance(),
-                    result.gameChar().isDead() ? PLAYER_WON : IN_PROGRESS,
+                    killedEnemy ? PLAYER_WON : IN_PROGRESS,
                     newPlayerActions,
-                    fight.opponentActions()
+                    fight.opponentActions(),
+                    fight.xp()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -166,7 +173,8 @@ public record DnD(
                     fight.distance(),
                     fight.outcome(),
                     fight.playerActions(),
-                    fight.opponent().availableActions()
+                    fight.opponent().availableActions(),
+                    fight.xp()
             );
             gameRepository.save(g -> g.withFightStatus(newFight));
             notifyPlayersFight(game, newFight);
@@ -208,7 +216,8 @@ public record DnD(
                     newDistance,
                     fight.outcome(),
                     fight.playerActions(),
-                    newOpponentActions
+                    newOpponentActions,
+                    fight.xp()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -233,7 +242,8 @@ public record DnD(
                     fight.distance(),
                     result.gameChar().isDead()? ENEMY_WON : IN_PROGRESS,
                     fight.playerActions(),
-                    newOpponentActions
+                    newOpponentActions,
+                    fight.xp()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -249,7 +259,8 @@ public record DnD(
                     fight.distance(),
                     fight.outcome(),
                     game.playerChar().availableActions(),
-                    fight.opponentActions()
+                    fight.opponentActions(),
+                    fight.xp()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)

@@ -9,5 +9,6 @@ public record Fight(
         int distance,
         FightOutcome outcome,
         AvailableActions playerActions,
-        AvailableActions opponentActions
+        AvailableActions opponentActions,
+        int xp
 ) implements CombatStatus {}
