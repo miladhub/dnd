@@ -135,7 +135,7 @@ public record DnD(
             SpellSlots newSlots = switch (attack) {
                 case SpellAttack sa -> game.playerChar()
                         .spellSlots()
-                        .subtractAtLevel(DndCombat.spellByName(sa.spell()).map(Spell::level).findFirst().orElseThrow());
+                        .subtractAtLevel(sa.spell().level());
                 case WeaponAttack ignored -> game.playerChar().spellSlots();
             };
             List<String> newLog = new ArrayList<>(fight.log());

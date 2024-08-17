@@ -60,8 +60,8 @@ public class ViewEncoderDecoder
             String info
     ) {
         return switch (action) {
-            case "Melee" -> new WeaponAttack(info);
-            case "Spell" -> new SpellAttack(info);
+            case "Melee" -> new WeaponAttack(DndCombat.weaponByName(info));
+            case "Spell" -> new SpellAttack(DndCombat.spellByName(info));
             case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
             case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
             case "EndTurn" -> new EndTurn();

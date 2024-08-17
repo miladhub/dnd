@@ -28,31 +28,31 @@ class DndCombatTest
 
     @Test
     void pick_melee_weapon_with_less_than_5_feet_heavy() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BATTLEAXE.name()), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(BATTLEAXE), false),
                 c.generateAttack(new Fight(true, everything_heavy, List.of(), 5,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
 
     @Test
     void pick_melee_spell_with_less_than_5_feet() {
-        assertEquals(new GeneratedCombatAction(new SpellAttack(SHOCKING_GRASP.name()), false),
+        assertEquals(new GeneratedCombatAction(new SpellAttack(SHOCKING_GRASP), false),
                 c.generateAttack(new Fight(true, all_spells, List.of(), 5,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
 
     @Test
     void pick_ranged_weapon_with_more_than_5_feet() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW.name()), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW), false),
                 c.generateAttack(new Fight(true, all_weapons, List.of(), 6,
                         IN_PROGRESS, available, available, XP_GAIN)));
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW.name()), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW), false),
                 c.generateAttack(new Fight(true, everything_light, List.of(), 6,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
 
     @Test
     void pick_ranged_spell_with_more_than_5_feet() {
-        assertEquals(new GeneratedCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false),
+        assertEquals(new GeneratedCombatAction(new SpellAttack(MAGIC_MISSILE), false),
                 c.generateAttack(new Fight(true, all_spells, List.of(), 6,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
@@ -73,7 +73,7 @@ class DndCombatTest
 
     @Test
     void choose_bonus_if_main_action_is_not_available() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(SWORD.name()), true),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(SWORD), true),
                 c.generateAttack(new Fight(true, everything_light, List.of(), 5,
                         IN_PROGRESS, available, new AvailableActions(0, 1, 30), XP_GAIN)));
     }

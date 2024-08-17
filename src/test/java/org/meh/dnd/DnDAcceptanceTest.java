@@ -225,8 +225,8 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack("sword"), false);
-        dnd.playCombatAction(new WeaponAttack("dagger"), true);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DAGGER), true);
         dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
 
         GameChar newGoblin = new GameChar(
@@ -272,7 +272,7 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 XP_GAIN), COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack("sword"), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -313,8 +313,8 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 XP_GAIN), COMBAT, foo);
 
-        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
-        dnd.playCombatAction(new WeaponAttack(DAGGER.name()), true);
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE), false);
+        dnd.playCombatAction(new WeaponAttack(DAGGER), true);
         dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
         dnd.playCombatAction(new EndTurn(), false);
 
@@ -355,7 +355,7 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -456,7 +456,7 @@ class DnDAcceptanceTest
                 COMBAT,
                 wizard);
 
-        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE), false);
 
         CombatOutput co = (CombatOutput) playerOutputs.getFirst();
 
@@ -542,7 +542,7 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
 
         GameChar damaged =
                 new GameChar("goblin",
@@ -553,8 +553,7 @@ class DnDAcceptanceTest
                         List.of(),
                         STANDARD_ACTIONS, SPELL_SLOTS);
         assertEquals(
-                new Fight(true, damaged, List.of("Foo: melee attack with " +
-                        "sword (3 hp damage)"),
+                new Fight(true, damaged, List.of("Foo: melee attack with sword (3 hp damage)"),
                         5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
                         STANDARD_ACTIONS,
@@ -581,10 +580,10 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), true);
 
         GameChar killed =
                 new GameChar("goblin", 3,
@@ -722,10 +721,10 @@ class DnDAcceptanceTest
                 List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
         ));
 
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), true);
 
         assertEquals(
                 List.of(new KillGoal(NpcType.WARRIOR, "goblin", true)),
@@ -799,7 +798,7 @@ class DnDAcceptanceTest
     }
 
     @Test
-    void killing_givex_xp() {
+    void killing_gives_xp() {
         GameChar gc = new GameChar("Foo", 3,
                 CharClass.FIGHTER,
                 10, 10, 15,
@@ -814,10 +813,10 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, gc);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD.name()), true);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(SWORD), true);
 
         Game game = gameRepository.game().orElseThrow();
         assertTrue(game.playerChar().xp() > 1000);
@@ -884,7 +883,7 @@ class DnDAcceptanceTest
         public GeneratedCombatAction generateAttack(Fight fight) {
             if (fight.opponentActions().actions() > 0)
                 return new GeneratedCombatAction(
-                    new WeaponAttack(fight.opponent().weapons().getFirst().name()),
+                    new WeaponAttack(fight.opponent().weapons().getFirst()),
                     false);
             else return new GeneratedCombatAction(
                     new EndTurn(),

@@ -4,7 +4,6 @@ import org.jboss.logging.Logger;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.meh.dnd.CharClass.*;
 import static org.meh.dnd.Die.*;
@@ -85,9 +84,9 @@ public class DndCombat implements Combat
         };
         String attackDescription = switch (attack) {
             case WeaponAttack m ->
-                    (weaponByName(m.weapon()).ranged()? "ranged" : "melee") +
-                    " attack with " + m.weapon() + dmg;
-            case SpellAttack s -> "cast " + s.spell() + dmg;
+                    (m.weapon().ranged()? "ranged" : "melee") +
+                    " attack with " + m.weapon().name() + dmg;
+            case SpellAttack s -> "cast " + s.spell().name() + dmg;
         };
         if (opponent.isDead()) {
             return attacker.name() + ": killed " + opponent.name() + ", " +
@@ -98,8 +97,10 @@ public class DndCombat implements Combat
         }
     }
 
-    private static Weapon weaponByName(String name) {
-        return attackWeapon(name).findFirst().orElseThrow();
+    public static Weapon weaponByName(String name) {
+        return WEAPONS.stream()
+                .filter(w -> w.name().equals(name))
+                .findFirst().orElseThrow();
     }
 
     public static SpellSlots spellSlots(
@@ -213,6 +214,7 @@ public class DndCombat implements Combat
         return monster.spells().stream()
                 .filter(s -> !s.ranged())
                 .map(Spell::name)
+                .map(DndCombat::spellByName)
                 .map(SpellAttack::new)
                 .findFirst();
     }
@@ -221,6 +223,7 @@ public class DndCombat implements Combat
         return monster.spells().stream()
                 .filter(Spell::ranged)
                 .map(Spell::name)
+                .map(DndCombat::spellByName)
                 .map(SpellAttack::new)
                 .findFirst();
     }
@@ -229,6 +232,7 @@ public class DndCombat implements Combat
         return monster.weapons().stream()
                 .filter(w -> !w.ranged())
                 .map(Weapon::name)
+                .map(DndCombat::weaponByName)
                 .map(WeaponAttack::new)
                 .findFirst();
     }
@@ -238,6 +242,7 @@ public class DndCombat implements Combat
                 .filter(w -> !w.ranged())
                 .filter(Weapon::light)
                 .map(Weapon::name)
+                .map(DndCombat::weaponByName)
                 .map(WeaponAttack::new)
                 .findFirst();
     }
@@ -246,6 +251,7 @@ public class DndCombat implements Combat
         return monster.weapons().stream()
                 .filter(Weapon::ranged)
                 .map(Weapon::name)
+                .map(DndCombat::weaponByName)
                 .map(WeaponAttack::new)
                 .findFirst();
     }
@@ -285,12 +291,8 @@ public class DndCombat implements Combat
 
     private static Die damageDie(Attacks attack) {
         return switch (attack) {
-            case WeaponAttack wa -> attackWeapon(wa.weapon())
-                    .map(Weapon::damage)
-                    .findFirst().orElseThrow();
-            case SpellAttack sa -> spellByName(sa.spell())
-                    .map(Spell::damage)
-                    .findFirst().orElseThrow();
+            case WeaponAttack wa -> wa.weapon().damage();
+            case SpellAttack sa -> sa.spell().damage();
         };
     }
 
@@ -316,9 +318,7 @@ public class DndCombat implements Combat
 
     private boolean needsNoRoll(Attacks attack) {
         return attack instanceof SpellAttack sa &&
-                !spellByName(sa.spell())
-                        .map(Spell::rollsToHit)
-                        .findFirst().orElseThrow();
+                !sa.spell().rollsToHit();
     }
 
     private static AttackRoll attackRoll(
@@ -351,22 +351,15 @@ public class DndCombat implements Combat
 
     private static boolean isRangedAttack(Attacks attack) {
         return switch (attack) {
-            case WeaponAttack wa -> attackWeapon(wa.weapon())
-                    .map(Weapon::ranged)
-                    .findFirst().orElseThrow();
-            case SpellAttack sa -> spellByName(sa.spell())
-                    .map(Spell::ranged)
-                    .findFirst().orElseThrow();
+            case WeaponAttack wa -> wa.weapon().ranged();
+            case SpellAttack sa -> sa.spell().ranged();
         };
     }
 
-    public static Stream<Spell> spellByName(String name) {
-        return SPELLS.stream().filter(s -> s.name().equals(name));
-    }
-
-    private static Stream<Weapon> attackWeapon(String wa) {
-        return WEAPONS.stream()
-                .filter(w -> w.name().equals(wa));
+    public static Spell spellByName(String name) {
+        return SPELLS.stream()
+                .filter(s -> s.name().equals(name))
+                .findFirst().orElseThrow();
     }
 
     private static GameChar generateOpponent(

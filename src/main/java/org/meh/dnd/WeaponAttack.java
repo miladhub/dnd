@@ -1,6 +1,6 @@
 package org.meh.dnd;
 
-public record WeaponAttack(String weapon)
+public record WeaponAttack(Weapon weapon)
         implements Attacks
 {
 }
