@@ -17,7 +17,8 @@ public record GameChar(
         Stats stats,
         List<Weapon> weapons,
         List<Spell> spells,
-        AvailableActions availableActions
+        AvailableActions availableActions,
+        SpellSlots spellSlots
 )
 {
     public GameChar {
@@ -28,7 +29,8 @@ public record GameChar(
         return new GameChar(name, level, charClass, Math.max(hp - damage, 0),
                 maxHp, ac, xp, nextXp,
                 stats,
-                weapons, spells, availableActions);
+                weapons, spells, availableActions,
+                spellSlots);
     }
 
     @JsonIgnore
@@ -37,6 +39,10 @@ public record GameChar(
     }
 
     public GameChar withHp(int hp) {
-        return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells, availableActions);
+        return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells, availableActions, spellSlots);
+    }
+
+    public GameChar withSpellSlots(SpellSlots spellSlots) {
+        return new GameChar(name, level, charClass, hp, maxHp,  ac, xp, nextXp, stats, weapons, spells, availableActions, spellSlots);
     }
 }

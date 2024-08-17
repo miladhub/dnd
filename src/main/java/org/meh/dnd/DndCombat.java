@@ -23,9 +23,10 @@ public class DndCombat implements Combat
     public static final Weapon BOW = new Weapon("bow", true, D6, true, false);
     public static final Weapon UNARMED = new Weapon("unarmed", false, D4, false, true);
     public static final Weapon DAGGER = new Weapon("dagger", false, D6, false, true);
-    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8, false);
-    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8, true);
-    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12, true);
+    public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8, true, 0);
+    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12, true, 0);
+    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8, false, 1);
+    public static final Spell MELF_ARROW = new Spell("Melf's Magic Arrow", true, D8, false, 2);
 
     private static final List<Weapon> WEAPONS = List.of(
             SWORD,
@@ -37,11 +38,12 @@ public class DndCombat implements Combat
     private static final List<Spell> SPELLS = List.of(
             SHOCKING_GRASP,
             FIRE_BOLT,
-            MAGIC_MISSILE
+            MAGIC_MISSILE,
+            MELF_ARROW
     );
     public static final List<Weapon> FIGHTER_WEAPONS = List.of(SWORD, DAGGER, BOW);
     public static final List<Weapon> WIZARD_WEAPONS = List.of(BOW, DAGGER);
-    public static final List<Spell> WIZARD_SPELLS = List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT);
+    public static final List<Spell> WIZARD_SPELLS = List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT, MELF_ARROW);
     public static final CharTemplate WARRIOR_TEMPLATE = new CharTemplate(
             10,
             13,
@@ -97,6 +99,36 @@ public class DndCombat implements Combat
 
     private static Weapon weaponByName(String name) {
         return attackWeapon(name).findFirst().orElseThrow();
+    }
+
+    public static SpellSlots spellSlots(
+            CharClass charClass,
+            int level
+    ) {
+        if (charClass != WIZARD)
+            return new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0);
+        else
+            return switch (level) {
+                case 1 -> new SpellSlots(2, 0, 0, 0, 0, 0, 0, 0, 0);
+                case 2 -> new SpellSlots(3, 0, 0, 0, 0, 0, 0, 0, 0);
+                case 3 -> new SpellSlots(4, 2, 0, 0, 0, 0, 0, 0, 0);
+                case 4 -> new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
+                case 5 -> new SpellSlots(4, 3, 2, 0, 0, 0, 0, 0, 0);
+                case 6 -> new SpellSlots(4, 3, 3, 0, 0, 0, 0, 0, 0);
+                case 7 -> new SpellSlots(4, 3, 3, 1, 0, 0, 0, 0, 0);
+                case 8 -> new SpellSlots(4, 3, 3, 2, 0, 0, 0, 0, 0);
+                case 9 -> new SpellSlots(4, 3, 3, 3, 1, 0, 0, 0, 0);
+                case 10 -> new SpellSlots(4, 3, 3, 3, 2, 0, 0, 0, 0);
+                case 11, 12 -> new SpellSlots(4, 3, 3, 3, 2, 1, 0, 0, 0);
+                case 13, 14 -> new SpellSlots(4, 3, 3, 3, 2, 1, 1, 0, 0);
+                case 15, 16 -> new SpellSlots(4, 3, 3, 3, 2, 1, 1, 1, 0);
+                case 17 -> new SpellSlots(4, 3, 3, 3, 2, 1, 1, 1, 1);
+                case 18 -> new SpellSlots(4, 3, 3, 3, 3, 1, 1, 1, 1);
+                case 19 -> new SpellSlots(4, 3, 3, 3, 3, 2, 1, 1, 1);
+                case 20 -> new SpellSlots(4, 3, 3, 3, 3, 2, 2, 1, 1);
+                default ->
+                        throw new IllegalStateException("Unexpected value: " + level);
+            };
     }
 
     @Override
@@ -254,7 +286,7 @@ public class DndCombat implements Combat
             case WeaponAttack wa -> attackWeapon(wa.weapon())
                     .map(Weapon::damage)
                     .findFirst().orElseThrow();
-            case SpellAttack sa -> attackSpell(sa.spell())
+            case SpellAttack sa -> spellByName(sa.spell())
                     .map(Spell::damage)
                     .findFirst().orElseThrow();
         };
@@ -282,7 +314,7 @@ public class DndCombat implements Combat
 
     private boolean needsNoRoll(Attacks attack) {
         return attack instanceof SpellAttack sa &&
-                !attackSpell(sa.spell())
+                !spellByName(sa.spell())
                         .map(Spell::rollsToHit)
                         .findFirst().orElseThrow();
     }
@@ -320,13 +352,13 @@ public class DndCombat implements Combat
             case WeaponAttack wa -> attackWeapon(wa.weapon())
                     .map(Weapon::ranged)
                     .findFirst().orElseThrow();
-            case SpellAttack sa -> attackSpell(sa.spell())
+            case SpellAttack sa -> spellByName(sa.spell())
                     .map(Spell::ranged)
                     .findFirst().orElseThrow();
         };
     }
 
-    private static Stream<Spell> attackSpell(String name) {
+    public static Stream<Spell> spellByName(String name) {
         return SPELLS.stream().filter(s -> s.name().equals(name));
     }
 
@@ -355,7 +387,8 @@ public class DndCombat implements Combat
                 template.stats(),
                 template.weapons(),
                 template.spells(),
-                template.availableActions()
+                template.availableActions(),
+                new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0)
         );
     }
 }

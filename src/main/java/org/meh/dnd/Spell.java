@@ -4,7 +4,8 @@ public record Spell(
         String name,
         boolean ranged,
         Die damage,
-        boolean rollsToHit
+        boolean rollsToHit,
+        int level
 )
 {
 }

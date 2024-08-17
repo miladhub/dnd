@@ -14,5 +14,7 @@ public record CharacterView(
         int constitution,
         int intelligence,
         int wisdom,
-        int charisma
+        int charisma,
+        boolean hasSpells,
+        SpellSlots spellSlots
 ) {}

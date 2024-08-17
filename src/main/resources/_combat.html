@@ -1,6 +1,6 @@
 <!--suppress ALL -->
 <div id="game" hx-ext="sse" sse-connect="/updates" sse-swap="message"
-     class="container mx-auto px-4 max-w-2xl">
+     class="container mx-auto px-4 max-w-5xl p-4">
 
 <!-- Status -->
 {{#fightOver}}
@@ -62,6 +62,11 @@
                 </ul>
             </div>
         </div>
+        {{#hasSpells}}
+        <div class="mt-2">
+            <p class="text-lg"><strong>Spells:</strong> {{spellSlots.level1}} / {{spellSlots.level2}} / {{spellSlots.level3}} / {{spellSlots.level4}} / {{spellSlots.level5}} / {{spellSlots.level6}} / {{spellSlots.level7}} / {{spellSlots.level8}} / {{spellSlots.level9}}</p>
+        </div>
+        {{/hasSpells}}
     </div>
     {{/character}}
 
@@ -96,12 +101,12 @@
     {{/enemy}}
 </section>
 
-<section class="w-full max-w-2xl p-4">
+<section class="p-4">
     <textarea id="combat-log" rows="5" readonly
               class="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-600 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-scroll">{{combatLog}}</textarea>
 </section>
 
-<section class="container mx-auto px-4 max-w-4xl space-y-4">
+<section class="container mx-auto px-4 space-y-4">
     {{^fightOver}}
     {{#actions}}
     {{^bonusAction}}

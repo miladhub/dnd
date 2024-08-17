@@ -90,7 +90,8 @@ public class RestServer
                     case FIGHTER -> List.of();
                     case WIZARD -> DndCombat.WIZARD_SPELLS;
                 },
-                new AvailableActions(actions, bonusActions, speed)
+                new AvailableActions(actions, bonusActions, speed),
+                DndCombat.spellSlots(charClass, level)
         );
         Game game = GameSaveLoad.createGameFrom(background, place, gameChar);
         gameRepository.save(game);

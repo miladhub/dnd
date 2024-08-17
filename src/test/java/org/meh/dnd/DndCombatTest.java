@@ -12,16 +12,17 @@ import static org.meh.dnd.FightOutcome.*;
 class DndCombatTest
 {
     private final DndCombat c = new DndCombat();
+    private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
     private final GameChar all_weapons = new GameChar("Foo", 3, FIGHTER, 10,
-            10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(), STANDARD_ACTIONS);
-    private final GameChar all_spells = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS);
-    private final GameChar everything_light = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS);
+            10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
+    private final GameChar all_spells = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
+    private final GameChar everything_light = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
     private final GameChar everything_heavy = new GameChar("Foo", 3, FIGHTER,
             10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(BATTLEAXE, BOW),
-            List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS);
-    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD), List.of(SHOCKING_GRASP), STANDARD_ACTIONS);
+            List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
+    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD), List.of(SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
     private final GameChar only_ranged = new GameChar("Foo", 3, FIGHTER, 10,
-            10, 13, 1000, 1500, STATS_FIGHTER, List.of(BOW), List.of(MAGIC_MISSILE), STANDARD_ACTIONS);
+            10, 13, 1000, 1500, STATS_FIGHTER, List.of(BOW), List.of(MAGIC_MISSILE), STANDARD_ACTIONS, SPELL_SLOTS);
     private final AvailableActions available =
             new AvailableActions(1, 1, 30);
 

@@ -57,7 +57,11 @@ public record DnD(
             }
             case Rest ignored -> {
                 gameRepository.save(g -> g
-                        .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
+                        .withPlayerChar(g.playerChar()
+                                .withHp(g.playerChar().maxHp())
+                                .withSpellSlots(DndCombat.spellSlots(
+                                        g.playerChar().charClass(),
+                                        g.playerChar().level())))
                         .withMode(RESTING)
                         .withLastOutput(new RestOutput())
                         .withDialogueTarget(new Nobody()));
@@ -127,6 +131,13 @@ public record DnD(
                     result);
             AvailableActions newPlayerActions =
                     fight.playerActions().subtractAction(bonusAction);
+            SpellSlots newSlots = switch (attack) {
+                case SpellAttack sa -> game.playerChar()
+                        .spellSlots()
+                        .subtractAtLevel(DndCombat.spellByName(sa.spell()).map(Spell::level).findFirst().orElseThrow());
+                case WeaponAttack ignored -> game.playerChar().spellSlots();
+            };
+            GameChar newPlayerChar = game.playerChar().withSpellSlots(newSlots);
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.add(description);
             Fight newFight = new Fight(
@@ -142,6 +153,7 @@ public record DnD(
                     .withFightStatus(newFight)
                     .withMode(newFight.opponent().isDead()? EXPLORING : COMBAT)
                     .withQuest(updateQuestFromFight(game.quest(), newFight))
+                    .withPlayerChar(newPlayerChar)
             );
             notifyPlayersFight(game, newFight);
             if (!newFight.playerTurn())
@@ -304,8 +316,9 @@ public record DnD(
                 : Stream.of();
         Stream<AvailableAction> spells = av.actions() > 0
                 ? gc.spells().stream()
-                .filter(s -> distance <= WEAPONS_REACH || s.ranged())
-                .map(s -> new AvailableAction(SPELL, s.name(), false))
+                    .filter(s -> distance <= WEAPONS_REACH || s.ranged())
+                    .filter(s -> gc.spellSlots().hasSlotsAtLevel(s.level()))
+                    .map(s -> new AvailableAction(SPELL, s.name(), false))
                 : Stream.of();
         int moveAmount = Math.min(av.remainingSpeed(), MOVE_STEP);
         Stream<AvailableAction> move = moveAmount > 0?

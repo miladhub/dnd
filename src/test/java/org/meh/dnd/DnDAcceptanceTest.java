@@ -9,8 +9,7 @@ import java.util.Optional;
 
 import static io.smallrye.common.constraint.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.DndCombat.*;
@@ -25,7 +24,8 @@ class DnDAcceptanceTest
             new AvailableAction(WEAPON, "sword", true),
             new AvailableAction(MOVE, "5", false),
             new AvailableAction(END_TURN, "", false));
-    public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
+    private static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
+    private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
     private final DMChannel dmChannel = new InMemoryDMChannel();
     private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
     private final GameRepository gameRepository = new InMemoryGameRepository();
@@ -51,7 +51,7 @@ class DnDAcceptanceTest
             STATS_FIGHTER,
             List.of(SWORD),
             List.of(),
-            STANDARD_ACTIONS);
+            STANDARD_ACTIONS, SPELL_SLOTS);
     private final CombatOutput combatGoblin =
             new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS, goblin, List.of(), false, false, 5, AVAILABLE_ACTIONS);
     private final RestOutput rest = new RestOutput();
@@ -70,7 +70,7 @@ class DnDAcceptanceTest
     private final GameChar foo = new GameChar("Foo", 3,
             CharClass.FIGHTER,
             10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
-            List.of(), STANDARD_ACTIONS);
+            List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
 
     @BeforeEach
     void setUp() {
@@ -82,7 +82,7 @@ class DnDAcceptanceTest
         startWith(exploring, new Peace(), EXPLORING, new GameChar("Foo", 3,
                 CharClass.FIGHTER,
                 1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
-                List.of(), STANDARD_ACTIONS));
+                List.of(), STANDARD_ACTIONS, SPELL_SLOTS));
 
         dmOutcome(seeGoblin);
         dnd.doAction(new Start("forest"));
@@ -235,7 +235,8 @@ class DnDAcceptanceTest
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of(),
-                STANDARD_ACTIONS);
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
 
         assertEquals(
                 new Fight(true, newGoblin, List.of(
@@ -277,7 +278,8 @@ class DnDAcceptanceTest
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of(),
-                STANDARD_ACTIONS);
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
 
         assertEquals(
                 new Fight(true, newGoblin, meleeOutput.log(), 5, IN_PROGRESS,
@@ -318,7 +320,8 @@ class DnDAcceptanceTest
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of(),
-                STANDARD_ACTIONS);
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
 
         assertEquals(
                 new Fight(true, newGoblin,
@@ -354,7 +357,8 @@ class DnDAcceptanceTest
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of(),
-                STANDARD_ACTIONS);
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
 
         assertEquals(
                 new Fight(true, newGoblin,
@@ -373,6 +377,91 @@ class DnDAcceptanceTest
         assertEquals(
                 Optional.of(COMBAT),
                 gameRepository.game().map(Game::mode));
+    }
+
+    @Test
+    void attack_presents_all_spells_with_full_slots() {
+        GameChar wizard = new GameChar("Wiz", 3,
+                CharClass.WIZARD,
+                10, 10, 15, 1000, 1500, STATS_WIZARD,
+                List.of(DAGGER),
+                List.of(SHOCKING_GRASP, MAGIC_MISSILE, MELF_ARROW),
+                new AvailableActions(1, 1, 30),
+                new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0));
+
+        startWith(seeGoblin, new Peace(), EXPLORING, wizard);
+
+        dnd.doAction(new Attack("goblin", NpcType.WARRIOR));
+
+        CombatOutput co = (CombatOutput) playerOutputs.getFirst();
+
+        assertThat(
+                co.availableActions().stream()
+                        .filter(a -> a.type() == SPELL).toList(),
+                containsInAnyOrder(
+                        new AvailableAction(SPELL, MAGIC_MISSILE.name(), false),
+                        new AvailableAction(SPELL, SHOCKING_GRASP.name(), false),
+                        new AvailableAction(SPELL, MELF_ARROW.name(), false)
+                ));
+    }
+
+    @Test
+    void attack_presents_spells_according_to_slots() {
+        GameChar wizard = new GameChar("Wiz", 3,
+                CharClass.WIZARD,
+                10, 10, 15, 1000, 1500, STATS_WIZARD,
+                List.of(DAGGER),
+                List.of(SHOCKING_GRASP, MAGIC_MISSILE, MELF_ARROW),
+                new AvailableActions(1, 1, 30),
+                new SpellSlots(1, 0, 0, 0, 0, 0, 0, 0, 0));
+
+        startWith(seeGoblin, new Peace(), EXPLORING, wizard);
+
+        dnd.doAction(new Attack("goblin", NpcType.WARRIOR));
+
+        CombatOutput co = (CombatOutput) playerOutputs.getFirst();
+
+        assertThat(co.availableActions().stream()
+                        .filter(a -> a.type() == SPELL).toList(),
+                containsInAnyOrder(
+                        new AvailableAction(SPELL, SHOCKING_GRASP.name(), false),
+                        new AvailableAction(SPELL, MAGIC_MISSILE.name(), false)
+                ));
+    }
+
+    @Test
+    void spells_consume_slots() {
+        GameChar wizard = new GameChar("Wiz", 3,
+                CharClass.WIZARD,
+                10, 10, 15, 1000, 1500, STATS_WIZARD,
+                List.of(DAGGER),
+                List.of(SHOCKING_GRASP, MAGIC_MISSILE, MELF_ARROW),
+                new AvailableActions(1, 1, 30),
+                new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0));
+
+        startWith(combatGoblin,
+                new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
+                        new AvailableActions(2, 1, 30),
+                        STANDARD_ACTIONS),
+                COMBAT,
+                wizard);
+
+        dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE.name()), false);
+
+        CombatOutput co = (CombatOutput) playerOutputs.getFirst();
+
+        assertThat(
+                co.availableActions().stream()
+                        .filter(a -> a.type() == SPELL).toList(),
+                containsInAnyOrder(
+                        new AvailableAction(SPELL, MAGIC_MISSILE.name(), false),
+                        new AvailableAction(SPELL, SHOCKING_GRASP.name(), false),
+                        new AvailableAction(SPELL, MELF_ARROW.name(), false)
+                ));
+
+        assertEquals(
+                Optional.of(new SpellSlots(3, 3, 0, 0, 0, 0, 0, 0, 0)),
+                gameRepository.game().map(Game::playerChar).map(GameChar::spellSlots));
     }
 
     @Test
@@ -447,7 +536,7 @@ class DnDAcceptanceTest
                         7, 10, 15, 1000, 1500, STATS_FIGHTER,
                         List.of(SWORD),
                         List.of(),
-                        STANDARD_ACTIONS);
+                        STANDARD_ACTIONS, SPELL_SLOTS);
         assertEquals(
                 new Fight(true, damaged, List.of("Foo: melee attack with " +
                         "sword (3 hp damage)"),
@@ -484,7 +573,7 @@ class DnDAcceptanceTest
                 new GameChar("goblin", 3,
                         CharClass.FIGHTER,
                         0, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
-                        List.of(), STANDARD_ACTIONS);
+                        List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
         assertEquals(killed, ((Fight) game().combatStatus()).opponent());
         assertEquals(
                 new Fight(true, killed, List.of(
@@ -522,7 +611,7 @@ class DnDAcceptanceTest
                 STATS_FIGHTER,
                 List.of(SWORD),
                 List.of(),
-                new AvailableActions(4, 1, 30));
+                new AvailableActions(4, 1, 30), SPELL_SLOTS);
         startWith(combatGoblin, new Fight(false, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         new AvailableActions(4, 1, 30)),
@@ -557,11 +646,34 @@ class DnDAcceptanceTest
     }
 
     @Test
+    void resting_restores_spell_slots() {
+        GameChar wizard = new GameChar("Wiz", 3,
+                CharClass.WIZARD,
+                10, 10, 15, 1000, 1500, STATS_WIZARD,
+                List.of(DAGGER),
+                List.of(SHOCKING_GRASP, MAGIC_MISSILE, MELF_ARROW),
+                new AvailableActions(1, 1, 30),
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+
+        startWith(exploring, new Peace(), EXPLORING, wizard);
+
+        dnd.doAction(new Rest());
+
+        assertTrue(
+                gameRepository.game()
+                        .map(Game::playerChar)
+                        .map(GameChar::spellSlots)
+                        .map(SpellSlots::level1)
+                        .orElseThrow() > 0
+        );
+    }
+
+    @Test
     void resting_heals() {
         startWith(exploring, new Peace(), EXPLORING, new GameChar("Foo", 3,
                 CharClass.FIGHTER,
                 1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
-                List.of(), STANDARD_ACTIONS));
+                List.of(), STANDARD_ACTIONS, SPELL_SLOTS));
 
         dnd.doAction(new Rest());
 
@@ -714,7 +826,7 @@ class DnDAcceptanceTest
                     STATS_FIGHTER,
                     List.of(SWORD, DAGGER),
                     List.of(),
-                    STANDARD_ACTIONS
+                    STANDARD_ACTIONS, SPELL_SLOTS
             );
             return new Fight(playerActsFirst, opponent, List.of(), 5, IN_PROGRESS,
                     STANDARD_ACTIONS,

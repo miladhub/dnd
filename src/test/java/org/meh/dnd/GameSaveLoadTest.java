@@ -17,7 +17,8 @@ class GameSaveLoadTest
             new AvailableAction(WEAPON, "sword", true),
             new AvailableAction(MOVE, "5", false),
             new AvailableAction(END_TURN, "", false));
-    public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
+    private static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
+    private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
     private final GameChar goblin = new GameChar(
             "goblin",
             3,
@@ -26,13 +27,15 @@ class GameSaveLoadTest
             STATS_FIGHTER,
             List.of(SWORD),
             List.of(),
-            STANDARD_ACTIONS);
+            STANDARD_ACTIONS,
+            SPELL_SLOTS);
     private final CombatOutput combatGoblin =
             new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS, goblin, List.of(), false, false, 5, AVAILABLE_ACTIONS);
     private final GameChar foo = new GameChar("Foo", 3,
             CharClass.FIGHTER,
             10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW),
-            List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS);
+            List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS,
+            SPELL_SLOTS);
 
     @Test
     void save_load_no_quests()

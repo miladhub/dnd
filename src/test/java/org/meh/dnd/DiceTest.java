@@ -64,6 +64,7 @@ class DiceTest
         assertEquals(5, Dice.dexBonus(foo));
     }
 
+    private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
     private static GameChar pc(Stats stats) {
         return new GameChar("Foo", 3,
                 CharClass.FIGHTER,
@@ -71,6 +72,7 @@ class DiceTest
                 stats,
                 List.of(SWORD, BOW),
                 List.of(MAGIC_MISSILE, SHOCKING_GRASP),
-                STANDARD_ACTIONS);
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
     }
 }
