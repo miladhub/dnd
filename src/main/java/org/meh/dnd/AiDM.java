@@ -280,7 +280,7 @@ public record AiDM(DMChannel dmChannel,
             DialogueOutput output =
                     parseDialogueOutput(content);
             gameRepository.save(g -> g
-                    .withChat(new Chat(List.of(new ChatMessage(ChatRole.DM, output.phrase()))))
+                    .withChat(new ChatWith(d.target(), List.of(new ChatMessage(ChatRole.DM, d.target(), output.phrase()))))
                     .withLastOutput(output)
             );
             playerChannel.post(output);
@@ -295,13 +295,14 @@ public record AiDM(DMChannel dmChannel,
             List<OpenAiRequestMessage> messages = new ArrayList<>(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT)
             ));
-            messages.addAll(gameRepository.game().orElseThrow().chat().messages().stream()
+            ChatWith chat = (ChatWith) gameRepository.game().orElseThrow().chat();
+            messages.addAll(chat.messages().stream()
                     .map(m -> new OpenAiRequestMessage(
                             switch (m.role()) {
                                 case DM -> Role.assistant;
                                 case PLAYER -> Role.user;
                             },
-                            m.message()))
+                            m.speaker() + ": " + m.message()))
                     .toList());
             messages.add(new OpenAiRequestMessage(Role.user, prompt));
 
@@ -312,9 +313,9 @@ public record AiDM(DMChannel dmChannel,
             DialogueOutput output =
                     parseDialogueOutput(content);
             gameRepository.save(g -> g
-                    .withChat(g.chat().add(
-                            new ChatMessage(ChatRole.PLAYER, s.what()),
-                            new ChatMessage(ChatRole.DM, output.phrase())))
+                    .withChat(chat.add(
+                            new ChatMessage(ChatRole.PLAYER, game.playerChar().name(), s.what()),
+                            new ChatMessage(ChatRole.DM, chat.target(), output.phrase())))
             );
             playerChannel.post(output);
         }
@@ -325,11 +326,11 @@ public record AiDM(DMChannel dmChannel,
             ChatResponse response = openAiClient.chatCompletion(List.of(
                     new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
                     new OpenAiRequestMessage(Role.user,
-                            context(game) + chat(game) + """
+                            context(game) + chat(game) + String.format("""
                             
-                            The character is currently exploring, what happens?
+                            The character is currently exploring %s, what happens?
                             
-                            """ + getExplorePromptPostfix(game))
+                            """, game.place()) + getExplorePromptPostfix(game))
             ), List.of());
 
             String content =
@@ -339,7 +340,7 @@ public record AiDM(DMChannel dmChannel,
                     output.withChoices(Quests.addQuestGoal(output.choices(), newGoals));
 
             gameRepository.save(g -> g
-                    .withChat(new Chat(List.of()))
+                    .withChat(new NoChat())
                     .withLastOutput(newOutput)
                     .withStoryLine(newOutput.storyLine())
                     .withQuest(newGoals)
@@ -362,11 +363,12 @@ public record AiDM(DMChannel dmChannel,
     }
 
     private static String chat(Game game) {
-        return "\n\nHere's how the dialogue went, see if you find anything" +
-                " useful for the story line:\n" +
-                game.chat().messages().stream()
-                        .map(d -> "* " + d.message())
-                        .collect(Collectors.joining("\n"));
+        ChatWith chat = (ChatWith) game.chat();
+        String chatContents = chat.messages().stream()
+                .map(d -> "* " + d.speaker() + ": " + d.message())
+                .collect(Collectors.joining("\n"));
+        return "Here's how the dialogue went, see if you find anything" +
+                " useful for the story line:\n" + chatContents + "\n";
     }
 
     private static String getExplorePromptPostfix(Game game) {
