@@ -24,7 +24,7 @@ public class DndCombat implements Combat
     public static final Weapon DAGGER = new Weapon("dagger", false, D4, false, true);
     public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8, true, 0);
     public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D10, true, 0);
-    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8, false, 1);
+    public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D4, false, 1);
     public static final Spell MELF_ARROW = new Spell("Melf's Magic Arrow", true, D8, false, 2);
 
     private static final List<Weapon> WEAPONS = List.of(
@@ -317,29 +317,33 @@ public class DndCombat implements Combat
             GameChar defender
     ) {
         if (hits(attack, attacker, defender)) {
-            DamageRoll roll = damageRoll(attack, attacker);
-            LOG.infof("damage roll (%s, %s) - %s: %d",
-                    roll.die().name().toLowerCase(),
-                    roll.stat().name().toLowerCase(),
-                    attacker.name(),
-                    roll.damage());
-            return new Hit(defender.damage(roll.damage()), roll.damage());
+            List<DamageRoll> damageRolls = damageRolls(attack, attacker);
+            damageRolls.forEach(roll ->
+                    LOG.infof("damage roll (%s, %s) - %s: %d",
+                            roll.die().name().toLowerCase(),
+                            roll.stat().name().toLowerCase(),
+                            attacker.name(),
+                            roll.damage()));
+            int damage = damageRolls.stream()
+                    .mapToInt(DamageRoll::damage)
+                    .sum();
+            return new Hit(defender.damage(damage), damage);
         } else {
             return new Miss(defender);
         }
     }
 
-    private DamageRoll damageRoll(
+    private List<DamageRoll> damageRolls(
             Attacks attack,
             GameChar attacker
     ) {
         Die die = damageDie(attack);
         return switch (attack) {
-            case SpellAttack ignored ->
-                    new DamageRoll(Dice.roll(1, die, 0), die, INT);
-            case WeaponAttack ignored -> isRangedAttack(attack)
+            case SpellAttack sa ->
+                    Spells.damageRollsFor(sa.spell());
+            case WeaponAttack ignored -> List.of(isRangedAttack(attack)
                     ? new DamageRoll(Dice.rollRanged(attacker, die), die, DEX)
-                    : new DamageRoll(Dice.rollMelee(attacker, die), die, STR);
+                    : new DamageRoll(Dice.rollMelee(attacker, die), die, STR));
         };
     }
 
@@ -349,9 +353,6 @@ public class DndCombat implements Combat
             case SpellAttack sa -> sa.spell().damage();
         };
     }
-
-    record AttackRoll(int roll, Stat stat) {}
-    record DamageRoll(int damage, Die die, Stat stat) {}
 
     private boolean hits(
             Attacks attack,
