@@ -89,6 +89,9 @@ public record DnD(
         }
     }
 
+    record DamageWithDescription(int damage, String description,
+                                 GameChar attacker, GameChar defender) {}
+
     public void playCombatAction(
             CombatActions action,
             boolean bonusAction
@@ -114,7 +117,8 @@ public record DnD(
                     fight.outcome(),
                     newPlayerActions,
                     fight.opponentActions(),
-                    fight.xp()
+                    fight.xp(),
+                    fight.delayedEffects()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -126,6 +130,11 @@ public record DnD(
         } else if (action instanceof Attacks attack) {
             AttackResult result =
                     combat.computeAttack(attack, game.playerChar(), fight.opponent());
+            List<DelayedEffect> newDelayedEffects = new ArrayList<>(fight.delayedEffects());
+            newDelayedEffects.addAll(switch (result) {
+                case Hit hit -> hit.delayedEffects();
+                case Miss ignored -> List.of();
+            });
             String description = DndCombat.combatActionDescription(
                     attack,
                     game.playerChar(),
@@ -156,7 +165,8 @@ public record DnD(
                     killedEnemy ? PLAYER_WON : IN_PROGRESS,
                     newPlayerActions,
                     fight.opponentActions(),
-                    fight.xp()
+                    fight.xp(),
+                    newDelayedEffects
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -168,17 +178,55 @@ public record DnD(
             if (!newFight.playerTurn())
                 playEnemyCombatTurn();
         } else if (action instanceof EndTurn) {
+            List<DamageWithDescription> damages = fight.delayedEffects().stream()
+                    .filter(e -> e.inTurns() == 0)
+                    .map(e -> {
+                        int amount = DndCombat.applyDamage(e.damageRolls(),
+                                e.attacker(), e.defender());
+                        String desc = DndCombat.combatActionDescription(
+                                e.attack(),
+                                e.attacker(),
+                                new Hit(e.defender().damage(amount), amount, List.of())
+                        );
+                        return new DamageWithDescription(amount, desc,
+                                e.attacker(), e.defender());
+                    })
+                    .toList();
+            int playerCharDamage = damages.stream()
+                    .filter(e -> e.defender().name().equals(game.playerChar().name()))
+                    .mapToInt(DamageWithDescription::damage)
+                    .sum();
+            int opponentCharDamage = damages.stream()
+                    .filter(e -> e.defender().name().equals(fight.opponent().name()))
+                    .mapToInt(DamageWithDescription::damage)
+                    .sum();
+            List<String> newLog = new ArrayList<>(fight.log());
+            newLog.addAll(damages.stream().map(DamageWithDescription::description).toList());
+            GameChar newOpponent = fight.opponent().damage(opponentCharDamage);
+            GameChar newPlayerChar = game.playerChar().damage(playerCharDamage);
             Fight newFight = new Fight(
                     false,
-                    fight.opponent(),
-                    fight.log(),
+                    newOpponent,
+                    newLog,
                     fight.distance(),
-                    fight.outcome(),
+                    newOpponent.isDead()? PLAYER_WON :
+                            newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS,
                     fight.playerActions(),
                     fight.opponent().availableActions(),
-                    fight.xp()
+                    fight.xp(),
+                    fight.delayedEffects().stream()
+                            .filter(e -> e.inTurns() > 0)
+                            .map(e -> new DelayedEffect(
+                                    e.inTurns() - 1,
+                                    e.damageRolls(),
+                                    e.attacker(),
+                                    e.defender(),
+                                    e.attack()))
+                            .toList()
             );
-            gameRepository.save(g -> g.withFightStatus(newFight));
+            gameRepository.save(g -> g
+                    .withFightStatus(newFight)
+                    .withPlayerChar(newPlayerChar));
             notifyPlayersFight(game, newFight);
             playEnemyCombatTurn();
         }
@@ -219,7 +267,8 @@ public record DnD(
                     fight.outcome(),
                     fight.playerActions(),
                     newOpponentActions,
-                    fight.xp()
+                    fight.xp(),
+                    fight.delayedEffects()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -229,6 +278,11 @@ public record DnD(
         } else if (ga.action() instanceof Attacks attack) {
             AttackResult result =
                     combat.computeAttack(attack, fight.opponent(), game.playerChar());
+            List<DelayedEffect> newDelayedEffects = new ArrayList<>(fight.delayedEffects());
+            newDelayedEffects.addAll(switch (result) {
+                case Hit hit -> hit.delayedEffects();
+                case Miss ignored -> List.of();
+            });
             String description = DndCombat.combatActionDescription(
                     attack,
                     fight.opponent(),
@@ -245,7 +299,8 @@ public record DnD(
                     result.gameChar().isDead()? ENEMY_WON : IN_PROGRESS,
                     fight.playerActions(),
                     newOpponentActions,
-                    fight.xp()
+                    fight.xp(),
+                    newDelayedEffects
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
@@ -254,18 +309,55 @@ public record DnD(
             );
             notifyPlayersFight(game, newFight);
         } else if (ga.action() instanceof EndTurn) {
+            List<DamageWithDescription> damages = fight.delayedEffects().stream()
+                    .filter(e -> e.inTurns() == 0)
+                    .map(e -> {
+                        int amount = DndCombat.applyDamage(e.damageRolls(),
+                                e.attacker(), e.defender());
+                        String desc = DndCombat.combatActionDescription(
+                                e.attack(),
+                                e.attacker(),
+                                new Hit(e.defender().damage(amount), amount, List.of())
+                        );
+                        return new DamageWithDescription(amount, desc,
+                                e.attacker(), e.defender());
+                    })
+                    .toList();
+            int playerCharDamage = damages.stream()
+                    .filter(e -> e.defender().name().equals(game.playerChar().name()))
+                    .mapToInt(DamageWithDescription::damage)
+                    .sum();
+            int opponentCharDamage = damages.stream()
+                    .filter(e -> e.defender().name().equals(fight.opponent().name()))
+                    .mapToInt(DamageWithDescription::damage)
+                    .sum();
+            List<String> newLog = new ArrayList<>(fight.log());
+            newLog.addAll(damages.stream().map(DamageWithDescription::description).toList());
+            GameChar newOpponent = fight.opponent().damage(opponentCharDamage);
+            GameChar newPlayerChar = game.playerChar().damage(playerCharDamage);
             Fight newFight = new Fight(
                     true,
-                    fight.opponent(),
-                    fight.log(),
+                    newOpponent,
+                    newLog,
                     fight.distance(),
-                    fight.outcome(),
+                    newOpponent.isDead()? PLAYER_WON :
+                            newPlayerChar.isDead()? ENEMY_WON : IN_PROGRESS,
                     game.playerChar().availableActions(),
                     fight.opponentActions(),
-                    fight.xp()
+                    fight.xp(),
+                    fight.delayedEffects().stream()
+                            .filter(e -> e.inTurns() > 0)
+                            .map(e -> new DelayedEffect(
+                                    e.inTurns() - 1,
+                                    e.damageRolls(),
+                                    e.attacker(),
+                                    e.defender(),
+                                    e.attack()))
+                            .toList()
             );
             gameRepository.save(g -> g
                     .withFightStatus(newFight)
+                    .withPlayerChar(newPlayerChar)
             );
             notifyPlayersFight(game, newFight);
         }

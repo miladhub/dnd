@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.smallrye.common.constraint.Assert.assertTrue;
@@ -221,7 +222,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
@@ -247,7 +248,7 @@ class DnDAcceptanceTest
                 ), 10, IN_PROGRESS,
                         new AvailableActions(0, 0, 25),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, new AvailableActions(0, 0, 25), STANDARD_ACTIONS, newGoblin,
@@ -269,7 +270,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS,
-                XP_GAIN), COMBAT, foo);
+                XP_GAIN, List.of()), COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
 
@@ -288,7 +289,7 @@ class DnDAcceptanceTest
                 new Fight(true, newGoblin, meleeOutput.log(), 5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
@@ -310,7 +311,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS,
-                XP_GAIN), COMBAT, foo);
+                XP_GAIN, List.of()), COMBAT, foo);
 
         dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE), false);
         dnd.playCombatAction(new WeaponAttack(DAGGER), true);
@@ -339,7 +340,7 @@ class DnDAcceptanceTest
                         IN_PROGRESS,
                         new AvailableActions(1, 1, 30),
                         new AvailableActions(0, 1, 30),
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertEquals(
                 Optional.of(COMBAT),
@@ -351,7 +352,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new SpellAttack(MAGIC_MISSILE), false);
@@ -373,7 +374,7 @@ class DnDAcceptanceTest
                         IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
@@ -451,7 +452,7 @@ class DnDAcceptanceTest
                 new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(2, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT,
                 wizard);
 
@@ -478,7 +479,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 10, IN_PROGRESS,
                 STANDARD_ACTIONS,
                 STANDARD_ACTIONS,
-                XP_GAIN), COMBAT, foo);
+                XP_GAIN, List.of()), COMBAT, foo);
 
         dnd.playCombatAction(new Move(Dir.TOWARDS_ENEMY, 5), false);
 
@@ -488,7 +489,7 @@ class DnDAcceptanceTest
                         5, IN_PROGRESS,
                         new AvailableActions(1, 1, 25),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(1, 1, 25),
@@ -507,7 +508,7 @@ class DnDAcceptanceTest
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new EndTurn(), false);
@@ -520,7 +521,7 @@ class DnDAcceptanceTest
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         new AvailableActions(0, 1, 30),
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
@@ -538,7 +539,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
@@ -556,7 +557,7 @@ class DnDAcceptanceTest
                         5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30),
@@ -576,7 +577,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(3, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
@@ -600,7 +601,7 @@ class DnDAcceptanceTest
                         5, PLAYER_WON,
                         new AvailableActions(0, 0, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertEquals(PLAYER_WON, ((Fight) game().combatStatus()).outcome());
         assertThat(playerOutputs, hasItem(
@@ -633,7 +634,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(false, goblin, List.of(), 5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         new AvailableActions(4, 1, 30),
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, foo);
 
         dnd.playCombatAction(new EndTurn(), false);
@@ -649,7 +650,7 @@ class DnDAcceptanceTest
                         5, ENEMY_WON,
                         STANDARD_ACTIONS,
                         new AvailableActions(0, 1, 30),
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(false, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
@@ -713,7 +714,7 @@ class DnDAcceptanceTest
                         true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(3, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 new NoChat(),
                 "Once upon a time in the west...",
                 "Dark Forest",
@@ -811,7 +812,7 @@ class DnDAcceptanceTest
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
                         new AvailableActions(3, 1, 30),
                         STANDARD_ACTIONS,
-                        XP_GAIN),
+                        XP_GAIN, List.of()),
                 COMBAT, gc);
 
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
@@ -821,6 +822,90 @@ class DnDAcceptanceTest
 
         Game game = gameRepository.game().orElseThrow();
         assertTrue(game.playerChar().xp() > 1000);
+    }
+
+    @Test
+    void player_damage_lasts_two_turns() {
+        DnD dnd = new DnD(gameRepository, dmChannel, playersChannel,
+                new MockCombat(true, 3) {
+                    @Override
+                    public AttackResult computeAttack(
+                            Attacks attack,
+                            GameChar attacker,
+                            GameChar defender
+                    ) {
+                        if (attack instanceof SpellAttack) {
+                            return new Hit(defender.damage(damage), damage, List.of(
+                                    new DelayedEffect(1, List.of(
+                                            new DamageRoll(damage, Die.D4, Stat.INT)
+                                    ), attacker, defender, attack)
+                            ));
+                        } else {
+                            return super.computeAttack(attack, attacker, defender);
+                        }
+                    }
+                });
+
+        startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
+                STANDARD_ACTIONS,
+                STANDARD_ACTIONS,
+                XP_GAIN, List.of()), COMBAT, foo);
+
+        dnd.playCombatAction(new SpellAttack(MELF_ARROW), false);
+        dnd.playCombatAction(new EndTurn(), false);
+
+        GameChar newGoblin = new GameChar(
+                "goblin",
+                3,
+                CharClass.FIGHTER,
+                4, 10, 15, 1000, 1500,
+                STATS_FIGHTER,
+                List.of(DndCombat.LONGSWORD),
+                List.of(),
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
+
+        assertEquals(
+                new Fight(true, newGoblin,
+                        List.of(
+                                "Foo: cast Melf's Magic Arrow (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "Foo: cast Melf's Magic Arrow (3 hp damage)"),
+                        5,
+                        IN_PROGRESS,
+                        new AvailableActions(1, 1, 30),
+                        new AvailableActions(0, 1, 30),
+                        XP_GAIN, List.of()),
+                game().combatStatus());
+    }
+
+    @Test
+    void enemy_damage_lasts_two_turns() {
+        DnD dnd = new DnD(gameRepository, dmChannel, playersChannel,
+                new MockCounterCombat());
+
+        startWith(combatGoblin,
+                new Fight(false, goblin, List.of(),
+                        5, IN_PROGRESS,
+                        STANDARD_ACTIONS,
+                        STANDARD_ACTIONS,
+                        XP_GAIN, List.of()),
+                COMBAT, foo);
+
+        dnd.playCombatAction(new EndTurn(), false);
+        dnd.playCombatAction(new EndTurn(), false);
+
+        assertEquals(
+                new Fight(true, goblin,
+                        List.of(
+                                "goblin: cast Melf's Magic Arrow (3 hp damage)",
+                                "goblin: cast Melf's Magic Arrow (3 hp damage)"),
+                        5, IN_PROGRESS,
+                        STANDARD_ACTIONS,
+                        STANDARD_ACTIONS,
+                        XP_GAIN,
+                        List.of()),
+                game().combatStatus());
     }
 
     private void dmOutcome(
@@ -854,42 +939,103 @@ class DnDAcceptanceTest
         gameRepository.save(game);
     }
 
-    private record MockCombat(
-            boolean playerActsFirst,
-            int damage
-    ) implements Combat {
-        @Override
-        public Fight generateFight(
-                GameChar gameChar,
-                Attack attack
+    private static class MockCombat implements Combat
+    {
+        final boolean playerActsFirst;
+        final int damage;
+
+        private MockCombat(
+                boolean playerActsFirst,
+                int damage
         ) {
-            GameChar opponent = new GameChar(
-                    attack.target(),
-                    3,
-                    CharClass.FIGHTER,
-                    10,
-                    10, 15, 1000, 1500,
-                    STATS_FIGHTER,
-                    List.of(DndCombat.LONGSWORD, DAGGER),
-                    List.of(),
-                    STANDARD_ACTIONS, SPELL_SLOTS
-            );
-            return new Fight(playerActsFirst, opponent, List.of(), 5, IN_PROGRESS,
-                    STANDARD_ACTIONS,
-                    STANDARD_ACTIONS,
-                    XP_GAIN);
+            this.playerActsFirst = playerActsFirst;
+            this.damage = damage;
         }
 
         @Override
+            public Fight generateFight(
+                    GameChar gameChar,
+                    Attack attack
+            ) {
+                GameChar opponent = new GameChar(
+                        attack.target(),
+                        3,
+                        CharClass.FIGHTER,
+                        10,
+                        10, 15, 1000, 1500,
+                        STATS_FIGHTER,
+                        List.of(LONGSWORD, DAGGER),
+                        List.of(),
+                        STANDARD_ACTIONS, SPELL_SLOTS
+                );
+                return new Fight(playerActsFirst, opponent, List.of(), 5, IN_PROGRESS,
+                        STANDARD_ACTIONS,
+                        STANDARD_ACTIONS,
+                        XP_GAIN, List.of());
+            }
+
+            @Override
+            public GeneratedCombatAction generateAttack(Fight fight) {
+                if (fight.opponentActions().actions() > 0)
+                    return new GeneratedCombatAction(
+                            new WeaponAttack(fight.opponent().weapons().getFirst()),
+                            false);
+                else return new GeneratedCombatAction(
+                        new EndTurn(),
+                        false
+                );
+            }
+
+            @Override
+            public AttackResult computeAttack(
+                    Attacks attack,
+                    GameChar attacker,
+                    GameChar defender
+            ) {
+                return new Hit(defender.damage(damage), damage, List.of());
+            }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (MockCombat) obj;
+            return this.playerActsFirst == that.playerActsFirst &&
+                    this.damage == that.damage;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(playerActsFirst, damage);
+        }
+
+        @Override
+        public String toString() {
+            return "MockCombat[" +
+                    "playerActsFirst=" + playerActsFirst + ", " +
+                    "damage=" + damage + ']';
+        }
+
+        }
+
+    private class MockCounterCombat
+            extends MockCombat
+    {
+        private int genNum = 0;
+        private int computeNum = 0;
+
+        public MockCounterCombat() {super(true, 3);}
+
+        @Override
         public GeneratedCombatAction generateAttack(Fight fight) {
-            if (fight.opponentActions().actions() > 0)
+            if (genNum++ == 0)
                 return new GeneratedCombatAction(
-                    new WeaponAttack(fight.opponent().weapons().getFirst()),
-                    false);
-            else return new GeneratedCombatAction(
-                    new EndTurn(),
-                    false
-            );
+                        new SpellAttack(MELF_ARROW),
+                        false);
+            else
+                return new GeneratedCombatAction(
+                        new EndTurn(),
+                        false);
         }
 
         @Override
@@ -898,7 +1044,14 @@ class DnDAcceptanceTest
                 GameChar attacker,
                 GameChar defender
         ) {
-            return new Hit(defender.damage(damage), damage);
+            if (computeNum++ == 0)
+                return new Hit(defender.damage(damage), damage, List.of(
+                        new DelayedEffect(1, List.of(
+                                new DamageRoll(damage, Die.D4, Stat.INT)
+                        ), attacker, defender, attack)
+                ));
+            else
+                return new Hit(defender.damage(damage), 3, List.of());
         }
     }
 }

@@ -10,5 +10,7 @@ public record Fight(
         FightOutcome outcome,
         AvailableActions playerActions,
         AvailableActions opponentActions,
-        int xp
-) implements CombatStatus {}
+        int xp,
+        List<DelayedEffect> delayedEffects
+) implements CombatStatus {
+}

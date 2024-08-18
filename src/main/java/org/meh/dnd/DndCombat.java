@@ -9,6 +9,7 @@ import static org.meh.dnd.CharClass.*;
 import static org.meh.dnd.Die.*;
 import static org.meh.dnd.FightOutcome.IN_PROGRESS;
 import static org.meh.dnd.Stat.*;
+import static org.meh.dnd.Dice.*;
 
 public class DndCombat implements Combat
 {
@@ -187,6 +188,22 @@ public class DndCombat implements Combat
         };
     }
 
+    public static int applyDamage(
+            List<DamageRoll> damageRolls,
+            GameChar attacker,
+            GameChar defender
+    ) {
+        damageRolls.forEach(roll ->
+                LOG.infof("damage roll (%s, %s) - %s: %d",
+                        roll.die().name().toLowerCase(),
+                        roll.stat().name().toLowerCase(),
+                        attacker.name(),
+                        roll.damage()));
+        return damageRolls.stream()
+                .mapToInt(DamageRoll::damage)
+                .sum();
+    }
+
     @Override
     public Fight generateFight(
             GameChar gameChar,
@@ -197,7 +214,7 @@ public class DndCombat implements Combat
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,
                 gameChar.availableActions(),
                 opponent.availableActions(),
-                XP_GAIN);
+                XP_GAIN, List.of());
     }
 
     private boolean computePlayerTurn(
@@ -317,40 +334,30 @@ public class DndCombat implements Combat
             GameChar defender
     ) {
         if (hits(attack, attacker, defender)) {
-            List<DamageRoll> damageRolls = damageRolls(attack, attacker);
-            damageRolls.forEach(roll ->
-                    LOG.infof("damage roll (%s, %s) - %s: %d",
-                            roll.die().name().toLowerCase(),
-                            roll.stat().name().toLowerCase(),
-                            attacker.name(),
-                            roll.damage()));
-            int damage = damageRolls.stream()
-                    .mapToInt(DamageRoll::damage)
-                    .sum();
-            return new Hit(defender.damage(damage), damage);
+            Damage damage = computeDamage(attack, attacker, defender);
+            int amount = applyDamage(damage.rolls(), attacker, defender);
+            return new Hit(defender.damage(amount), amount, damage.delayedEffects());
         } else {
             return new Miss(defender);
         }
     }
 
-    private List<DamageRoll> damageRolls(
+    private Damage computeDamage(
             Attacks attack,
-            GameChar attacker
+            GameChar attacker,
+            GameChar defender
     ) {
-        Die die = damageDie(attack);
         return switch (attack) {
             case SpellAttack sa ->
-                    Spells.damageRollsFor(sa.spell());
-            case WeaponAttack ignored -> List.of(isRangedAttack(attack)
-                    ? new DamageRoll(Dice.rollRanged(attacker, die), die, DEX)
-                    : new DamageRoll(Dice.rollMelee(attacker, die), die, STR));
-        };
-    }
-
-    private static Die damageDie(Attacks attack) {
-        return switch (attack) {
-            case WeaponAttack wa -> wa.weapon().damage();
-            case SpellAttack sa -> sa.spell().damage();
+                    Spells.damageRollsFor(sa, attacker, defender);
+            case WeaponAttack wa -> {
+                Die die = wa.weapon().damage();
+                yield new Damage(
+                        List.of(isRangedAttack(attack)
+                                ? new DamageRoll(rollRanged(attacker, die), die, DEX)
+                                : new DamageRoll(rollMelee(attacker, die), die, STR)),
+                List.of());
+            }
         };
     }
 
@@ -383,10 +390,10 @@ public class DndCombat implements Combat
         int pb = proficiencyBonus(attacker);
         return switch (attack) {
             case SpellAttack ignored ->
-                    new AttackRoll(pb + Dice.roll(1, D20, Dice.intBonus(attacker)), INT);
+                    new AttackRoll(pb + roll(1, D20, intBonus(attacker)), INT);
             case WeaponAttack ignored -> isRangedAttack(attack)
-                    ? new AttackRoll(pb + Dice.rollRanged(attacker, D20), DEX)
-                    : new AttackRoll(pb + Dice.rollMelee(attacker, D20), STR);
+                    ? new AttackRoll(pb + rollRanged(attacker, D20), DEX)
+                    : new AttackRoll(pb + rollMelee(attacker, D20), STR);
         };
     }
 
