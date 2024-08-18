@@ -70,7 +70,7 @@ class DiceTest
                 CharClass.FIGHTER,
                 10, 10, 15, 1000, 1500,
                 stats,
-                List.of(SWORD, BOW),
+                List.of(LONGSWORD, LONGBOW),
                 List.of(MAGIC_MISSILE, SHOCKING_GRASP),
                 STANDARD_ACTIONS,
                 SPELL_SLOTS);

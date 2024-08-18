@@ -14,21 +14,21 @@ class DndCombatTest
     private final DndCombat c = new DndCombat();
     private static final SpellSlots SPELL_SLOTS = new SpellSlots(4, 3, 0, 0, 0, 0, 0, 0, 0);
     private final GameChar all_weapons = new GameChar("Foo", 3, FIGHTER, 10,
-            10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
+            10, 13, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD, LONGBOW), List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
     private final GameChar all_spells = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
-    private final GameChar everything_light = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
+    private final GameChar everything_light = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD, LONGBOW), List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
     private final GameChar everything_heavy = new GameChar("Foo", 3, FIGHTER,
-            10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(BATTLEAXE, BOW),
+            10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(GREATAXE, LONGBOW),
             List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
-    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(SWORD), List.of(SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
+    private final GameChar only_melee = new GameChar("Foo", 3, FIGHTER, 10, 10, 13, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD), List.of(SHOCKING_GRASP), STANDARD_ACTIONS, SPELL_SLOTS);
     private final GameChar only_ranged = new GameChar("Foo", 3, FIGHTER, 10,
-            10, 13, 1000, 1500, STATS_FIGHTER, List.of(BOW), List.of(MAGIC_MISSILE), STANDARD_ACTIONS, SPELL_SLOTS);
+            10, 13, 1000, 1500, STATS_FIGHTER, List.of(LONGBOW), List.of(MAGIC_MISSILE), STANDARD_ACTIONS, SPELL_SLOTS);
     private final AvailableActions available =
             new AvailableActions(1, 1, 30);
 
     @Test
     void pick_melee_weapon_with_less_than_5_feet_heavy() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BATTLEAXE), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(GREATAXE), false),
                 c.generateAttack(new Fight(true, everything_heavy, List.of(), 5,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
@@ -42,10 +42,10 @@ class DndCombatTest
 
     @Test
     void pick_ranged_weapon_with_more_than_5_feet() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(LONGBOW), false),
                 c.generateAttack(new Fight(true, all_weapons, List.of(), 6,
                         IN_PROGRESS, available, available, XP_GAIN)));
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(BOW), false),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(LONGBOW), false),
                 c.generateAttack(new Fight(true, everything_light, List.of(), 6,
                         IN_PROGRESS, available, available, XP_GAIN)));
     }
@@ -73,7 +73,7 @@ class DndCombatTest
 
     @Test
     void choose_bonus_if_main_action_is_not_available() {
-        assertEquals(new GeneratedCombatAction(new WeaponAttack(SWORD), true),
+        assertEquals(new GeneratedCombatAction(new WeaponAttack(LONGSWORD), true),
                 c.generateAttack(new Fight(true, everything_light, List.of(), 5,
                         IN_PROGRESS, available, new AvailableActions(0, 1, 30), XP_GAIN)));
     }

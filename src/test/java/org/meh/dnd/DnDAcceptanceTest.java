@@ -18,10 +18,9 @@ import static org.meh.dnd.GameMode.*;
 
 class DnDAcceptanceTest
 {
-    private static final Weapon SWORD = DndCombat.SWORD;
     private static final List<AvailableAction> AVAILABLE_ACTIONS = List.of(
-            new AvailableAction(WEAPON, "sword", false),
-            new AvailableAction(WEAPON, "sword", true),
+            new AvailableAction(WEAPON, "longsword", false),
+            new AvailableAction(WEAPON, "longsword", true),
             new AvailableAction(MOVE, "5", false),
             new AvailableAction(END_TURN, "", false));
     private static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
@@ -50,7 +49,7 @@ class DnDAcceptanceTest
             CharClass.FIGHTER,
             10, 10, 15, 1000, 1500,
             STATS_FIGHTER,
-            List.of(SWORD),
+            List.of(DndCombat.LONGSWORD),
             List.of(),
             STANDARD_ACTIONS, SPELL_SLOTS);
     private final CombatOutput combatGoblin =
@@ -63,14 +62,14 @@ class DnDAcceptanceTest
     private final CombatOutput meleeOutput = new CombatOutput(
             false,
             STANDARD_ACTIONS, STANDARD_ACTIONS, goblin,
-            List.of("Foo: melee attack with sword (3 hp damage)"),
+            List.of("Foo: melee attack with longsword (3 hp damage)"),
             false,
             false,
             5,
             AVAILABLE_ACTIONS);
     private final GameChar foo = new GameChar("Foo", 3,
             CharClass.FIGHTER,
-            10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
+            10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(DndCombat.LONGSWORD),
             List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
 
     @BeforeEach
@@ -82,7 +81,7 @@ class DnDAcceptanceTest
     void restarting_heals() {
         startWith(exploring, new Peace(), EXPLORING, new GameChar("Foo", 3,
                 CharClass.FIGHTER,
-                1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
+                1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(DndCombat.LONGSWORD),
                 List.of(), STANDARD_ACTIONS, SPELL_SLOTS));
 
         dmOutcome(seeGoblin);
@@ -225,7 +224,7 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
         dnd.playCombatAction(new WeaponAttack(DAGGER), true);
         dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
 
@@ -235,14 +234,14 @@ class DnDAcceptanceTest
                 CharClass.FIGHTER,
                 4, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
-                List.of(SWORD),
+                List.of(DndCombat.LONGSWORD),
                 List.of(),
                 STANDARD_ACTIONS,
                 SPELL_SLOTS);
 
         assertEquals(
                 new Fight(true, newGoblin, List.of(
-                        "Foo: melee attack with sword (3 hp damage)",
+                        "Foo: melee attack with longsword (3 hp damage)",
                         "Foo: melee attack with dagger (3 hp damage)",
                         "Foo: move 5 feet away from goblin"
                 ), 10, IN_PROGRESS,
@@ -253,7 +252,7 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, new AvailableActions(0, 0, 25), STANDARD_ACTIONS, newGoblin,
                         List.of(
-                                "Foo: melee attack with sword (3 hp damage)",
+                                "Foo: melee attack with longsword (3 hp damage)",
                                 "Foo: melee attack with dagger (3 hp damage)",
                                 "Foo: move 5 feet away from goblin"
                         ),
@@ -272,7 +271,7 @@ class DnDAcceptanceTest
                 STANDARD_ACTIONS,
                 XP_GAIN), COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
 
         GameChar newGoblin = new GameChar(
                 "goblin",
@@ -280,7 +279,7 @@ class DnDAcceptanceTest
                 CharClass.FIGHTER,
                 7, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
-                List.of(SWORD),
+                List.of(DndCombat.LONGSWORD),
                 List.of(),
                 STANDARD_ACTIONS,
                 SPELL_SLOTS);
@@ -293,10 +292,10 @@ class DnDAcceptanceTest
                 game().combatStatus());
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
-                        List.of("Foo: melee attack with sword (3 hp damage)"),
+                        List.of("Foo: melee attack with longsword (3 hp damage)"),
                         false,
                         false, 5, List.of(
-                                new AvailableAction(WEAPON, "sword", true),
+                                new AvailableAction(WEAPON, "longsword", true),
                                 new AvailableAction(MOVE, "5", false),
                                 new AvailableAction(END_TURN, "", false)
                 )))
@@ -324,7 +323,7 @@ class DnDAcceptanceTest
                 CharClass.FIGHTER,
                 4, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
-                List.of(SWORD),
+                List.of(DndCombat.LONGSWORD),
                 List.of(),
                 STANDARD_ACTIONS,
                 SPELL_SLOTS);
@@ -335,7 +334,7 @@ class DnDAcceptanceTest
                                 "Foo: cast Magic Missile (3 hp damage)",
                                 "Foo: melee attack with dagger (3 hp damage)",
                                 "Foo: move 5 feet away from goblin",
-                                "goblin: melee attack with sword (3 hp damage)"),
+                                "goblin: melee attack with longsword (3 hp damage)"),
                         10,
                         IN_PROGRESS,
                         new AvailableActions(1, 1, 30),
@@ -363,7 +362,7 @@ class DnDAcceptanceTest
                 CharClass.FIGHTER,
                 7, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
-                List.of(SWORD),
+                List.of(DndCombat.LONGSWORD),
                 List.of(),
                 STANDARD_ACTIONS,
                 SPELL_SLOTS);
@@ -380,7 +379,7 @@ class DnDAcceptanceTest
                 new CombatOutput(true, new AvailableActions(0, 1, 30), STANDARD_ACTIONS, newGoblin,
                         List.of("Foo: cast Magic Missile (3 hp damage)"),
                         false, false, 5, List.of(
-                        new AvailableAction(WEAPON, "sword", true),
+                        new AvailableAction(WEAPON, "longsword", true),
                         new AvailableAction(MOVE, "5", false),
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
@@ -504,7 +503,7 @@ class DnDAcceptanceTest
     @Test
     void attack_melee_enemy_turn() {
         startWith(combatGoblin,
-                new Fight(false, goblin, List.of("Foo: melee attack with sword"),
+                new Fight(false, goblin, List.of("Foo: melee attack with longsword"),
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         STANDARD_ACTIONS,
@@ -516,8 +515,8 @@ class DnDAcceptanceTest
         assertEquals(
                 new Fight(true, goblin,
                         List.of(
-                                "Foo: melee attack with sword",
-                                "goblin: melee attack with sword (3 hp damage)"),
+                                "Foo: melee attack with longsword",
+                                "goblin: melee attack with longsword (3 hp damage)"),
                         5, IN_PROGRESS,
                         STANDARD_ACTIONS,
                         new AvailableActions(0, 1, 30),
@@ -526,8 +525,8 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
                         List.of(
-                                "Foo: melee attack with sword",
-                                "goblin: melee attack with sword (3 hp damage)"),
+                                "Foo: melee attack with longsword",
+                                "goblin: melee attack with longsword (3 hp damage)"),
                         false, false, 5, AVAILABLE_ACTIONS)));
         assertEquals(
                 Optional.of(COMBAT),
@@ -542,18 +541,18 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
 
         GameChar damaged =
                 new GameChar("goblin",
                         3,
                         CharClass.FIGHTER,
                         7, 10, 15, 1000, 1500, STATS_FIGHTER,
-                        List.of(SWORD),
+                        List.of(DndCombat.LONGSWORD),
                         List.of(),
                         STANDARD_ACTIONS, SPELL_SLOTS);
         assertEquals(
-                new Fight(true, damaged, List.of("Foo: melee attack with sword (3 hp damage)"),
+                new Fight(true, damaged, List.of("Foo: melee attack with longsword (3 hp damage)"),
                         5, IN_PROGRESS,
                         new AvailableActions(0, 1, 30),
                         STANDARD_ACTIONS,
@@ -562,9 +561,9 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, contains(
                 new CombatOutput(true, new AvailableActions(0, 1, 30),
                         new AvailableActions(1, 1, 30), damaged,
-                        List.of("Foo: melee attack with sword (3 hp damage)"),
+                        List.of("Foo: melee attack with longsword (3 hp damage)"),
                         false, false, 5, List.of(
-                        new AvailableAction(WEAPON, "sword", true),
+                        new AvailableAction(WEAPON, "longsword", true),
                         new AvailableAction(MOVE, "5", false),
                         new AvailableAction(END_TURN, "", false)))));
         assertEquals(
@@ -580,23 +579,23 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, foo);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), true);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), true);
 
         GameChar killed =
                 new GameChar("goblin", 3,
                         CharClass.FIGHTER,
-                        0, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
+                        0, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(DndCombat.LONGSWORD),
                         List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
         assertEquals(killed, ((Fight) game().combatStatus()).opponent());
         assertEquals(
                 new Fight(true, killed, List.of(
-                        "Foo: melee attack with sword (3 hp damage)",
-                        "Foo: melee attack with sword (3 hp damage)",
-                        "Foo: melee attack with sword (3 hp damage)",
-                        "Foo: killed goblin, melee attack with sword (3 hp damage)",
+                        "Foo: melee attack with longsword (3 hp damage)",
+                        "Foo: melee attack with longsword (3 hp damage)",
+                        "Foo: melee attack with longsword (3 hp damage)",
+                        "Foo: killed goblin, melee attack with longsword (3 hp damage)",
                         "Gained " + XP_GAIN + " xp"),
                         5, PLAYER_WON,
                         new AvailableActions(0, 0, 30),
@@ -607,10 +606,10 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(true, new AvailableActions(0, 0, 30), STANDARD_ACTIONS, killed,
                         List.of(
-                                "Foo: melee attack with sword (3 hp damage)",
-                                "Foo: melee attack with sword (3 hp damage)",
-                                "Foo: melee attack with sword (3 hp damage)",
-                                "Foo: killed goblin, melee attack with sword (3 hp damage)",
+                                "Foo: melee attack with longsword (3 hp damage)",
+                                "Foo: melee attack with longsword (3 hp damage)",
+                                "Foo: melee attack with longsword (3 hp damage)",
+                                "Foo: killed goblin, melee attack with longsword (3 hp damage)",
                                 "Gained " + XP_GAIN + " xp"),
                         true, false, 5, List.of(
                         new AvailableAction(MOVE, "5", false),
@@ -628,7 +627,7 @@ class DnDAcceptanceTest
                 CharClass.FIGHTER,
                 10, 10, 15, 1000, 1500,
                 STATS_FIGHTER,
-                List.of(SWORD),
+                List.of(DndCombat.LONGSWORD),
                 List.of(),
                 new AvailableActions(4, 1, 30), SPELL_SLOTS);
         startWith(combatGoblin, new Fight(false, goblin, List.of(), 5, IN_PROGRESS,
@@ -642,10 +641,10 @@ class DnDAcceptanceTest
         assertEquals(
                 new Fight(false, goblin,
                         List.of(
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: killed Foo, melee attack with sword (3 hp damage)"
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: killed Foo, melee attack with longsword (3 hp damage)"
                         ),
                         5, ENEMY_WON,
                         STANDARD_ACTIONS,
@@ -655,10 +654,10 @@ class DnDAcceptanceTest
         assertThat(playerOutputs, hasItem(
                 new CombatOutput(false, STANDARD_ACTIONS, new AvailableActions(0, 1, 30), goblin,
                         List.of(
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: melee attack with sword (3 hp damage)",
-                                "goblin: killed Foo, melee attack with sword (3 hp damage)"
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "goblin: killed Foo, melee attack with longsword (3 hp damage)"
                         ),
                         false, true, 5, AVAILABLE_ACTIONS)));
         assertEquals(
@@ -693,7 +692,7 @@ class DnDAcceptanceTest
     void resting_heals() {
         startWith(exploring, new Peace(), EXPLORING, new GameChar("Foo", 3,
                 CharClass.FIGHTER,
-                1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD),
+                1, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(DndCombat.LONGSWORD),
                 List.of(), STANDARD_ACTIONS, SPELL_SLOTS));
 
         dnd.doAction(new Rest());
@@ -723,10 +722,10 @@ class DnDAcceptanceTest
                 List.of(new KillGoal(NpcType.WARRIOR, "goblin", false))
         ));
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), true);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), true);
 
         assertEquals(
                 List.of(new KillGoal(NpcType.WARRIOR, "goblin", true)),
@@ -806,7 +805,7 @@ class DnDAcceptanceTest
                 10, 10, 15,
                 1000,
                 1500,
-                STATS_FIGHTER, List.of(SWORD),
+                STATS_FIGHTER, List.of(DndCombat.LONGSWORD),
                 List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
 
         startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
@@ -815,10 +814,10 @@ class DnDAcceptanceTest
                         XP_GAIN),
                 COMBAT, gc);
 
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), false);
-        dnd.playCombatAction(new WeaponAttack(SWORD), true);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
+        dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), true);
 
         Game game = gameRepository.game().orElseThrow();
         assertTrue(game.playerChar().xp() > 1000);
@@ -871,7 +870,7 @@ class DnDAcceptanceTest
                     10,
                     10, 15, 1000, 1500,
                     STATS_FIGHTER,
-                    List.of(SWORD, DAGGER),
+                    List.of(DndCombat.LONGSWORD, DAGGER),
                     List.of(),
                     STANDARD_ACTIONS, SPELL_SLOTS
             );

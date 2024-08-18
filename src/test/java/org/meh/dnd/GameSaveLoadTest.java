@@ -13,8 +13,8 @@ import static org.meh.dnd.GameMode.EXPLORING;
 class GameSaveLoadTest
 {
     private static final List<AvailableAction> AVAILABLE_ACTIONS = List.of(
-            new AvailableAction(WEAPON, "sword", false),
-            new AvailableAction(WEAPON, "sword", true),
+            new AvailableAction(WEAPON, "longsword", false),
+            new AvailableAction(WEAPON, "longsword", true),
             new AvailableAction(MOVE, "5", false),
             new AvailableAction(END_TURN, "", false));
     private static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
@@ -25,7 +25,7 @@ class GameSaveLoadTest
             CharClass.FIGHTER,
             10, 10, 15, 1000, 1500,
             STATS_FIGHTER,
-            List.of(SWORD),
+            List.of(LONGSWORD),
             List.of(),
             STANDARD_ACTIONS,
             SPELL_SLOTS);
@@ -33,7 +33,7 @@ class GameSaveLoadTest
             new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS, goblin, List.of(), false, false, 5, AVAILABLE_ACTIONS);
     private final GameChar foo = new GameChar("Foo", 3,
             CharClass.FIGHTER,
-            10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(SWORD, BOW),
+            10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD, LONGBOW),
             List.of(MAGIC_MISSILE, SHOCKING_GRASP), STANDARD_ACTIONS,
             SPELL_SLOTS);
 

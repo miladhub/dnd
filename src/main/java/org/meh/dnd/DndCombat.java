@@ -17,22 +17,22 @@ public class DndCombat implements Combat
     public static final AvailableActions STANDARD_ACTIONS = new AvailableActions(1, 1, 30);
     public static final Stats STATS_FIGHTER = new Stats(15, 13, 14, 8, 12, 10);
     public static final Stats STATS_WIZARD = new Stats(8, 12, 14, 15, 13, 10);
-    public static final Weapon SWORD = new Weapon("sword", false, D8, false, true);
-    public static final Weapon BATTLEAXE = new Weapon("battleaxe", false, D12, true, false);
-    public static final Weapon BOW = new Weapon("bow", true, D6, true, false);
+    public static final Weapon LONGSWORD = new Weapon("longsword", false, D8, false, true);
+    public static final Weapon GREATAXE = new Weapon("greataxe", false, D12, true, false);
+    public static final Weapon LONGBOW = new Weapon("longbow", true, D6, true, false);
     public static final Weapon UNARMED = new Weapon("unarmed", false, D4, false, true);
-    public static final Weapon DAGGER = new Weapon("dagger", false, D6, false, true);
+    public static final Weapon DAGGER = new Weapon("dagger", false, D4, false, true);
     public static final Spell SHOCKING_GRASP = new Spell("Shocking Grasp", false, D8, true, 0);
-    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D12, true, 0);
+    public static final Spell FIRE_BOLT = new Spell("Fire Bolt", true, D10, true, 0);
     public static final Spell MAGIC_MISSILE = new Spell("Magic Missile", true, D8, false, 1);
     public static final Spell MELF_ARROW = new Spell("Melf's Magic Arrow", true, D8, false, 2);
 
     private static final List<Weapon> WEAPONS = List.of(
-            SWORD,
-            BATTLEAXE,
+            LONGSWORD,
+            GREATAXE,
             UNARMED,
             DAGGER,
-            BOW
+            LONGBOW
     );
     private static final List<Spell> SPELLS = List.of(
             SHOCKING_GRASP,
@@ -40,8 +40,8 @@ public class DndCombat implements Combat
             MAGIC_MISSILE,
             MELF_ARROW
     );
-    public static final List<Weapon> FIGHTER_WEAPONS = List.of(SWORD, DAGGER, BOW);
-    public static final List<Weapon> WIZARD_WEAPONS = List.of(BOW, DAGGER);
+    public static final List<Weapon> FIGHTER_WEAPONS = List.of(LONGSWORD, DAGGER, LONGBOW);
+    public static final List<Weapon> WIZARD_WEAPONS = List.of(LONGBOW, DAGGER);
     public static final List<Spell> WIZARD_SPELLS = List.of(MAGIC_MISSILE, SHOCKING_GRASP, FIRE_BOLT, MELF_ARROW);
     public static final CharTemplate WARRIOR_TEMPLATE = new CharTemplate(
             10,
