@@ -3,6 +3,7 @@ package org.meh.dnd;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -18,13 +19,20 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Path("/")
 public class RestServer
 {
     private final static Logger LOG = Logger.getLogger(RestServer.class);
-    private final DMChannel dmChannel = new InMemoryDMChannel();
-    private final PlayerChannel playersChannel = new InMemoryPlayerChannel();
+    private final ExecutorService executor =
+            Executors.newSingleThreadExecutor();
+    private final DMChannel dmChannel =
+            new InMemoryThreadedDMChannel(executor);
+    private final PlayerChannel playersChannel =
+            new InMemoryThreadedPlayerChannel(executor);
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DndCombat combat = new DndCombat();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
@@ -40,6 +48,13 @@ public class RestServer
                 LOG.error(e);
             }
         });
+    }
+
+    @PreDestroy
+    public void shutDown()
+    throws InterruptedException {
+        executor.shutdown();
+        assert(executor.awaitTermination(3, TimeUnit.SECONDS));
     }
 
     @POST
