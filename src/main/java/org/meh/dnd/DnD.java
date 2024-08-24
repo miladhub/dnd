@@ -147,9 +147,9 @@ public record DnD(
                         .subtractAtLevel(sa.spell().level());
                 case WeaponAttack ignored -> game.playerChar().spellSlots();
             };
-            boolean killedEnemy = result.gameChar().isDead();
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.add(description);
+            boolean killedEnemy = result.gameChar().isDead();
             if (killedEnemy)
                 newLog.add(String.format("Gained %d xp", fight.xp()));
             GameChar newPlayerChar = game.playerChar()
@@ -179,6 +179,7 @@ public record DnD(
                 playEnemyCombatTurn();
         } else if (action instanceof EndTurn) {
             List<DamageWithDescription> damages = fight.delayedEffects().stream()
+                    .map(e -> updatePlayerAndOpponent(game, fight, e))
                     .filter(e -> e.inTurns() == 0)
                     .map(e -> {
                         int amount = DndCombat.applyDamage(e.damageRolls(),
@@ -203,7 +204,13 @@ public record DnD(
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.addAll(damages.stream().map(DamageWithDescription::description).toList());
             GameChar newOpponent = fight.opponent().damage(opponentCharDamage);
-            GameChar newPlayerChar = game.playerChar().damage(playerCharDamage);
+            if (newOpponent.isDead())
+                newLog.add(String.format("Gained %d xp", fight.xp()));
+            GameChar newPlayerChar = game.playerChar()
+                    .damage(playerCharDamage)
+                    .withXp(newOpponent.isDead()
+                            ? game.playerChar().xp() + fight.xp()
+                            : game.playerChar().xp());
             Fight newFight = new Fight(
                     false,
                     newOpponent,
@@ -310,6 +317,7 @@ public record DnD(
             notifyPlayersFight(game, newFight);
         } else if (ga.action() instanceof EndTurn) {
             List<DamageWithDescription> damages = fight.delayedEffects().stream()
+                    .map(e -> updatePlayerAndOpponent(game, fight, e))
                     .filter(e -> e.inTurns() == 0)
                     .map(e -> {
                         int amount = DndCombat.applyDamage(e.damageRolls(),
@@ -334,7 +342,13 @@ public record DnD(
             List<String> newLog = new ArrayList<>(fight.log());
             newLog.addAll(damages.stream().map(DamageWithDescription::description).toList());
             GameChar newOpponent = fight.opponent().damage(opponentCharDamage);
-            GameChar newPlayerChar = game.playerChar().damage(playerCharDamage);
+            if (newOpponent.isDead())
+                newLog.add(String.format("Gained %d xp", fight.xp()));
+            GameChar newPlayerChar = game.playerChar()
+                    .damage(playerCharDamage)
+                    .withXp(newOpponent.isDead()
+                            ? game.playerChar().xp() + fight.xp()
+                            : game.playerChar().xp());
             Fight newFight = new Fight(
                     true,
                     newOpponent,
@@ -361,6 +375,18 @@ public record DnD(
             );
             notifyPlayersFight(game, newFight);
         }
+    }
+
+    private DelayedEffect updatePlayerAndOpponent(
+            Game game,
+            Fight fight,
+            DelayedEffect e
+    ) {
+        return e.defender().name().equals(game.playerChar().name())
+                ? new DelayedEffect(e.inTurns(), e.damageRolls(),
+                fight.opponent(), game.playerChar(), e.attack())
+                : new DelayedEffect(e.inTurns(), e.damageRolls(),
+                game.playerChar(), fight.opponent(), e.attack());
     }
 
     private static int computeDistance(

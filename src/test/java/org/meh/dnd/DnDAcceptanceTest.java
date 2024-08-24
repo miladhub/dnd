@@ -820,8 +820,7 @@ class DnDAcceptanceTest
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), false);
         dnd.playCombatAction(new WeaponAttack(DndCombat.LONGSWORD), true);
 
-        Game game = gameRepository.game().orElseThrow();
-        assertTrue(game.playerChar().xp() > 1000);
+        assertTrue(game().playerChar().xp() > 1000);
     }
 
     @Test
@@ -905,6 +904,115 @@ class DnDAcceptanceTest
                         STANDARD_ACTIONS,
                         XP_GAIN,
                         List.of()),
+                game().combatStatus());
+    }
+
+    @Test
+    void enemy_damage_lasts_two_turns_and_kills_player() {
+        DnD dnd = new DnD(gameRepository, dmChannel, playersChannel,
+                new MockCounterCombat());
+
+        GameChar foo = new GameChar("Foo", 3,
+                CharClass.FIGHTER,
+                4, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD),
+                List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
+
+        startWith(combatGoblin,
+                new Fight(false, goblin, List.of(),
+                        5, IN_PROGRESS,
+                        STANDARD_ACTIONS,
+                        STANDARD_ACTIONS,
+                        XP_GAIN, List.of()),
+                COMBAT, foo);
+
+        dnd.playCombatAction(new EndTurn(), false);
+        dnd.playCombatAction(new EndTurn(), false);
+
+        assertTrue(game().playerChar().xp() == 1000);
+        assertTrue(game().playerChar().isDead());
+        assertEquals(
+                new Fight(false, goblin,
+                        List.of(
+                                "goblin: cast Melf's Magic Arrow (3 hp damage)",
+                                "goblin: killed Foo, cast Melf's Magic Arrow (3 hp damage)"),
+                        5,
+                        ENEMY_WON,
+                        STANDARD_ACTIONS,
+                        STANDARD_ACTIONS,
+                        XP_GAIN,
+                        List.of()),
+                game().combatStatus());
+    }
+
+    @Test
+    void delayed_effect_kills_and_gives_xp() {
+        DnD dnd = new DnD(gameRepository, dmChannel, playersChannel,
+                new MockCombat(true, 3) {
+                    @Override
+                    public AttackResult computeAttack(
+                            Attacks attack,
+                            GameChar attacker,
+                            GameChar defender
+                    ) {
+                        if (attack instanceof SpellAttack) {
+                            return new Hit(defender.damage(damage), damage, List.of(
+                                    new DelayedEffect(1, List.of(
+                                            new DamageRoll(damage, Die.D4, Stat.INT)
+                                    ), attacker, defender, attack)
+                            ));
+                        } else {
+                            return super.computeAttack(attack, attacker, defender);
+                        }
+                    }
+                });
+
+        GameChar goblin = new GameChar(
+                "goblin",
+                3,
+                CharClass.FIGHTER,
+                4, 10, 15, 1000, 1500,
+                STATS_FIGHTER,
+                List.of(LONGSWORD),
+                List.of(),
+                STANDARD_ACTIONS, SPELL_SLOTS);
+
+        GameChar foo = new GameChar("Foo", 3,
+                CharClass.FIGHTER,
+                10, 10, 15, 1000, 1500, STATS_FIGHTER, List.of(LONGSWORD),
+                List.of(), STANDARD_ACTIONS, SPELL_SLOTS);
+
+        startWith(combatGoblin, new Fight(true, goblin, List.of(), 5, IN_PROGRESS,
+                STANDARD_ACTIONS,
+                STANDARD_ACTIONS,
+                XP_GAIN, List.of()), COMBAT, foo);
+
+        dnd.playCombatAction(new SpellAttack(MELF_ARROW), false);
+        dnd.playCombatAction(new EndTurn(), false);
+
+        GameChar newGoblin = new GameChar(
+                "goblin",
+                3,
+                CharClass.FIGHTER,
+                0, 10, 15, 1000, 1500,
+                STATS_FIGHTER,
+                List.of(DndCombat.LONGSWORD),
+                List.of(),
+                STANDARD_ACTIONS,
+                SPELL_SLOTS);
+
+        assertTrue(game().playerChar().xp() > 1000);
+        assertEquals(
+                new Fight(true, newGoblin,
+                        List.of(
+                                "Foo: cast Melf's Magic Arrow (3 hp damage)",
+                                "goblin: melee attack with longsword (3 hp damage)",
+                                "Foo: killed goblin, cast Melf's Magic Arrow (3 hp damage)",
+                                "Gained " + XP_GAIN + " xp"),
+                        5,
+                        PLAYER_WON,
+                        new AvailableActions(1, 1, 30),
+                        new AvailableActions(0, 1, 30),
+                        XP_GAIN, List.of()),
                 game().combatStatus());
     }
 
