@@ -230,13 +230,11 @@ public record AiDM(
 
             String content = assistant().chat(
                             start.place() != null && !start.place().isBlank()
-                                ? context(game) + String.format("""
-                                
+                                ? String.format("""
                                 Let's begin. The character is currently exploring %s, what happens?
                                 
                                 """, start.place()) + getExplorePromptPostfix(game)
-                                : context(game) + """
-                                
+                                : """
                                 Let's begin, what happens?
                                 
                                 """ + getExplorePromptPostfix(game));
@@ -254,9 +252,8 @@ public record AiDM(
         }
         if (action instanceof Explore e) {
             String content = assistant().chat(
-                            String.format(context(game) +
+                            String.format(
                                     """
-                                    
                                     The character is currently exploring %s, what happens?
                                     
                                     """ + getExplorePromptPostfix(game),
@@ -271,8 +268,7 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Dialogue d) {
-            String prompt = String.format(context(game) + """
-                    
+            String prompt = String.format("""
                     The character wants to speak to '%s', what does '%s' say to start the dialogue?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
@@ -288,8 +284,7 @@ public record AiDM(
             playerChannel.post(output);
         }
         if (action instanceof Say s) {
-            String prompt = String.format(context(game) + """
-                    
+            String prompt = String.format("""
                     The character says '%s', what's the answer?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
@@ -329,7 +324,7 @@ public record AiDM(
             newGoals.add(ed.goal());
 
             String content = assistant().chat(
-                            context(game) + chat(game) + String.format("""
+                            chat(game) + String.format("""
                             
                             The character is currently exploring %s, what happens?
                             
@@ -347,19 +342,6 @@ public record AiDM(
             );
             playerChannel.post(newOutput);
         }
-    }
-
-    private static String context(Game game) {
-        return game.background() + "\n" + describeDiary(game);
-    }
-
-    private static String describeDiary(Game game) {
-        return game.diary().isEmpty()
-                ? ""
-                : "\nHere's a list of noteworthy events happened so far:\n" +
-                game.diary().stream()
-                        .map(d -> "* " + d)
-                        .collect(Collectors.joining("\n")) + "\n\n";
     }
 
     private static String chat(Game game) {
@@ -437,6 +419,12 @@ public record AiDM(
         public String background() {
             LOG.info("tool - background");
             return gameRepository.game().map(Game::background).orElse("");
+        }
+
+        @Tool("Gets a list of noteworthy events happened so far")
+        public List<String> diary() {
+            LOG.info("tool - diary");
+            return gameRepository.game().map(Game::diary).orElse(List.of());
         }
     }
 
