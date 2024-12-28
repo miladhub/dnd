@@ -1,9 +1,13 @@
 package org.meh.dnd;
 
-import org.meh.dnd.openai.ChatResponse;
-import org.meh.dnd.openai.OpenAiClient;
-import org.meh.dnd.openai.OpenAiRequestMessage;
-import org.meh.dnd.openai.Role;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModelName;
+import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.SystemMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +16,13 @@ import java.util.stream.Collectors;
 import static org.meh.dnd.Quests.*;
 import static org.meh.dnd.ResponseParser.*;
 
-public record AiDM(DMChannel dmChannel,
-                   PlayerChannel playerChannel,
-                   OpenAiClient openAiClient,
-                   GameRepository gameRepository
-) implements DM {
+public record AiDM(
+        PlayerChannel playerChannel,
+        GameRepository gameRepository
+)
+        implements DM
+{
+    private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
     private static final int NO_COMBAT_ZONE = 3;
     private static final String SYSTEM_PROMPT = """
             You are a Dungeons and Dragons master, and I'm going
@@ -170,15 +176,28 @@ public record AiDM(DMChannel dmChannel,
             it must not be an action.
             """;
 
+    private Assistant assistant() {
+        ChatLanguageModel model = createModel();
+        return AiServices.builder(Assistant.class)
+                .chatLanguageModel(model)
+                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                .build();
+    }
+
+    private static ChatLanguageModel createModel() {
+        return new OpenAiChatModel.OpenAiChatModelBuilder()
+                .modelName(OpenAiChatModelName.GPT_4_O_MINI)
+                .apiKey(OPENAI_API_KEY)
+                .build();
+    }
+
     @Override
     public void process(
             Actions action
-    ) throws Exception {
+    ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            ChatResponse questResponse = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user, String.format(
+            String questContent = assistant().chat(String.format(
                             """
                             Given this background:
                             
@@ -205,15 +224,10 @@ public record AiDM(DMChannel dmChannel,
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
                             'talk'.
-                            """, game.background()))
-            ), List.of());
-            String questContent =
-                    ((ChatResponse.MessageChatResponse) questResponse).content();
+                            """, game.background()));
             List<QuestGoal> quest = parseQuest(questContent);
 
-            ChatResponse response = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user,
+            String content = assistant().chat(
                             start.place() != null && !start.place().isBlank()
                                 ? context(game) + String.format("""
                                 
@@ -224,16 +238,13 @@ public record AiDM(DMChannel dmChannel,
                                 
                                 Let's begin, what happens?
                                 
-                                """ + getExplorePromptPostfix(game))
-            ), List.of());
+                                """ + getExplorePromptPostfix(game));
 
-            String content =
-                    ((ChatResponse.MessageChatResponse) response).content();
             List<QuestGoal> newQuest =
                     updateQuestFromExploring(quest, start.place());
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
-                    output.withChoices(Quests.addQuestGoal(output.choices(), newQuest));
+                    output.withChoices(addQuestGoal(output.choices(), newQuest));
             gameRepository.save(g -> g
                     .withLastOutput(newOutput)
                     .withStoryLine(newOutput.storyLine())
@@ -241,20 +252,15 @@ public record AiDM(DMChannel dmChannel,
             playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
-            ChatResponse response = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user,
+            String content = assistant().chat(
                             String.format(context(game) +
                                     """
                                     
                                     The character is currently exploring %s, what happens?
                                     
                                     """ + getExplorePromptPostfix(game),
-                                    e.place()))
-            ), List.of());
+                                    e.place()));
 
-            String content =
-                    ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
                     output.withChoices(Quests.addQuestGoal(output.choices(), game.quest()));
@@ -271,12 +277,7 @@ public record AiDM(DMChannel dmChannel,
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     d.target(),
                     d.target());
-            ChatResponse response = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user, prompt)),
-                    List.of());
-            String content =
-                    ((ChatResponse.MessageChatResponse) response).content();
+            String content = assistant().chat(prompt);
             DialogueOutput output =
                     parseDialogueOutput(content);
             gameRepository.save(g -> g
@@ -292,24 +293,27 @@ public record AiDM(DMChannel dmChannel,
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     s.what());
-            List<OpenAiRequestMessage> messages = new ArrayList<>(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT)
-            ));
-            ChatWith chat = (ChatWith) gameRepository.game().orElseThrow().chat();
-            messages.addAll(chat.messages().stream()
-                    .map(m -> new OpenAiRequestMessage(
-                            switch (m.role()) {
-                                case DM -> Role.assistant;
-                                case PLAYER -> Role.user;
-                            },
-                            m.speaker() + ": " + m.message()))
-                    .toList());
-            messages.add(new OpenAiRequestMessage(Role.user, prompt));
 
-            ChatResponse response = openAiClient.chatCompletion(messages,
-                    List.of());
-            String content =
-                    ((ChatResponse.MessageChatResponse) response).content();
+            ChatWith chat =
+                    (ChatWith) gameRepository.game().orElseThrow().chat();
+
+            MessageWindowChatMemory memory =
+                    MessageWindowChatMemory.withMaxMessages(100);
+
+            chat.messages().forEach(m -> memory.add(
+                    switch (m.role()) {
+                        case DM -> new AiMessage(m.speaker() + ": " + m.message());
+                        case PLAYER -> new UserMessage(m.speaker() + ": " + m.message());
+                    }
+            ));
+
+            Assistant assistant = AiServices.builder(Assistant.class)
+                    .chatLanguageModel(createModel())
+                    .chatMemory(memory)
+                    .build();
+
+            String content = assistant.chat(prompt);
+
             DialogueOutput output =
                     parseDialogueOutput(content);
             gameRepository.save(g -> g
@@ -323,18 +327,13 @@ public record AiDM(DMChannel dmChannel,
             List<QuestGoal> newGoals = new ArrayList<>(game.quest());
             newGoals.add(ed.goal());
 
-            ChatResponse response = openAiClient.chatCompletion(List.of(
-                    new OpenAiRequestMessage(Role.system, SYSTEM_PROMPT),
-                    new OpenAiRequestMessage(Role.user,
+            String content = assistant().chat(
                             context(game) + chat(game) + String.format("""
                             
                             The character is currently exploring %s, what happens?
                             
-                            """, game.place()) + getExplorePromptPostfix(game))
-            ), List.of());
+                            """, game.place()) + getExplorePromptPostfix(game));
 
-            String content =
-                    ((ChatResponse.MessageChatResponse) response).content();
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
                     output.withChoices(Quests.addQuestGoal(output.choices(), newGoals));
@@ -429,5 +428,11 @@ public record AiDM(DMChannel dmChannel,
     ) {
         ParsedDialogueResponse parsed = parseDialogueResponse(content);
         return new DialogueOutput(parsed.phrase(), parsed.answers());
+    }
+
+    public interface Assistant
+    {
+        @SystemMessage(SYSTEM_PROMPT)
+        String chat(String prompt);
     }
 }

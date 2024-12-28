@@ -11,7 +11,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
-import org.meh.dnd.openai.HttpUrlConnectionOpenAiClient;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -36,8 +35,7 @@ public class RestServer
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DndCombat combat = new DndCombat();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
-    private final DM dm = new AiDM(dmChannel, playersChannel,
-            new HttpUrlConnectionOpenAiClient(), gameRepository);
+    private final DM dm = new AiDM(playersChannel, gameRepository);
 
     @PostConstruct
     public void initialize() {
