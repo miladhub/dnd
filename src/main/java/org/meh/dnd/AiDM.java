@@ -197,6 +197,8 @@ public record AiDM(
         return new OpenAiChatModel.OpenAiChatModelBuilder()
                 .modelName(OpenAiChatModelName.GPT_4_O_MINI)
                 .apiKey(OPENAI_API_KEY)
+                .logRequests(true)
+                .logResponses(true)
                 .build();
     }
 
@@ -448,8 +450,8 @@ public record AiDM(
         private String describeGoal(QuestGoal g) {
             return switch (g) {
                 case ExploreGoal e -> "explore " + e.target();
-                case KillGoal k -> "kill " + k.target();
-                case TalkGoal t -> "talk to " + t.target();
+                case KillGoal k -> "kill " + k.type().name().toLowerCase() + k.target();
+                case TalkGoal t -> "talk " + t.type().name().toLowerCase() + t.target();
             };
         }
     }
