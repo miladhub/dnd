@@ -132,10 +132,9 @@ public record AiDM(
             You cannot add anything beyond the format above.
             """;
     private static final String DIALOGUE_PROMPT_POSTFIX = """
-            It is important to keep the dialogue brief.
-            
             Your response must be a phrase, followed by a list of possible
-            answers that the player must choose from.
+            answers that the player must choose from. Remember the character's
+            background, current goals, and highlights to create a meaningful dialogue.
             
             To mark the beginning of the answers section, place the
             following text before them:
@@ -145,7 +144,7 @@ public record AiDM(
             <new line>
             
             Each answer can either be a phrase to continue the dialogue, or an
-            dialogue-ending phrase plus one goal quest to be added as a result
+            dialogue-ending phrase plus a new goal quest to be added as a result
             of the dialogue, separated by an arrow, "=>":
             
             - <phrase>
@@ -161,19 +160,25 @@ public record AiDM(
             
             - <type> can be either 'warrior' or 'magic' or 'beast'
             
-            If a goal is specified, then the corresponding phrase must be one
-            that would end the dialogue.
+            A goal must allow the character to reach one of their current goals,
+            either directly or indirectly. As part of the answer, hint as to why
+            reaching this additional goal would help achieving one of the current
+            goals.
+            If a goal is specified, then the corresponding phrase will end the dialogue.
             
-            For example:
+            For example, given the quest current goals:
+            
+            * explore Dark Dungeon
+            * kill beast The Red Dragon
+            
+            you may present these possible answers:
             
             * Hello there! How are you?
-            * Farewell, and good luck. => explore Dark Dungeon
-            * Good luck defeating the dragon! => kill beast The Red Dragon
-            * Tell my old Elf friend that I sent you. => talk magic Elf Sage
+            * I will find the secret path leading to the dungeon then, farewell. => explore Path to Dark Dungeon
+            * I will talk to the sage to receive fire resistance! => talk magic Sage
             
             In these examples, the first one, without a goal, does not end the
-            dialogue. The others, such as "Farewell...", end the dialogue and
-            provide a goal.
+            dialogue. The other two end the dialogue and provide a goal.
             
             Each answer must consist of a phrase that the character would say,
             it must not be an action.
@@ -261,7 +266,7 @@ public record AiDM(
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
-                    output.withChoices(Quests.addQuestGoal(output.choices(), game.quest()));
+                    output.withChoices(addQuestGoal(output.choices(), game.quest()));
             gameRepository.save(g -> g
                     .withLastOutput(newOutput)
                     .withStoryLine(newOutput.storyLine()));
@@ -269,7 +274,8 @@ public record AiDM(
         }
         if (action instanceof Dialogue d) {
             String prompt = String.format("""
-                    The character wants to speak to '%s', what does '%s' say to start the dialogue?
+                    The character wants to speak to NPC '%s'.
+                    What does '%s' say to start the dialogue?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     d.target(),
@@ -285,7 +291,7 @@ public record AiDM(
         }
         if (action instanceof Say s) {
             String prompt = String.format("""
-                    The character says '%s', what's the answer?
+                    The character says: '%s'. What's the answer?
                     
                     """ + DIALOGUE_PROMPT_POSTFIX,
                     s.what());
@@ -305,6 +311,7 @@ public record AiDM(
 
             Assistant assistant = AiServices.builder(Assistant.class)
                     .chatLanguageModel(createModel())
+                    .tools(new AiDmToolbox(gameRepository))
                     .chatMemory(memory)
                     .build();
 
@@ -332,7 +339,7 @@ public record AiDM(
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
-                    output.withChoices(Quests.addQuestGoal(output.choices(), newGoals));
+                    output.withChoices(addQuestGoal(output.choices(), newGoals));
 
             gameRepository.save(g -> g
                     .withChat(new NoChat())
@@ -425,6 +432,25 @@ public record AiDM(
         public List<String> diary() {
             LOG.info("tool - diary");
             return gameRepository.game().map(Game::diary).orElse(List.of());
+        }
+
+        @Tool("Gets the list of current quest goals")
+        public List<String> goals() {
+            LOG.info("tool - goals");
+            return gameRepository.game()
+                    .map(Game::quest)
+                    .map(gs -> gs.stream()
+                            .map(this::describeGoal)
+                            .toList())
+                    .orElse(List.of());
+        }
+
+        private String describeGoal(QuestGoal g) {
+            return switch (g) {
+                case ExploreGoal e -> "explore " + e.target();
+                case KillGoal k -> "kill " + k.target();
+                case TalkGoal t -> "talk to " + t.target();
+            };
         }
     }
 
