@@ -1,5 +1,6 @@
 package org.meh.dnd;
 
+import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -8,6 +9,7 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.SystemMessage;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ public record AiDM(
 )
         implements DM
 {
+    private final static Logger LOG = Logger.getLogger(AiDM.class);
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
     private static final int NO_COMBAT_ZONE = 3;
     private static final String SYSTEM_PROMPT = """
@@ -180,6 +183,7 @@ public record AiDM(
         ChatLanguageModel model = createModel();
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(model)
+                .tools(new AiDmToolbox(gameRepository))
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                 .build();
     }
@@ -197,13 +201,10 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            String questContent = assistant().chat(String.format(
+            String questContent = assistant().chat(
                             """
-                            Given this background:
-                            
-                            "%s"
-                            
-                            Lay out a bullet list of goals that would lead the
+                            Given the character's background,
+                            lay out a bullet list of goals that would lead the
                             character to reaching their goal. Each goal must be
                             of either of these types:
                             
@@ -224,7 +225,7 @@ public record AiDM(
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
                             'talk'.
-                            """, game.background()));
+                            """);
             List<QuestGoal> quest = parseQuest(questContent);
 
             String content = assistant().chat(
@@ -428,6 +429,15 @@ public record AiDM(
     ) {
         ParsedDialogueResponse parsed = parseDialogueResponse(content);
         return new DialogueOutput(parsed.phrase(), parsed.answers());
+    }
+
+    public record AiDmToolbox(GameRepository gameRepository)
+    {
+        @Tool("Gets the character background")
+        public String background() {
+            LOG.info("tool - background");
+            return gameRepository.game().map(Game::background).orElse("");
+        }
     }
 
     public interface Assistant
