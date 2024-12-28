@@ -163,7 +163,8 @@ public record AiDM(
             A goal must allow the character to reach one of their current goals,
             either directly or indirectly. As part of the answer, hint as to why
             reaching this additional goal would help achieving one of the current
-            goals.
+            goals. Do not specify goals that are already part of the quest's
+            current goals.
             If a goal is specified, then the corresponding phrase will end the dialogue.
             
             For example, given the quest current goals:
@@ -284,7 +285,7 @@ public record AiDM(
                     d.target());
             String content = assistant().chat(prompt);
             DialogueOutput output =
-                    parseDialogueOutput(content);
+                    parseDialogueOutput(game, content);
             gameRepository.save(g -> g
                     .withChat(new ChatWith(d.target(), List.of(new ChatMessage(ChatRole.DM, d.target(), output.phrase()))))
                     .withLastOutput(output)
@@ -320,7 +321,7 @@ public record AiDM(
             String content = assistant.chat(prompt);
 
             DialogueOutput output =
-                    parseDialogueOutput(content);
+                    parseDialogueOutput(game, content);
             gameRepository.save(g -> g
                     .withChat(chat.add(
                             new ChatMessage(ChatRole.PLAYER, game.playerChar().name(), s.what()),
@@ -416,15 +417,42 @@ public record AiDM(
     }
 
     static DialogueOutput parseDialogueOutput(
+            Game game,
             String content
     ) {
         ParsedDialogueResponse parsed = parseDialogueResponse(content);
-        return new DialogueOutput(parsed.phrase(), parsed.answers());
+        ParsedDialogueResponse dedup = dedupDialogueResponse(parsed, game);
+        return new DialogueOutput(dedup.phrase(), dedup.answers());
+    }
+
+    private static ParsedDialogueResponse dedupDialogueResponse(
+            ParsedDialogueResponse parsed,
+            Game game
+    ) {
+        return new ParsedDialogueResponse(
+                parsed.phrase(),
+                parsed.answers().stream()
+                        .filter(a ->
+                                !(a instanceof EndDialogue e) ||
+                                game.quest().stream()
+                                        .noneMatch(g -> goalMatches(g, e.goal()))
+                ).toList());
+    }
+
+    private static boolean goalMatches(
+            QuestGoal l,
+            QuestGoal r
+    ) {
+        return switch (l) {
+            case ExploreGoal le -> r instanceof ExploreGoal re && le.target().equals(re.target());
+            case KillGoal lk -> r instanceof KillGoal rk && lk.type() == rk.type() && lk.target().equals(rk.target());
+            case TalkGoal lt -> r instanceof TalkGoal rt && lt.type() == rt.type() && lt.target().equals(rt.target());
+        };
     }
 
     public record AiDmToolbox(GameRepository gameRepository)
     {
-        @Tool("Gets the character background")
+        @Tool("Gets the character's background")
         public String background() {
             LOG.info("tool - background");
             return gameRepository.game().map(Game::background).orElse("");
@@ -442,6 +470,7 @@ public record AiDM(
             return gameRepository.game()
                     .map(Game::quest)
                     .map(gs -> gs.stream()
+                            .filter(g -> !g.reached())
                             .map(this::describeGoal)
                             .toList())
                     .orElse(List.of());
@@ -450,9 +479,37 @@ public record AiDM(
         private String describeGoal(QuestGoal g) {
             return switch (g) {
                 case ExploreGoal e -> "explore " + e.target();
-                case KillGoal k -> "kill " + k.type().name().toLowerCase() + k.target();
-                case TalkGoal t -> "talk " + t.type().name().toLowerCase() + t.target();
+                case KillGoal k -> "kill " + k.type().name().toLowerCase() +
+                        " " + k.target();
+                case TalkGoal t -> "talk " + t.type().name().toLowerCase() +
+                        " " + t.target();
             };
+        }
+
+        @Tool("Gets the character's name")
+        public String charName() {
+            LOG.info("tool - charName");
+            return gameRepository.game()
+                    .map(Game::playerChar)
+                    .map(GameChar::name).orElse("");
+        }
+
+        @Tool("Gets the character's class")
+        public String getCharClass() {
+            LOG.info("tool - class");
+            return gameRepository.game()
+                    .map(Game::playerChar)
+                    .map(GameChar::charClass)
+                    .map(CharClass::name)
+                    .orElse("");
+        }
+
+        @Tool("Gets the character's current location")
+        public String place() {
+            LOG.info("tool - place");
+            return gameRepository.game()
+                    .map(Game::place)
+                    .orElse("");
         }
     }
 
