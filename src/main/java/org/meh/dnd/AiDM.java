@@ -236,7 +236,7 @@ public record AiDM(
                             """);
             List<QuestGoal> quest = parseQuest(questContent);
 
-            String content = assistant().chat(
+            ParsedExploreResponse content = assistant().explore(
                             start.place() != null && !start.place().isBlank()
                                 ? String.format("""
                                 Let's begin. The character is currently exploring %s, what happens?
@@ -259,7 +259,7 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
-            String content = assistant().chat(
+            ParsedExploreResponse content = assistant().explore(
                             String.format(
                                     """
                                     The character is currently exploring %s, what happens?
@@ -333,7 +333,7 @@ public record AiDM(
             List<QuestGoal> newGoals = new ArrayList<>(game.quest());
             newGoals.add(ed.goal());
 
-            String content = assistant().chat(
+            ParsedExploreResponse content = assistant().explore(
                             chat(game) + String.format("""
                             
                             The character is currently exploring %s, what happens?
@@ -378,11 +378,9 @@ public record AiDM(
     }
 
     static ExploreOutput parseExploreOutput(
-            String content,
+            ParsedExploreResponse parsed,
             String place
     ) {
-        ParsedExploreResponse parsed =
-                parseExploreResponse(content);
         if (parsed.npcs().stream().anyMatch(NPC::hostile)) {
             return new ExploreOutput(
                     place,
@@ -517,5 +515,8 @@ public record AiDM(
     {
         @SystemMessage(SYSTEM_PROMPT)
         String chat(String prompt);
+
+        @SystemMessage(SYSTEM_PROMPT)
+        ParsedExploreResponse explore(String prompt);
     }
 }
