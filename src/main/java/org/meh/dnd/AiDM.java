@@ -228,13 +228,13 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Dialogue d) {
-            String prompt = String.format("""
+            ParsedDialogueResponse content = assistant().dialogue(String.format(
+                    """
                     The character wants to speak to NPC '%s'.
-                    What does '%s' say to start the dialogue?
+                    
+                    Provide a phrase that the NPC '%s' says to start off the dialogue.
                     """,
-                    d.target(),
-                    d.target());
-            ParsedDialogueResponse content = assistant().dialogue(prompt);
+                    d.target(), d.target()));
             DialogueOutput output =
                     parseDialogueOutput(game, content);
             gameRepository.save(g -> g
@@ -244,11 +244,6 @@ public record AiDM(
             playerChannel.post(output);
         }
         if (action instanceof Say s) {
-            String prompt = String.format("""
-                    The character, still speaking with '%s', says: '%s'. What's the answer?
-                    """,
-                    game.dialogueTarget(),
-                    s.what());
 
             ChatWith chat =
                     (ChatWith) gameRepository.game().orElseThrow().chat();
@@ -263,13 +258,19 @@ public record AiDM(
                     }
             ));
 
+            memory.add(new UserMessage(game.playerChar().name() + ": " + s.what()));
+
             Assistant assistant = AiServices.builder(Assistant.class)
                     .chatLanguageModel(createModel())
                     .tools(new AiDmToolbox(gameRepository))
                     .chatMemory(memory)
                     .build();
 
-            ParsedDialogueResponse content = assistant.dialogue(prompt);
+            ParsedDialogueResponse content = assistant.dialogue(String.format(
+                    """
+                    Provide a phrase as the answer from NPC '%s'.
+                    """,
+                    ((Somebody) game.dialogueTarget()).who()));
 
             DialogueOutput output =
                     parseDialogueOutput(game, content);
@@ -462,7 +463,9 @@ public record AiDM(
 
         @SystemMessage(SYSTEM_PROMPT)
         @dev.langchain4j.service.UserMessage("""
-        Provide a list of answers.
+        {prompt}
+        
+        Also, provide a list of answers for the character to choose from.
         
         Each answer can either be of type "say" or "end dialogue", not both.
         
