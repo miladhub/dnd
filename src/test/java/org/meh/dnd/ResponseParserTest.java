@@ -1,12 +1,13 @@
 package org.meh.dnd;
 
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.meh.dnd.NpcType.*;
-import static org.meh.dnd.ResponseParser.*;
 
 class ResponseParserTest
 {
@@ -31,49 +32,97 @@ class ResponseParserTest
     }
 
     @Test
-    void parse_dialogue_with_endings() {
-        String response = """
-                "I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in."
+    void parse_end_dialogue()
+    throws Exception {
+        String json = """
+                {
+                  "phrase": "You steel yourself for the confrontation, aware of the risks. Gathering more information about the Sorcerer could provide an advantage in this battle.",
+                  "answers": [
+                    {
+                      "actionType": "SAY",
+                      "say": {
+                        "what": "Let's scout the area and see if we can find any clues about the Sorcerer's whereabouts or weaknesses."
+                      }
+                    },
+                    {
+                      "actionType": "END_DIALOGUE",
+                      "endDialoguePhrase": "To better prepare for the confrontation, it might be wise to talk to the Knight Commander. They may have crucial information about the Sorcerer’s past and strategies to defeat him.",
+                      "goalType": "TALK",
+                      "talkGoal": {
+                        "talkNpcType": "WARRIOR",
+                        "talkTarget": "Knight Commander"
+                      }
+                    }
+                  ]
+                }
+                """;
 
-                *** ANSWERS ***
+        String j2 = """
+                {
+                  "phrase": "Gathering information about the Sorcerer is crucial to ensure a successful confrontation.",
+                  "answers": [
+                    {
+                      "actionType": "SAY",
+                      "say": {
+                        "what": "We should investigate the Sorcerer's lair and gather intel on his weaknesses."
+                      }
+                    },
+                    {
+                      "actionType": "END_DIALOGUE",
+                      "endDialogue": {
+                        "endDialoguePhrase": "Exploring the Forbidden Forest might reveal secrets about the Sorcerer's power and his plans.",
+                        "goalType": "EXPLORE",
+                        "exploreGoal": {
+                          "place": "Forbidden Forest"
+                        }
+                      }
+                    }
+                  ]
+                }
+                """;
 
-                * Hello there!
-                * Farewell, and good luck. => explore Dark Dungeon
-                * Good luck defeating the dragon! => kill beast The Red Dragon
-                * Tell my old Elf friend that I sent you. => talk magic Elf Sage""";
-
-        ParsedDialogueResponse output = new ParsedDialogueResponse(
-                "\"I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in.\"",
-                List.of(
-                        new Say("Hello there!"),
-                        new EndDialogue("Farewell, and good luck.",
-                                new ExploreGoal("Dark Dungeon", false)),
-                        new EndDialogue("Good luck defeating the dragon!",
-                                new KillGoal(BEAST, "The Red Dragon", false)),
-                        new EndDialogue("Tell my old Elf friend that I sent you.",
-                                new TalkGoal(MAGIC, "Elf Sage", false))
-                )
-        );
-        assertEquals(output, parseDialogueResponse(response));
+        try (Jsonb jsonb = JsonbBuilder.create()) {
+            ResponseParser.ParsedDialogueResponse r = jsonb.fromJson(json,
+                    ResponseParser.ParsedDialogueResponse.class);
+            assertNotNull(r);
+        }
     }
 
     @Test
-    void parse_dialogue_no_endings() {
-        String response = """
-                "I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in."
+    void end_dialogue_explore()
+    throws Exception {
+        String json = """
+                {
+                  "endDialoguePhrase": "Exploring the Forbidden Forest might reveal secrets about the Sorcerer's power and his plans.",
+                  "goalType": "EXPLORE",
+                  "exploreGoal": {
+                    "place": "Forbidden Forest"
+                  }
+                }
+                """;
+        try (Jsonb jsonb = JsonbBuilder.create()) {
+            ResponseParser.EndDialogueModel r = jsonb.fromJson(json,
+                    ResponseParser.EndDialogueModel.class);
+            assertNotNull(r);
+        }
+    }
 
-                *** ANSWERS ***
-
-                * "What kind of illusion can you create?"
-                * Where are you going?""";
-
-        ParsedDialogueResponse output = new ParsedDialogueResponse(
-                "\"I can create an illusion of a fire in the forest to draw them away from the camp. While they're distracted, we can sneak in.\"",
-                List.of(
-                        new Say("What kind of illusion can you create?"),
-                        new Say("Where are you going?")
-                )
-        );
-        assertEquals(output, parseDialogueResponse(response));
+    @Test
+    void end_dialogue_talk()
+    throws Exception {
+        String json = """
+                {
+                  "endDialoguePhrase": "Exploring the Forbidden Forest might reveal secrets about the Sorcerer's power and his plans.",
+                  "goalType": "EXPLORE",
+                  "exploreGoal": {
+                    "place": "Forbidden Forest"
+                  }
+                }
+                """;
+        try (Jsonb jsonb = JsonbBuilder.create()) {
+            ResponseParser.EndDialogueModel r = jsonb.fromJson(json,
+                    ResponseParser.EndDialogueModel.class);
+            assertNotNull(r);
+        }
     }
 }

@@ -131,59 +131,6 @@ public record AiDM(
 
             You cannot add anything beyond the format above.
             """;
-    private static final String DIALOGUE_PROMPT_POSTFIX = """
-            Your response must be a phrase, followed by a list of possible
-            answers that the player must choose from. Remember the character's
-            background, current goals, and highlights to create a meaningful dialogue.
-            
-            To mark the beginning of the answers section, place the
-            following text before them:
-            
-            <new line>
-            *** ANSWERS ***
-            <new line>
-            
-            Each answer can either be a phrase to continue the dialogue, or an
-            dialogue-ending phrase plus a new goal quest to be added as a result
-            of the dialogue, separated by an arrow, "=>":
-            
-            - <phrase>
-            - <phrase> => <goal>
-            
-            The <goal> can be either of:
-            
-            - explore <place>
-            - kill <type> <who or what>
-            - talk <type> <to whom>
-            
-            where:
-            
-            - <type> can be either 'warrior' or 'magic' or 'beast'
-            
-            A goal must allow the character to reach one of their current goals,
-            either directly or indirectly. As part of the answer, hint as to why
-            reaching this additional goal would help achieving one of the current
-            goals. Do not specify goals that are already part of the quest's
-            current goals.
-            If a goal is specified, then the corresponding phrase will end the dialogue.
-            
-            For example, given the quest current goals:
-            
-            * explore Dark Dungeon
-            * kill beast The Red Dragon
-            
-            you may present these possible answers:
-            
-            * Hello there! How are you?
-            * I will find the secret path leading to the dungeon then, farewell. => explore Path to Dark Dungeon
-            * I will talk to the sage to receive fire resistance! => talk magic Sage
-            
-            In these examples, the first one, without a goal, does not end the
-            dialogue. The other two end the dialogue and provide a goal.
-            
-            Each answer must consist of a phrase that the character would say,
-            it must not be an action.
-            """;
 
     private Assistant assistant() {
         ChatLanguageModel model = createModel();
@@ -198,6 +145,7 @@ public record AiDM(
         return new OpenAiChatModel.OpenAiChatModelBuilder()
                 .modelName(OpenAiChatModelName.GPT_4_O_MINI)
                 .apiKey(OPENAI_API_KEY)
+                .parallelToolCalls(true)
                 .logRequests(true)
                 .logResponses(true)
                 .build();
@@ -209,11 +157,15 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            String questContent = assistant().chat(
+            String questContent = assistant().chat(String.format(
                             """
-                            Given the character's background,
-                            lay out a bullet list of goals that would lead the
-                            character to reaching their goal. Each goal must be
+                            This is the background of the character, called "%s":
+                            
+                            "%s"
+                            
+                            This character has no current goals, so your job now
+                            is to lay out a bullet list of goals that would lead
+                            them to reaching their goal. Each goal must be
                             of either of these types:
                             
                             - explore <place>
@@ -233,7 +185,7 @@ public record AiDM(
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
                             'talk'.
-                            """);
+                            """, game.playerChar().name(), game.background()));
             List<QuestGoal> quest = parseQuest(questContent);
 
             ParsedExploreResponse content = assistant().explore(
@@ -279,11 +231,10 @@ public record AiDM(
             String prompt = String.format("""
                     The character wants to speak to NPC '%s'.
                     What does '%s' say to start the dialogue?
-                    
-                    """ + DIALOGUE_PROMPT_POSTFIX,
+                    """,
                     d.target(),
                     d.target());
-            String content = assistant().chat(prompt);
+            ParsedDialogueResponse content = assistant().dialogue(prompt);
             DialogueOutput output =
                     parseDialogueOutput(game, content);
             gameRepository.save(g -> g
@@ -294,9 +245,9 @@ public record AiDM(
         }
         if (action instanceof Say s) {
             String prompt = String.format("""
-                    The character says: '%s'. What's the answer?
-                    
-                    """ + DIALOGUE_PROMPT_POSTFIX,
+                    The character, still speaking with '%s', says: '%s'. What's the answer?
+                    """,
+                    game.dialogueTarget(),
                     s.what());
 
             ChatWith chat =
@@ -318,7 +269,7 @@ public record AiDM(
                     .chatMemory(memory)
                     .build();
 
-            String content = assistant.chat(prompt);
+            ParsedDialogueResponse content = assistant.dialogue(prompt);
 
             DialogueOutput output =
                     parseDialogueOutput(game, content);
@@ -416,11 +367,29 @@ public record AiDM(
 
     static DialogueOutput parseDialogueOutput(
             Game game,
-            String content
+            ParsedDialogueResponse parsed
     ) {
-        ParsedDialogueResponse parsed = parseDialogueResponse(content);
         ParsedDialogueResponse dedup = dedupDialogueResponse(parsed, game);
-        return new DialogueOutput(dedup.phrase(), dedup.answers());
+        return new DialogueOutput(
+                dedup.phrase(),
+                dedup.answers().stream().map(AiDM::parseAction).toList());
+    }
+
+    private static Actions parseAction(DialogueActionModel m) {
+        return switch (m.actionType()) {
+            case SAY -> new Say(m.say().what());
+            case END_DIALOGUE -> new EndDialogue(
+                    m.endDialogue().endDialoguePhrase(),
+                    parseGoal(m.endDialogue()));
+        };
+    }
+
+    private static QuestGoal parseGoal(EndDialogueModel m) {
+        return switch (m.goalType()) {
+            case KILL -> new KillGoal(m.killGoal().killNpcType(), m.killGoal().killTarget(), false);
+            case EXPLORE -> new ExploreGoal(m.exploreGoal().place(), false);
+            case TALK -> new TalkGoal(m.talkGoal().talkNpcType(), m.talkGoal().talkTarget(), false);
+        };
     }
 
     private static ParsedDialogueResponse dedupDialogueResponse(
@@ -431,20 +400,20 @@ public record AiDM(
                 parsed.phrase(),
                 parsed.answers().stream()
                         .filter(a ->
-                                !(a instanceof EndDialogue e) ||
+                                a.actionType() != DialogueActionType.END_DIALOGUE ||
                                 game.quest().stream()
-                                        .noneMatch(g -> goalMatches(g, e.goal()))
+                                        .noneMatch(g -> goalMatches(g, a.endDialogue()))
                 ).toList());
     }
 
     private static boolean goalMatches(
             QuestGoal l,
-            QuestGoal r
+            EndDialogueModel m
     ) {
         return switch (l) {
-            case ExploreGoal le -> r instanceof ExploreGoal re && le.target().equals(re.target());
-            case KillGoal lk -> r instanceof KillGoal rk && lk.type() == rk.type() && lk.target().equals(rk.target());
-            case TalkGoal lt -> r instanceof TalkGoal rt && lt.type() == rt.type() && lt.target().equals(rt.target());
+            case ExploreGoal le -> m.goalType() == GoalType.EXPLORE && le.target().equals(m.exploreGoal().place());
+            case KillGoal lk -> m.goalType() == GoalType.KILL && lk.type() == m.killGoal().killNpcType() && lk.target().equals(m.killGoal().killTarget());
+            case TalkGoal lt -> m.goalType() == GoalType.TALK && lt.type() == m.talkGoal().talkNpcType() && lt.target().equals(m.talkGoal().talkTarget());
         };
     }
 
@@ -477,37 +446,9 @@ public record AiDM(
         private String describeGoal(QuestGoal g) {
             return switch (g) {
                 case ExploreGoal e -> "explore " + e.target();
-                case KillGoal k -> "kill " + k.type().name().toLowerCase() +
-                        " " + k.target();
-                case TalkGoal t -> "talk " + t.type().name().toLowerCase() +
-                        " " + t.target();
+                case KillGoal k -> "kill " + k.target();
+                case TalkGoal t -> "talk to " + t.target();
             };
-        }
-
-        @Tool("Gets the character's name")
-        public String charName() {
-            LOG.info("tool - charName");
-            return gameRepository.game()
-                    .map(Game::playerChar)
-                    .map(GameChar::name).orElse("");
-        }
-
-        @Tool("Gets the character's class")
-        public String getCharClass() {
-            LOG.info("tool - class");
-            return gameRepository.game()
-                    .map(Game::playerChar)
-                    .map(GameChar::charClass)
-                    .map(CharClass::name)
-                    .orElse("");
-        }
-
-        @Tool("Gets the character's current location")
-        public String place() {
-            LOG.info("tool - place");
-            return gameRepository.game()
-                    .map(Game::place)
-                    .orElse("");
         }
     }
 
@@ -518,5 +459,21 @@ public record AiDM(
 
         @SystemMessage(SYSTEM_PROMPT)
         ParsedExploreResponse explore(String prompt);
+
+        @SystemMessage(SYSTEM_PROMPT)
+        @dev.langchain4j.service.UserMessage("""
+        Provide a list of answers.
+        
+        Each answer can either be of type "say" or "end dialogue", not both.
+        
+        In the "end dialogue" case, you must provide a goal.
+        
+        A goal must allow the character to reach one of their current goals,
+        either directly or indirectly. In the "end dialogue phrase", hint as to
+        why reaching this additional goal would help achieving one of the current
+        goals. Do not specify goals that are already part of the quest's
+        current goals.
+        """)
+        ParsedDialogueResponse dialogue(String prompt);
     }
 }
