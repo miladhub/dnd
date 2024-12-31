@@ -1,15 +1,13 @@
 package org.meh.dnd;
 
-import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.service.SystemMessage;
-import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +22,6 @@ public record AiDM(
 )
         implements DM
 {
-    private final static Logger LOG = Logger.getLogger(AiDM.class);
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
     private static final int NO_COMBAT_ZONE = 3;
     private static final String SYSTEM_PROMPT = """
@@ -134,10 +131,41 @@ public record AiDM(
 
     private Assistant assistant() {
         ChatLanguageModel model = createModel();
+        MessageWindowChatMemory memory = MessageWindowChatMemory.withMaxMessages(10);
+        Game g = gameRepository.game().orElseThrow();
+        String systemPrompt = SYSTEM_PROMPT + String.format("""
+                
+                The character name is '%s'. Their background is as follows:
+                
+                "%s"
+                
+                """, g.playerChar().name(), g.background());
+
+        String questPrompt = g.quest().isEmpty()
+                ? "" : String.format("""
+                
+                The character's goals so far are:
+                %s
+                """,
+                g.quest().stream()
+                        .map(qg -> "* " + describeGoal(qg))
+                        .collect(Collectors.joining("\n")));
+
+        List<String> diary = gameRepository.game().map(Game::diary).orElse(List.of());
+        String diaryPrompt = diary.isEmpty()? "" : String.format("""
+                
+                This is a list of noteworthy events happened so far:
+                %s
+                """, diary.stream()
+                .map(e -> "* " + e)
+                .collect(Collectors.joining("\n")));
+
+        memory.add(new SystemMessage(
+                systemPrompt + questPrompt + diaryPrompt));
+
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(model)
-                .tools(new AiDmToolbox(gameRepository))
-                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                .chatMemory(memory)
                 .build();
     }
 
@@ -145,7 +173,6 @@ public record AiDM(
         return new OpenAiChatModel.OpenAiChatModelBuilder()
                 .modelName(OpenAiChatModelName.GPT_4_O_MINI)
                 .apiKey(OPENAI_API_KEY)
-                .parallelToolCalls(true)
                 .logRequests(true)
                 .logResponses(true)
                 .build();
@@ -157,16 +184,11 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            String questContent = assistant().chat(String.format(
+            String questContent = assistant().chat(
                             """
-                            This is the background of the character, called "%s":
-                            
-                            "%s"
-                            
-                            This character has no current goals, so your job now
-                            is to lay out a bullet list of goals that would lead
-                            them to reaching their goal. Each goal must be
-                            of either of these types:
+                            Your job is to lay out a bullet list of goals that
+                            would lead the character to reaching their goal.
+                            Each goal must be of either of these types:
                             
                             - explore <place>
                             - kill <type> <who or what>
@@ -185,7 +207,7 @@ public record AiDM(
                             Don't add anything but the list in the response. Each
                             element must be either an 'explore' or a 'kill' or a
                             'talk'.
-                            """, game.playerChar().name(), game.background()));
+                            """);
             List<QuestGoal> quest = parseQuest(questContent);
 
             ParsedExploreResponse content = assistant().explore(
@@ -262,7 +284,6 @@ public record AiDM(
 
             Assistant assistant = AiServices.builder(Assistant.class)
                     .chatLanguageModel(createModel())
-                    .tools(new AiDmToolbox(gameRepository))
                     .chatMemory(memory)
                     .build();
 
@@ -418,50 +439,20 @@ public record AiDM(
         };
     }
 
-    public record AiDmToolbox(GameRepository gameRepository)
-    {
-        @Tool("Gets the character's background")
-        public String background() {
-            LOG.info("tool - background");
-            return gameRepository.game().map(Game::background).orElse("");
-        }
-
-        @Tool("Gets a list of noteworthy events happened so far")
-        public List<String> diary() {
-            LOG.info("tool - diary");
-            return gameRepository.game().map(Game::diary).orElse(List.of());
-        }
-
-        @Tool("Gets the list of current quest goals")
-        public List<String> goals() {
-            LOG.info("tool - goals");
-            return gameRepository.game()
-                    .map(Game::quest)
-                    .map(gs -> gs.stream()
-                            .filter(g -> !g.reached())
-                            .map(this::describeGoal)
-                            .toList())
-                    .orElse(List.of());
-        }
-
-        private String describeGoal(QuestGoal g) {
-            return switch (g) {
-                case ExploreGoal e -> "explore " + e.target();
-                case KillGoal k -> "kill " + k.target();
-                case TalkGoal t -> "talk to " + t.target();
-            };
-        }
+    private static String describeGoal(QuestGoal g) {
+        return switch (g) {
+            case ExploreGoal e -> "explore " + e.target();
+            case KillGoal k -> "kill " + k.target();
+            case TalkGoal t -> "talk to " + t.target();
+        };
     }
 
     public interface Assistant
     {
-        @SystemMessage(SYSTEM_PROMPT)
         String chat(String prompt);
 
-        @SystemMessage(SYSTEM_PROMPT)
         ParsedExploreResponse explore(String prompt);
 
-        @SystemMessage(SYSTEM_PROMPT)
         @dev.langchain4j.service.UserMessage("""
         {prompt}
         
