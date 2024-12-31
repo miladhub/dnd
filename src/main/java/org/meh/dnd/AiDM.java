@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.meh.dnd.Quests.*;
-import static org.meh.dnd.ResponseParser.*;
+import static org.meh.dnd.AiEntities.*;
 
 public record AiDM(
         PlayerChannel playerChannel,
@@ -184,31 +184,10 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            String questContent = assistant().chat(
-                            """
-                            Your job is to lay out a bullet list of goals that
-                            would lead the character to reaching their goal.
-                            Each goal must be of either of these types:
-                            
-                            - explore <place>
-                            - kill <type> <who or what>
-                            - talk <type> <to whom>
-                            
-                            where:
-                            
-                            - <type> can be either 'warrior' or 'magic' or 'beast'
-                            
-                            For example:
-                            
-                            * explore Dark Dungeon
-                            * kill beast The Red Dragon
-                            * talk magic Elf Sage
-                            
-                            Don't add anything but the list in the response. Each
-                            element must be either an 'explore' or a 'kill' or a
-                            'talk'.
-                            """);
-            List<QuestGoal> quest = parseQuest(questContent);
+            QuestStartModel startModel = assistant().startQuest();
+            List<QuestGoal> quest = startModel.questGoals().stream()
+                    .map(AiDM::parseGoal)
+                    .toList();
 
             ParsedExploreResponse content = assistant().explore(
                             start.place() != null && !start.place().isBlank()
@@ -406,6 +385,14 @@ public record AiDM(
         };
     }
 
+    private static QuestGoal parseGoal(QuestGoalModel m) {
+        return switch (m.goalType()) {
+            case KILL -> new KillGoal(m.killGoal().killNpcType(), m.killGoal().killTarget(), false);
+            case EXPLORE -> new ExploreGoal(m.exploreGoal().place(), false);
+            case TALK -> new TalkGoal(m.talkGoal().talkNpcType(), m.talkGoal().talkTarget(), false);
+        };
+    }
+
     private static QuestGoal parseGoal(EndDialogueModel m) {
         return switch (m.goalType()) {
             case KILL -> new KillGoal(m.killGoal().killNpcType(), m.killGoal().killTarget(), false);
@@ -449,7 +436,11 @@ public record AiDM(
 
     public interface Assistant
     {
-        String chat(String prompt);
+        @dev.langchain4j.service.UserMessage("""
+        Your job is to lay out a list of goals that
+        make sense given their background.
+        """)
+        QuestStartModel startQuest();
 
         ParsedExploreResponse explore(String prompt);
 
