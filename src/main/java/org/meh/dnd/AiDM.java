@@ -36,97 +36,7 @@ public record AiDM(
             followed by a list of non-playing characters (NPCs), and
             a list of places to explore. Finally, if you deem the description
             relevant enough in the context of the character's story,
-            add a storyline at the end.
-            
-            To mark the beginning of the NPCs section, place the following
-            text before them:
-            
-            <new line>
-            *** NPCs ***
-            <new line>
-            
-            Each NPC must be listed with this format:
-            - <friendliness> <type> <name>
-            
-            where
-            - <friendliness> can either be 'hostile' or 'friendly'
-            - <type> can be either 'warrior' or 'magic' or 'beast'
-            - <name> is the name of the NPC, nothing more (no description here)
-            
-            Present the NPCs with a bullet list, for example:
-            * hostile beast Wolf
-            * friendly warrior Elf
-            
-            To mark the beginning of the places to explore section, place the
-            following text before them:
-            
-            <new line>
-            *** PLACES ***
-            <new line>
-            
-            Present the places with a bullet list, for example:
-            * Forest
-            * Dungeon
-            
-            To mark the beginning of the storyline, place the following text
-            before it:
-            
-            <new line>
-            *** STORYLINE ***
-            <new line>
-            
-            Present the storyline immediately after, only if noteworthy. It
-            must consist of 10 words at most.
-
-            You cannot add anything beyond the format above.
-            """;
-    private static final String EXPLORE_PROMPT_POSTFIX_NO_COMBAT = """
-            Your response must be made of a description,
-            followed by a list of non-playing characters (NPCs), and
-            a list of places to explore. Finally, if you deem the description
-            relevant enough in the context of the character's story,
-            add a storyline at the end.
-            
-            To mark the beginning of the NPCs section, place the following
-            text before them:
-            
-            <new line>
-            *** NPCs ***
-            <new line>
-            
-            Each NPC must be listed with this format (all must be friendly):
-            - friendly <type> <name>
-            
-            where
-            - <type> can be either 'warrior' or 'magic' or 'beast'
-            - <name> is the name of the NPC, nothing more (no description here)
-            
-            Present the NPCs with a bullet list, for example:
-            * friendly beast Owl
-            * friendly magic Elf
-            
-            To mark the beginning of the places to explore section, place the
-            following text before them:
-            
-            <new line>
-            *** PLACES ***
-            <new line>
-            
-            Present the places with a bullet list, for example:
-            * Forest
-            * Dungeon
-            
-            To mark the beginning of the storyline, place the following text
-            before it:
-            
-            <new line>
-            *** STORYLINE ***
-            <new line>
-            
-            Present the storyline immediately after, only if noteworthy. It
-            must consist of 10 words at most.
-
-            You cannot add anything beyond the format above.
+            add a storyline at the end (max 10 words).
             """;
 
     private Assistant assistant() {
@@ -245,7 +155,6 @@ public record AiDM(
             playerChannel.post(output);
         }
         if (action instanceof Say s) {
-
             ChatWith chat =
                     (ChatWith) gameRepository.game().orElseThrow().chat();
 
@@ -285,8 +194,28 @@ public record AiDM(
             List<QuestGoal> newGoals = new ArrayList<>(game.quest());
             newGoals.add(ed.goal());
 
-            ParsedExploreResponse content = assistant().explore(
-                            chat(game) + String.format("""
+            ChatWith chat =
+                    (ChatWith) gameRepository.game().orElseThrow().chat();
+
+            MessageWindowChatMemory memory =
+                    MessageWindowChatMemory.withMaxMessages(100);
+
+            chat.messages().forEach(m -> memory.add(
+                    switch (m.role()) {
+                        case DM -> new AiMessage(m.speaker() + ": " + m.message());
+                        case PLAYER -> new UserMessage(m.speaker() + ": " + m.message());
+                    }
+            ));
+
+            memory.add(new UserMessage(game.playerChar().name() + ": " + ed.phrase()));
+
+            Assistant assistant = AiServices.builder(Assistant.class)
+                    .chatLanguageModel(createModel())
+                    .chatMemory(memory)
+                    .build();
+
+            ParsedExploreResponse content = assistant.explore(
+                            String.format("""
                             
                             The character is currently exploring %s, what happens?
                             
@@ -306,18 +235,11 @@ public record AiDM(
         }
     }
 
-    private static String chat(Game game) {
-        ChatWith chat = (ChatWith) game.chat();
-        String chatContents = chat.messages().stream()
-                .map(d -> "* " + d.speaker() + ": " + d.message())
-                .collect(Collectors.joining("\n"));
-        return "Here's how the dialogue went, see if you find anything" +
-                " useful for the story line:\n" + chatContents + "\n";
-    }
-
     private static String getExplorePromptPostfix(Game game) {
         if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
-            return EXPLORE_PROMPT_POSTFIX_NO_COMBAT;
+            return EXPLORE_PROMPT_POSTFIX + """
+                    All NPCs must be friendly.
+                    """;
         else
             return EXPLORE_PROMPT_POSTFIX;
     }
