@@ -22,63 +22,6 @@ public record AiDM(
 ) implements DM {
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
 
-    private Assistant assistant(Game g) {
-        String systemPrompt = String.format("""
-                You are a Dungeons and Dragons master, and I'm going
-                to tell you what the player is doing.
-                
-                You have to briefly describe what's happening to them,
-                and then you must provide them with choices on how
-                to move forward in their story.
-                
-                The character name is '%s'. Their background is as follows:
-                
-                "%s"
-                
-                """, g.playerChar().name(), g.background());
-
-        String questPrompt = g.quest().isEmpty()
-                ? ""
-                : String.format("""
-                
-                The character's goals so far are:
-                %s
-                """,
-                g.quest().stream()
-                        .map(qg -> "* " + describeGoal(qg))
-                        .collect(Collectors.joining("\n")));
-
-        String diaryPrompt = g.diary().isEmpty()
-                ? ""
-                : String.format("""
-                
-                This is a list of noteworthy events happened so far:
-                %s
-                """, g.diary().stream()
-                .map(e -> "* " + e)
-                .collect(Collectors.joining("\n")));
-
-        MessageWindowChatMemory memory =
-                MessageWindowChatMemory.withMaxMessages(10);
-
-        memory.add(new SystemMessage(
-                systemPrompt + questPrompt + diaryPrompt));
-
-        return AiServices.builder(Assistant.class)
-                .chatLanguageModel(createModel())
-                .chatMemory(memory)
-                .build();
-    }
-
-    private static ChatLanguageModel createModel() {
-        return new OpenAiChatModel.OpenAiChatModelBuilder()
-                .modelName(OpenAiChatModelName.GPT_4_O_MINI)
-                .apiKey(OPENAI_API_KEY)
-                .logRequests(true)
-                .logResponses(true)
-                .build();
-    }
-
     @Override
     public void process(
             Actions action
@@ -176,6 +119,63 @@ public record AiDM(
             );
             playerChannel.post(newOutput);
         }
+    }
+
+    private Assistant assistant(Game g) {
+        String systemPrompt = String.format("""
+                You are a Dungeons and Dragons master, and I'm going
+                to tell you what the player is doing.
+                
+                You have to briefly describe what's happening to them,
+                and then you must provide them with choices on how
+                to move forward in their story.
+                
+                The character name is '%s'. Their background is as follows:
+                
+                "%s"
+                
+                """, g.playerChar().name(), g.background());
+
+        String questPrompt = g.quest().isEmpty()
+                ? ""
+                : String.format("""
+                
+                The character's goals so far are:
+                %s
+                """,
+                g.quest().stream()
+                        .map(qg -> "* " + describeGoal(qg))
+                        .collect(Collectors.joining("\n")));
+
+        String diaryPrompt = g.diary().isEmpty()
+                ? ""
+                : String.format("""
+                
+                This is a list of noteworthy events happened so far:
+                %s
+                """, g.diary().stream()
+                .map(e -> "* " + e)
+                .collect(Collectors.joining("\n")));
+
+        MessageWindowChatMemory memory =
+                MessageWindowChatMemory.withMaxMessages(10);
+
+        memory.add(new SystemMessage(
+                systemPrompt + questPrompt + diaryPrompt));
+
+        return AiServices.builder(Assistant.class)
+                .chatLanguageModel(createModel())
+                .chatMemory(memory)
+                .build();
+    }
+
+    private ChatLanguageModel createModel() {
+        return new OpenAiChatModel.OpenAiChatModelBuilder()
+                .modelName(OpenAiChatModelName.GPT_4_O_MINI)
+                .apiKey(OPENAI_API_KEY)
+                .logRequests(true)
+                .logResponses(true)
+                .build();
     }
 
     private static MessageWindowChatMemory memoryFromChat(
