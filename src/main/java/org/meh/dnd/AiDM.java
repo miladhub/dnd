@@ -23,7 +23,7 @@ public record AiDM(
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
 
     private Assistant assistant(Game g) {
-        String systemPrompt =  String.format("""
+        String systemPrompt = String.format("""
                 You are a Dungeons and Dragons master, and I'm going
                 to tell you what the player is doing.
                 
@@ -38,7 +38,8 @@ public record AiDM(
                 """, g.playerChar().name(), g.background());
 
         String questPrompt = g.quest().isEmpty()
-                ? "" : String.format("""
+                ? ""
+                : String.format("""
                 
                 The character's goals so far are:
                 %s
@@ -47,15 +48,13 @@ public record AiDM(
                         .map(qg -> "* " + describeGoal(qg))
                         .collect(Collectors.joining("\n")));
 
-        List<String> diary = gameRepository.game()
-                .map(Game::diary)
-                .orElse(List.of());
-
-        String diaryPrompt = diary.isEmpty()? "" : String.format("""
+        String diaryPrompt = g.diary().isEmpty()
+                ? ""
+                : String.format("""
                 
                 This is a list of noteworthy events happened so far:
                 %s
-                """, diary.stream()
+                """, g.diary().stream()
                 .map(e -> "* " + e)
                 .collect(Collectors.joining("\n")));
 
@@ -152,12 +151,8 @@ public record AiDM(
             playerChannel.post(output);
         }
         if (action instanceof EndDialogue ed) {
-            List<QuestGoal> newGoals = new ArrayList<>(game.quest());
-            newGoals.add(ed.goal());
-
             ChatWith chat =
-                    (ChatWith) gameRepository.game().orElseThrow().chat();
-
+                    (ChatWith) game.chat();
             MessageWindowChatMemory memory =
                     memoryFromChat(game.playerChar(), chat, ed.phrase());
 
@@ -165,10 +160,11 @@ public record AiDM(
                     .chatLanguageModel(createModel())
                     .chatMemory(memory)
                     .build();
-
             ParsedExploreResponse content = assistant.explore(game.place());
 
             ExploreOutput output = parseExploreOutput(content, game.place());
+            List<QuestGoal> newGoals = new ArrayList<>(game.quest());
+            newGoals.add(ed.goal());
             ExploreOutput newOutput =
                     output.withChoices(addQuestGoal(output.choices(), newGoals));
 
