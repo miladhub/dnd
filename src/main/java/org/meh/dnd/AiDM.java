@@ -23,7 +23,6 @@ public record AiDM(
         implements DM
 {
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
-    private static final int NO_COMBAT_ZONE = 3;
     private static final String SYSTEM_PROMPT = """
             You are a Dungeons and Dragons master, and I'm going
             to provide to you what the player is doing.
@@ -94,6 +93,11 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
+            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
+//            return EXPLORE_PROMPT_POSTFIX + """
+//                    All NPCs must be friendly.
+//                    """;
+//        else
             QuestStartModel startModel = assistant().startQuest(String.format(
                     """
                     Let's begin the quest. Your job is twofold.
@@ -103,7 +107,7 @@ public record AiDM(
                     
                     Secondly, as the character is currently exploring '%s',
                     describe what happens.
-                    """, start.place()) + getExplorePromptPostfix(game)
+                    """, start.place()) + EXPLORE_PROMPT_POSTFIX
             );
 
             List<QuestGoal> quest = startModel.questGoals().stream()
@@ -124,12 +128,17 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
+            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
+//            return EXPLORE_PROMPT_POSTFIX + """
+//                    All NPCs must be friendly.
+//                    """;
+//        else
             ParsedExploreResponse content = assistant().explore(
                             String.format(
                                     """
                                     The character is currently exploring %s, what happens?
                                     
-                                    """ + getExplorePromptPostfix(game),
+                                    """ + EXPLORE_PROMPT_POSTFIX,
                                     e.place()));
 
             ExploreOutput output = parseExploreOutput(content, game.place());
@@ -216,12 +225,17 @@ public record AiDM(
                     .chatMemory(memory)
                     .build();
 
+            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
+//            return EXPLORE_PROMPT_POSTFIX + """
+//                    All NPCs must be friendly.
+//                    """;
+//        else
             ParsedExploreResponse content = assistant.explore(
                             String.format("""
                             
                             The character is currently exploring %s, what happens?
                             
-                            """, game.place()) + getExplorePromptPostfix(game));
+                            """, game.place()) + EXPLORE_PROMPT_POSTFIX);
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
@@ -235,22 +249,6 @@ public record AiDM(
             );
             playerChannel.post(newOutput);
         }
-    }
-
-    private static String getExplorePromptPostfix(Game game) {
-        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
-            return EXPLORE_PROMPT_POSTFIX + """
-                    All NPCs must be friendly.
-                    """;
-        else
-            return EXPLORE_PROMPT_POSTFIX;
-    }
-
-    private static List<PlayerOutput> lastEvents(Game game) {
-        List<PlayerOutput> events = game.events();
-        return events.size() >= NO_COMBAT_ZONE
-                ? events.subList(events.size() - NO_COMBAT_ZONE, events.size())
-                : events;
     }
 
     static ExploreOutput parseExploreOutput(
