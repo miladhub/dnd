@@ -32,7 +32,7 @@ public record AiDM(
             to move forward in their story.
             """;
     private static final String EXPLORE_PROMPT_POSTFIX = """
-            Your response must be made of a description,
+            Your response for what happens when they explore must consist of a description,
             followed by a list of non-playing characters (NPCs), and
             a list of places to explore. Finally, if you deem the description
             relevant enough in the context of the character's story,
@@ -94,20 +94,27 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            QuestStartModel startModel = assistant().startQuest();
+            QuestStartModel startModel = assistant().startQuest(String.format(
+                    """
+                    Let's begin the quest. Your job is twofold.
+                    
+                    First, lay out a list of goals that make sense given their
+                    background.
+                    
+                    Secondly, as the character is currently exploring '%s',
+                    describe what happens.
+                    """, start.place()) + getExplorePromptPostfix(game)
+            );
+
             List<QuestGoal> quest = startModel.questGoals().stream()
                     .map(AiDM::parseGoal)
                     .toList();
 
-            ParsedExploreResponse content = assistant().explore(String.format(
-                    """
-                    Let's begin. The character is currently exploring %s, what happens?
-                    
-                    """, start.place()) + getExplorePromptPostfix(game));
+            ParsedExploreResponse explore = startModel.exploreResponse();
 
             List<QuestGoal> newQuest =
                     updateQuestFromExploring(quest, start.place());
-            ExploreOutput output = parseExploreOutput(content, game.place());
+            ExploreOutput output = parseExploreOutput(explore, game.place());
             ExploreOutput newOutput =
                     output.withChoices(addQuestGoal(output.choices(), newQuest));
             gameRepository.save(g -> g
@@ -353,11 +360,7 @@ public record AiDM(
 
     public interface Assistant
     {
-        @dev.langchain4j.service.UserMessage("""
-        Your job is to lay out a list of goals that
-        make sense given their background.
-        """)
-        QuestStartModel startQuest();
+        QuestStartModel startQuest(String prompt);
 
         ParsedExploreResponse explore(String prompt);
 

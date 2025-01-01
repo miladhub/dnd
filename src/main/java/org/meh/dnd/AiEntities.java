@@ -11,7 +11,10 @@ public class AiEntities
     public record TalkGoalModel(NpcType talkNpcType, String talkTarget) {}
     public record ExploreGoalModel(String place) {}
     public record SayModel(String what) {}
-    public record QuestStartModel(List<QuestGoalModel> questGoals) {}
+    public record QuestStartModel(
+            List<QuestGoalModel> questGoals,
+            ParsedExploreResponse exploreResponse
+    ) {}
     public record QuestGoalModel(
             GoalType goalType,
             KillGoalModel killGoal,
