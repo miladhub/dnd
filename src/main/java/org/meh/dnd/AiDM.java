@@ -116,13 +116,8 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Dialogue d) {
-            ParsedDialogueResponse content = assistant(game).dialogue(String.format(
-                    """
-                    The character wants to speak to NPC '%s'.
-                    
-                    Provide a phrase that the NPC '%s' says to start off the dialogue.
-                    """,
-                    d.target(), d.target()));
+            ParsedDialogueResponse content =
+                    assistant(game).startDialogue(d.target());
             DialogueOutput output =
                     parseDialogueOutput(game, content);
             gameRepository.save(g -> g
@@ -133,7 +128,7 @@ public record AiDM(
         }
         if (action instanceof Say s) {
             ChatWith chat =
-                    (ChatWith) gameRepository.game().orElseThrow().chat();
+                    (ChatWith) game.chat();
 
             MessageWindowChatMemory memory =
                     MessageWindowChatMemory.withMaxMessages(100);
@@ -152,11 +147,9 @@ public record AiDM(
                     .chatMemory(memory)
                     .build();
 
-            ParsedDialogueResponse content = assistant.dialogue(String.format(
-                    """
-                    Provide a phrase as the answer from NPC '%s'.
-                    """,
-                    ((Somebody) game.dialogueTarget()).who()));
+            Somebody npc = (Somebody) game.dialogueTarget();
+            ParsedDialogueResponse content =
+                    assistant.answerDialogue(npc.who());
 
             DialogueOutput output =
                     parseDialogueOutput(game, content);
@@ -343,7 +336,9 @@ public record AiDM(
         ParsedExploreResponse explore(String place);
 
         @dev.langchain4j.service.UserMessage("""
-        {prompt}
+        The character wants to speak to NPC '{npcName}'.
+        
+        Provide a phrase that the NPC '{npcName}' says to start off the dialogue.
         
         Also, provide a list of answers for the character to choose from.
         
@@ -357,6 +352,23 @@ public record AiDM(
         goals. Do not specify goals that are already part of the quest's
         current goals.
         """)
-        ParsedDialogueResponse dialogue(String prompt);
+        ParsedDialogueResponse startDialogue(String prompt);
+
+        @dev.langchain4j.service.UserMessage("""
+        Provide a phrase as the answer from NPC '{npcName}'.
+        
+        Also, provide a list of answers for the character to choose from.
+        
+        Each answer can either be of type "say" or "end dialogue", not both.
+        
+        In the "end dialogue" case, you must provide a goal.
+        
+        A goal must allow the character to reach one of their current goals,
+        either directly or indirectly. In the "end dialogue phrase", hint as to
+        why reaching this additional goal would help achieving one of the current
+        goals. Do not specify goals that are already part of the quest's
+        current goals.
+        """)
+        ParsedDialogueResponse answerDialogue(String prompt);
     }
 }
