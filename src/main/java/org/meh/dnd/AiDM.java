@@ -131,16 +131,7 @@ public record AiDM(
                     (ChatWith) game.chat();
 
             MessageWindowChatMemory memory =
-                    MessageWindowChatMemory.withMaxMessages(100);
-
-            chat.messages().forEach(m -> memory.add(
-                    switch (m.role()) {
-                        case DM -> new AiMessage(m.speaker() + ": " + m.message());
-                        case PLAYER -> new UserMessage(m.speaker() + ": " + m.message());
-                    }
-            ));
-
-            memory.add(new UserMessage(game.playerChar().name() + ": " + s.what()));
+                    memoryFromChat(game.playerChar(), chat, s.what());
 
             Assistant assistant = AiServices.builder(Assistant.class)
                     .chatLanguageModel(createModel())
@@ -168,16 +159,7 @@ public record AiDM(
                     (ChatWith) gameRepository.game().orElseThrow().chat();
 
             MessageWindowChatMemory memory =
-                    MessageWindowChatMemory.withMaxMessages(100);
-
-            chat.messages().forEach(m -> memory.add(
-                    switch (m.role()) {
-                        case DM -> new AiMessage(m.speaker() + ": " + m.message());
-                        case PLAYER -> new UserMessage(m.speaker() + ": " + m.message());
-                    }
-            ));
-
-            memory.add(new UserMessage(game.playerChar().name() + ": " + ed.phrase()));
+                    memoryFromChat(game.playerChar(), chat, ed.phrase());
 
             Assistant assistant = AiServices.builder(Assistant.class)
                     .chatLanguageModel(createModel())
@@ -198,6 +180,23 @@ public record AiDM(
             );
             playerChannel.post(newOutput);
         }
+    }
+
+    private static MessageWindowChatMemory memoryFromChat(
+            GameChar playerChar,
+            ChatWith chat,
+            String lastUserMessage
+    ) {
+        MessageWindowChatMemory memory =
+                MessageWindowChatMemory.withMaxMessages(100);
+        chat.messages().forEach(m -> memory.add(
+                switch (m.role()) {
+                    case DM -> new AiMessage(m.speaker() + ": " + m.message());
+                    case PLAYER -> new UserMessage(m.speaker() + ": " + m.message());
+                }
+        ));
+        memory.add(new UserMessage(playerChar.name() + ": " + lastUserMessage));
+        return memory;
     }
 
     static ExploreOutput parseExploreOutput(
@@ -352,7 +351,7 @@ public record AiDM(
         goals. Do not specify goals that are already part of the quest's
         current goals.
         """)
-        ParsedDialogueResponse startDialogue(String prompt);
+        ParsedDialogueResponse startDialogue(String npcName);
 
         @dev.langchain4j.service.UserMessage("""
         Provide a phrase as the answer from NPC '{npcName}'.
@@ -369,6 +368,6 @@ public record AiDM(
         goals. Do not specify goals that are already part of the quest's
         current goals.
         """)
-        ParsedDialogueResponse answerDialogue(String prompt);
+        ParsedDialogueResponse answerDialogue(String npcName);
     }
 }
