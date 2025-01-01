@@ -19,30 +19,17 @@ import static org.meh.dnd.AiEntities.*;
 public record AiDM(
         PlayerChannel playerChannel,
         GameRepository gameRepository
-)
-        implements DM
-{
+) implements DM {
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
-    private static final String SYSTEM_PROMPT = """
-            You are a Dungeons and Dragons master, and I'm going
-            to provide to you what the player is doing.
-            You have to briefly describe to them what's happening,
-            and then you must provide them with choices on how
-            to move forward in their story.
-            """;
-    private static final String EXPLORE_PROMPT_POSTFIX = """
-            Your response for what happens when they explore must consist of a description,
-            followed by a list of non-playing characters (NPCs), and
-            a list of places to explore. Finally, if you deem the description
-            relevant enough in the context of the character's story,
-            add a storyline at the end (max 10 words).
-            """;
 
-    private Assistant assistant() {
-        ChatLanguageModel model = createModel();
-        MessageWindowChatMemory memory = MessageWindowChatMemory.withMaxMessages(10);
-        Game g = gameRepository.game().orElseThrow();
-        String systemPrompt = SYSTEM_PROMPT + String.format("""
+    private Assistant assistant(Game g) {
+        String systemPrompt =  String.format("""
+                You are a Dungeons and Dragons master, and I'm going
+                to tell you what the player is doing.
+                
+                You have to briefly describe what's happening to them,
+                and then you must provide them with choices on how
+                to move forward in their story.
                 
                 The character name is '%s'. Their background is as follows:
                 
@@ -60,7 +47,10 @@ public record AiDM(
                         .map(qg -> "* " + describeGoal(qg))
                         .collect(Collectors.joining("\n")));
 
-        List<String> diary = gameRepository.game().map(Game::diary).orElse(List.of());
+        List<String> diary = gameRepository.game()
+                .map(Game::diary)
+                .orElse(List.of());
+
         String diaryPrompt = diary.isEmpty()? "" : String.format("""
                 
                 This is a list of noteworthy events happened so far:
@@ -69,11 +59,14 @@ public record AiDM(
                 .map(e -> "* " + e)
                 .collect(Collectors.joining("\n")));
 
+        MessageWindowChatMemory memory =
+                MessageWindowChatMemory.withMaxMessages(10);
+
         memory.add(new SystemMessage(
                 systemPrompt + questPrompt + diaryPrompt));
 
         return AiServices.builder(Assistant.class)
-                .chatLanguageModel(model)
+                .chatLanguageModel(createModel())
                 .chatMemory(memory)
                 .build();
     }
@@ -93,27 +86,16 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            QuestStartModel startModel = assistant().startQuest(String.format(
-                    """
-                    Let's begin the quest. Your job is twofold.
-                    
-                    First, lay out a list of goals that make sense given their
-                    background.
-                    
-                    Secondly, as the character is currently exploring '%s',
-                    describe what happens.
-                    """, start.place()) + EXPLORE_PROMPT_POSTFIX
-            );
+            QuestStartModel startModel =
+                    assistant(game).startQuest(start.place());
 
             List<QuestGoal> quest = startModel.questGoals().stream()
                     .map(AiDM::parseGoal)
                     .toList();
-
-            ParsedExploreResponse explore = startModel.exploreResponse();
+            ExploreOutput output = parseExploreOutput(startModel.exploreResponse(), game.place());
 
             List<QuestGoal> newQuest =
                     updateQuestFromExploring(quest, start.place());
-            ExploreOutput output = parseExploreOutput(explore, game.place());
             ExploreOutput newOutput =
                     output.withChoices(addQuestGoal(output.choices(), newQuest));
             gameRepository.save(g -> g
@@ -123,13 +105,7 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
-            ParsedExploreResponse content = assistant().explore(
-                            String.format(
-                                    """
-                                    The character is currently exploring %s, what happens?
-                                    
-                                    """ + EXPLORE_PROMPT_POSTFIX,
-                                    e.place()));
+            ParsedExploreResponse content = assistant(game).explore(e.place());
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
@@ -140,7 +116,7 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Dialogue d) {
-            ParsedDialogueResponse content = assistant().dialogue(String.format(
+            ParsedDialogueResponse content = assistant(game).dialogue(String.format(
                     """
                     The character wants to speak to NPC '%s'.
                     
@@ -215,12 +191,7 @@ public record AiDM(
                     .chatMemory(memory)
                     .build();
 
-            ParsedExploreResponse content = assistant.explore(
-                            String.format("""
-                            
-                            The character is currently exploring %s, what happens?
-                            
-                            """, game.place()) + EXPLORE_PROMPT_POSTFIX);
+            ParsedExploreResponse content = assistant.explore(game.place());
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
@@ -343,9 +314,33 @@ public record AiDM(
 
     public interface Assistant
     {
-        QuestStartModel startQuest(String prompt);
+        @dev.langchain4j.service.UserMessage("""
+        Let's begin the quest. Your job is twofold.
+        
+        First, lay out a list of goals that make sense given their
+        background.
+        
+        Secondly, as the character is currently exploring '{place}',
+        describe what happens.
+        
+        Your response for what happens when they explore must consist of a
+        description, followed by a list of non-playing characters (NPCs), and
+        a list of places to explore. Finally, if you deem the description
+        relevant enough in the context of the character's story,
+        add a storyline at the end (max 10 words).
+        """)
+        QuestStartModel startQuest(String place);
 
-        ParsedExploreResponse explore(String prompt);
+        @dev.langchain4j.service.UserMessage("""
+        The character is currently exploring {place}, what happens?
+        
+        Your response must consist of a description,
+        followed by a list of non-playing characters (NPCs), and
+        a list of places to explore. Finally, if you deem the description
+        relevant enough in the context of the character's story,
+        add a storyline at the end (max 10 words).
+        """)
+        ParsedExploreResponse explore(String place);
 
         @dev.langchain4j.service.UserMessage("""
         {prompt}
