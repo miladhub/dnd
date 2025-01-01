@@ -39,9 +39,9 @@ public class RestServer
 
     @PostConstruct
     public void initialize() {
-        dmChannel.subscribe(pi -> {
+        dmChannel.subscribe(action -> {
             try {
-                dm.process(pi);
+                dm.process(action);
             } catch (Exception e) {
                 LOG.error(e);
             }
