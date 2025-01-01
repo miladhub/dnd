@@ -93,11 +93,6 @@ public record AiDM(
     ) {
         Game game = gameRepository.game().orElseThrow();
         if (action instanceof Start start) {
-            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
-//            return EXPLORE_PROMPT_POSTFIX + """
-//                    All NPCs must be friendly.
-//                    """;
-//        else
             QuestStartModel startModel = assistant().startQuest(String.format(
                     """
                     Let's begin the quest. Your job is twofold.
@@ -128,11 +123,6 @@ public record AiDM(
             playerChannel.post(newOutput);
         }
         if (action instanceof Explore e) {
-            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
-//            return EXPLORE_PROMPT_POSTFIX + """
-//                    All NPCs must be friendly.
-//                    """;
-//        else
             ParsedExploreResponse content = assistant().explore(
                             String.format(
                                     """
@@ -225,11 +215,6 @@ public record AiDM(
                     .chatMemory(memory)
                     .build();
 
-            //        if (lastEvents(game).stream().anyMatch(e -> e instanceof CombatOutput))
-//            return EXPLORE_PROMPT_POSTFIX + """
-//                    All NPCs must be friendly.
-//                    """;
-//        else
             ParsedExploreResponse content = assistant.explore(
                             String.format("""
                             
