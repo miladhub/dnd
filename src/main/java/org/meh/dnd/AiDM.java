@@ -99,16 +99,11 @@ public record AiDM(
                     .map(AiDM::parseGoal)
                     .toList();
 
-            ParsedExploreResponse content = assistant().explore(
-                            start.place() != null && !start.place().isBlank()
-                                ? String.format("""
-                                Let's begin. The character is currently exploring %s, what happens?
-                                
-                                """, start.place()) + getExplorePromptPostfix(game)
-                                : """
-                                Let's begin, what happens?
-                                
-                                """ + getExplorePromptPostfix(game));
+            ParsedExploreResponse content = assistant().explore(String.format(
+                    """
+                    Let's begin. The character is currently exploring %s, what happens?
+                    
+                    """, start.place()) + getExplorePromptPostfix(game));
 
             List<QuestGoal> newQuest =
                     updateQuestFromExploring(quest, start.place());
