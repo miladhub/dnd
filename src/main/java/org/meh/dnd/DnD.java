@@ -25,7 +25,11 @@ public record DnD(
         switch (action) {
             case Start s -> {
                 gameRepository.save(g -> g
-                        .withPlayerChar(g.playerChar().withHp(g.playerChar().maxHp()))
+                        .withPlayerChar(g.playerChar()
+                                .withHp(g.playerChar().maxHp())
+                                .withSpellSlots(DndCombat.spellSlots(
+                                        g.playerChar().charClass(),
+                                        g.playerChar().level())))
                         .withDiary(List.of())
                         .withQuest(updateQuestFromExploring(g.quest(), s.place())));
                 dmChannel.post(action);
