@@ -339,13 +339,13 @@ public record AiDM(
         
         Each answer can either be of type "say" or "end dialogue", not both.
         
-        In the "end dialogue" case, you must provide a goal.
+        In the "end dialogue" case, you must provide an end-dialogue phrase that
+        the character would say to the NPC to end the dialogue, and an
+        end-dialogue goal.
         
-        A goal must allow the character to reach one of their current goals,
-        either directly or indirectly. In the "end dialogue phrase", hint as to
-        why reaching this additional goal would help achieving one of the current
-        goals. Do not specify goals that are already part of the quest's
-        current goals.
+        The end-dialogue goal must allow the character to reach one of their
+        current goals, either directly or indirectly. Do not specify goals that
+        are already part of the quest's current goals.
         """)
         ParsedDialogueResponse startDialogue(String npcName);
 
@@ -356,13 +356,13 @@ public record AiDM(
         
         Each answer can either be of type "say" or "end dialogue", not both.
         
-        In the "end dialogue" case, you must provide a goal.
+        In the "end dialogue" case, you must provide an end-dialogue phrase that
+        the character would say to the NPC to end the dialogue, and an
+        end-dialogue goal.
         
-        A goal must allow the character to reach one of their current goals,
-        either directly or indirectly. In the "end dialogue phrase", hint as to
-        why reaching this additional goal would help achieving one of the current
-        goals. Do not specify goals that are already part of the quest's
-        current goals.
+        The end-dialogue goal must allow the character to reach one of their
+        current goals, either directly or indirectly. Do not specify goals that
+        are already part of the quest's current goals.
         """)
         ParsedDialogueResponse answerDialogue(String npcName);
     }
