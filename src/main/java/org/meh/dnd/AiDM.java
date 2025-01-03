@@ -123,8 +123,9 @@ public record AiDM(
 
     private Assistant assistant(Game g) {
         String systemPrompt = String.format("""
-                You are a Dungeons and Dragons master, and I'm going
-                to tell you what the player is doing.
+                You are a Dungeons and Dragons master. You have to tell the
+                player what's happening, and I'm going to tell you what the
+                player is doing as a reaction to that.
                 
                 You have to briefly describe what's happening to them,
                 and then you must provide them with choices on how
