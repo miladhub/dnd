@@ -4,7 +4,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
@@ -27,9 +27,9 @@ public record AiDM(
             Actions action
     ) {
         Game game = gameRepository.game().orElseThrow();
-        if (action instanceof Start start) {
+        if (action instanceof Start(String place)) {
             QuestStartModel startModel =
-                    assistant(game).startQuest(start.place());
+                    assistant(game).startQuest(place);
 
             List<QuestGoal> quest = startModel.questGoals().stream()
                     .map(AiDM::parseGoal)
@@ -37,7 +37,7 @@ public record AiDM(
             ExploreOutput output = parseExploreOutput(startModel.exploreResponse(), game.place());
 
             List<QuestGoal> newQuest =
-                    updateQuestFromExploring(quest, start.place());
+                    updateQuestFromExploring(quest, place);
             ExploreOutput newOutput =
                     output.withChoices(addQuestGoal(output.choices(), newQuest));
             gameRepository.save(g -> g
@@ -46,8 +46,8 @@ public record AiDM(
                     .withQuest(newQuest));
             playerChannel.post(newOutput);
         }
-        if (action instanceof Explore e) {
-            ParsedExploreResponse content = assistant(game).explore(e.place());
+        if (action instanceof Explore(String place)) {
+            ParsedExploreResponse content = assistant(game).explore(place);
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             ExploreOutput newOutput =
@@ -68,15 +68,15 @@ public record AiDM(
             );
             playerChannel.post(output);
         }
-        if (action instanceof Say s) {
+        if (action instanceof Say(String what)) {
             ChatWith chat =
                     (ChatWith) game.chat();
 
             MessageWindowChatMemory memory =
-                    memoryFromChat(game.playerChar(), chat, s.what());
+                    memoryFromChat(game.playerChar(), chat, what);
 
             Assistant assistant = AiServices.builder(Assistant.class)
-                    .chatLanguageModel(createModel())
+                    .chatModel(createModel())
                     .chatMemory(memory)
                     .build();
 
@@ -88,26 +88,26 @@ public record AiDM(
                     parseDialogueOutput(game, content);
             gameRepository.save(g -> g
                     .withChat(chat.add(
-                            new ChatMessage(ChatRole.PLAYER, game.playerChar().name(), s.what()),
+                            new ChatMessage(ChatRole.PLAYER, game.playerChar().name(), what),
                             new ChatMessage(ChatRole.DM, chat.target(), output.phrase())))
             );
             playerChannel.post(output);
         }
-        if (action instanceof EndDialogue ed) {
+        if (action instanceof EndDialogue(String phrase, QuestGoal goal)) {
             ChatWith chat =
                     (ChatWith) game.chat();
             MessageWindowChatMemory memory =
-                    memoryFromChat(game.playerChar(), chat, ed.phrase());
+                    memoryFromChat(game.playerChar(), chat, phrase);
 
             Assistant assistant = AiServices.builder(Assistant.class)
-                    .chatLanguageModel(createModel())
+                    .chatModel(createModel())
                     .chatMemory(memory)
                     .build();
             ParsedExploreResponse content = assistant.explore(game.place());
 
             ExploreOutput output = parseExploreOutput(content, game.place());
             List<QuestGoal> newGoals = new ArrayList<>(game.quest());
-            newGoals.add(ed.goal());
+            newGoals.add(goal);
             ExploreOutput newOutput =
                     output.withChoices(addQuestGoal(output.choices(), newGoals));
 
@@ -165,12 +165,12 @@ public record AiDM(
                 systemPrompt + questPrompt + diaryPrompt));
 
         return AiServices.builder(Assistant.class)
-                .chatLanguageModel(createModel())
+                .chatModel(createModel())
                 .chatMemory(memory)
                 .build();
     }
 
-    private ChatLanguageModel createModel() {
+    private ChatModel createModel() {
         return new OpenAiChatModel.OpenAiChatModelBuilder()
                 .modelName(OpenAiChatModelName.GPT_4_O_MINI)
                 .apiKey(OPENAI_API_KEY)
