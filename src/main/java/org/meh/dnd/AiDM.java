@@ -8,11 +8,13 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 import static org.meh.dnd.Quests.*;
 import static org.meh.dnd.AiEntities.*;
 
@@ -20,6 +22,7 @@ public record AiDM(
         PlayerChannel playerChannel,
         GameRepository gameRepository
 ) implements DM {
+    private static final Logger LOGGER = Logger.getLogger(AiDM.class);
     private static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
 
     @Override
@@ -171,12 +174,24 @@ public record AiDM(
     }
 
     private ChatModel createModel() {
-        return new OpenAiChatModel.OpenAiChatModelBuilder()
-                .modelName(OpenAiChatModelName.GPT_4_O_MINI)
-                .apiKey(OPENAI_API_KEY)
-                .logRequests(true)
-                .logResponses(true)
-                .build();
+        if (OPENAI_API_KEY != null) {
+            LOGGER.info("Creating OpenAI model");
+            return new OpenAiChatModel.OpenAiChatModelBuilder()
+                    .modelName(OpenAiChatModelName.GPT_4_O_MINI)
+                    .apiKey(OPENAI_API_KEY)
+                    .logRequests(true)
+                    .logResponses(true)
+                    .build();
+        } else {
+            LOGGER.info("Creating local model");
+            return OpenAiChatModel.builder()
+                    .baseUrl("http://127.0.0.1:11434/v1")
+                    .modelName("gemma3:1b")
+                    .logRequests(true)
+                    .logResponses(true)
+                    .supportedCapabilities(RESPONSE_FORMAT_JSON_SCHEMA)
+                    .build();
+        }
     }
 
     private static MessageWindowChatMemory memoryFromChat(

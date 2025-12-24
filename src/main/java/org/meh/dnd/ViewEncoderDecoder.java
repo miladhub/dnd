@@ -111,47 +111,23 @@ public class ViewEncoderDecoder
                     pc.level(),
                     pc.charClass().toString().toLowerCase(),
                     "You are resting.",
-                    List.of(ViewEncoderDecoder.encodeAction(new Explore(game.place()), game.quest())),
+                    List.of(ViewEncoderDecoder.encodeAction(new Explore(
+                            game.place()),
+                            game.quest())),
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place(), questDone,
                     pc.xp() >= pc.nextXp()));
             case CombatOutput co -> Templates.combat(new CombatView(
-                    co.playerTurn(), co.playerWon(), co.enemyWon(),
+                    co.playerTurn(),
+                    co.playerWon(),
+                    co.enemyWon(),
                     co.playerWon() || co.enemyWon(),
-                    co.playerTurn() ? co.playerAvailableActions() : co.opponentAvailableActions(),
-                    new CharacterView(pc.name(),
-                            pc.level(),
-                            pc.charClass().toString().toLowerCase(),
-                            pc.ac(),
-                            pc.xp(),
-                            pc.nextXp(),
-                            pc.hp(),
-                            pc.maxHp(),
-                            pc.stats().strength(),
-                            pc.stats().dexterity(),
-                            pc.stats().constitution(),
-                            pc.stats().intelligence(),
-                            pc.stats().wisdom(),
-                            pc.stats().charisma(),
-                            pc.charClass() == CharClass.WIZARD,
-                            pc.spellSlots()),
-                    new CharacterView(co.opponent().name(),
-                            co.opponent().level(),
-                            co.opponent().charClass().toString().toLowerCase(),
-                            co.opponent().ac(),
-                            co.opponent().xp(),
-                            co.opponent().nextXp(),
-                            co.opponent().hp(),
-                            co.opponent().maxHp(),
-                            co.opponent().stats().strength(),
-                            co.opponent().stats().dexterity(),
-                            co.opponent().stats().constitution(),
-                            co.opponent().stats().intelligence(),
-                            co.opponent().stats().wisdom(),
-                            co.opponent().stats().charisma(),
-                            co.opponent().charClass() == CharClass.WIZARD,
-                            co.opponent().spellSlots()),
+                    co.playerTurn()
+                            ? co.playerAvailableActions()
+                            : co.opponentAvailableActions(),
+                    getCharacterView(pc),
+                    getCharacterView(co.opponent()),
                     String.join("\n", co.log().reversed()).trim(),
                     co.distance(),
                     co.availableActions().stream()
@@ -160,6 +136,26 @@ public class ViewEncoderDecoder
                     game.place()
             ));
         };
+    }
+
+    private static CharacterView getCharacterView(GameChar gc) {
+        return new CharacterView(
+                gc.name(),
+                gc.level(),
+                gc.charClass().toString().toLowerCase(),
+                gc.ac(),
+                gc.xp(),
+                gc.nextXp(),
+                gc.hp(),
+                gc.maxHp(),
+                gc.stats().strength(),
+                gc.stats().dexterity(),
+                gc.stats().constitution(),
+                gc.stats().intelligence(),
+                gc.stats().wisdom(),
+                gc.stats().charisma(),
+                gc.charClass() == CharClass.WIZARD,
+                gc.spellSlots());
     }
 
     private static Stream<CombatActionView> encodeCombatAction(AvailableAction a) {
