@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Path("/")
 public class RestServer
@@ -175,13 +176,28 @@ public class RestServer
     @RestStreamElementType("text/html")
     public Multi<String> updatesStream() {
         return Multi.createFrom().<String>emitter(
-                        me -> playersChannel.subscribe(
-                                po -> me.emit(toHtml(po))))
+                        me -> {
+                            Consumer<PlayerOutput> sub = new Consumer<>() {
+                                @Override
+                                public void accept(PlayerOutput po) {
+                                    if (me.isCancelled()) {
+                                        playersChannel.unsubscribe(this);
+                                    } else {
+                                        try {
+                                            me.emit(toHtml(po));
+                                        } catch (Exception ignored) {
+                                        }
+                                    }
+                                }
+                            };
+                            playersChannel.subscribe(sub);
+                            me.onTermination(() ->
+                                    playersChannel.unsubscribe(sub));
+                        })
                 .onItem().call(i ->
-                        // Delay the emission until the returned uni emits its item
                         Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
                 )
-                .onFailure().retry().withBackOff(Duration.ofMillis(100)).indefinitely();
+                .onFailure().recoverWithMulti(Multi.createFrom().empty());
     }
 
     private String toHtml(

@@ -15,6 +15,11 @@ public class InMemoryChannel<T>
     }
 
     @Override
+    public void unsubscribe(Consumer<T> consumer) {
+        consumers.remove(consumer);
+    }
+
+    @Override
     public void post(T message) {
         consumers.forEach(c -> c.accept(message));
     }
