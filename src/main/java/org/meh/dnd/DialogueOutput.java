@@ -7,8 +7,4 @@ public record DialogueOutput(
         List<Actions> answers
 )
         implements PlayerOutput
-{
-    public DialogueOutput withChoices(List<Actions> answers) {
-        return null;
-    }
-}
+{}

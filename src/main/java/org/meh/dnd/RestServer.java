@@ -35,7 +35,10 @@ public class RestServer
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DndCombat combat = new DndCombat();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
-    private final DM dm = new AiDM(playersChannel, gameRepository);
+    private final DM dm = System.getenv("OPENAI_API_KEY") != null
+            && !System.getenv("OPENAI_API_KEY").isBlank()
+            ? new AiDM(playersChannel, gameRepository)
+            : new SimpleDM(playersChannel, gameRepository);
 
     @PostConstruct
     public void initialize() {

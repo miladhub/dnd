@@ -185,8 +185,8 @@ public record AiDM(
         } else {
             LOGGER.info("Creating local model");
             return OpenAiChatModel.builder()
-                    .baseUrl("http://127.0.0.1:11434/v1")
-                    .modelName("gemma3:1b")
+                    .baseUrl("http://127.0.0.1:1234/v1")
+                    .modelName("google/gemma-4-e2b")
                     .logRequests(true)
                     .logResponses(true)
                     .supportedCapabilities(RESPONSE_FORMAT_JSON_SCHEMA)
