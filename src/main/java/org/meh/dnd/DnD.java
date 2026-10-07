@@ -114,6 +114,7 @@ public record DnD(
             return;
         }
         if (action instanceof Move move) {
+            requireMovement(fight.playerActions(), move);
             int newDistance = computeDistance(move, fight);
             GameChar gameChar = game.playerChar();
             GameChar opponent = fight.opponent();
@@ -143,6 +144,8 @@ public record DnD(
             if (!newFight.playerTurn())
                 playEnemyCombatTurn();
         } else if (action instanceof Attacks attack) {
+            requireAction(fight.playerActions(), bonusAction);
+            requireSpellSlot(game.playerChar(), attack);
             AttackResult result =
                     combat.computeAttack(attack, game.playerChar(), fight.opponent());
             List<DelayedEffect> newDelayedEffects = new ArrayList<>(fight.delayedEffects());
@@ -257,12 +260,14 @@ public record DnD(
     private void playMultiCombatAction(Game game, Fight fight,
                                        CombatActions action, boolean bonusAction) {
         if (!fight.activeCombatant().equals("player"))
-            return;
+            throw new IllegalStateException("It is not the player's turn");
         List<Combatant> combatants = new ArrayList<>(fight.combatants());
         Combatant player = combatants.stream().filter(c -> c.id().equals("player"))
                 .findFirst().orElseThrow();
         List<String> log = new ArrayList<>(fight.log());
         if (action instanceof Attacks attack) {
+            requireAction(player.actions(), bonusAction);
+            requireSpellSlot(player.character(), attack);
             String targetId = attack instanceof WeaponAttack wa ? wa.target()
                     : ((SpellAttack) attack).target();
             Combatant target = combatants.stream().filter(c -> c.id().equals(targetId))
@@ -270,9 +275,19 @@ public record DnD(
                     .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid combat target"));
             AttackResult result = combat.computeAttack(attack, player.character(), target.character());
             combatants = replace(combatants, target.withCharacter(result.gameChar()));
-            combatants = replace(combatants, player.withActions(player.actions().subtractAction(bonusAction)));
+            GameChar updatedPlayer = player.character();
+            if (attack instanceof SpellAttack spellAttack)
+                updatedPlayer = updatedPlayer.withSpellSlots(
+                        updatedPlayer.spellSlots().subtractAtLevel(spellAttack.spell().level()));
+            combatants = replace(combatants, player.withCharacter(updatedPlayer)
+                    .withActions(player.actions().subtractAction(bonusAction)));
+            List<DelayedEffect> delayedEffects = new ArrayList<>(fight.delayedEffects());
+            if (result instanceof Hit hit)
+                delayedEffects.addAll(hit.delayedEffects());
+            fight = withDelayedEffects(fight, delayedEffects);
             log.add(DndCombat.combatActionDescription(attack, player.character(), result));
         } else if (action instanceof Move move) {
+            requireMovement(player.actions(), move);
             int direction = move.dir() == Dir.TOWARDS_ENEMY ? 1 : -1;
             combatants = replace(combatants, player.withPosition(Math.max(0,
                     player.position() + direction * move.amount()))
@@ -281,7 +296,12 @@ public record DnD(
         } else if (action instanceof EndTurn) {
             combatants = replace(combatants, player.withActions(new AvailableActions(0, 0, 0)));
         }
+        DelayedResolution delayed = action instanceof EndTurn
+                ? resolveMultiDelayedEffects(combatants, fight.delayedEffects(), log)
+                : new DelayedResolution(combatants, fight.delayedEffects());
+        combatants = delayed.combatants();
         Fight next = advanceMultiFight(fight, combatants, log);
+        next = withDelayedEffects(next, delayed.effects());
         saveAndNotifyMulti(game, next);
         runMultiAiTurns(next);
     }
@@ -302,7 +322,16 @@ public record DnD(
                 AttackResult result = combat.computeAttack(attack, actor.character(), target.character());
                 combatants = replace(combatants, target.withCharacter(result.gameChar()));
                 log.add(DndCombat.combatActionDescription(attack, actor.character(), result));
-                combatants = replace(combatants, actor.withActions(actor.actions().subtractAction(false)));
+                GameChar updatedActor = actor.character();
+                if (attack instanceof SpellAttack spellAttack &&
+                        updatedActor.spellSlots().hasSlotsAtLevel(spellAttack.spell().level()))
+                    updatedActor = updatedActor.withSpellSlots(
+                            updatedActor.spellSlots().subtractAtLevel(spellAttack.spell().level()));
+                combatants = replace(combatants, actor.withCharacter(updatedActor)
+                        .withActions(actor.actions().subtractAction(false)));
+                if (result instanceof Hit hit)
+                    fight = withDelayedEffects(fight,
+                            append(fight.delayedEffects(), hit.delayedEffects()));
             } else if (action instanceof Move move) {
                 int direction = move.dir() == Dir.TOWARDS_ENEMY ? -1 : 1;
                 combatants = replace(combatants, actor.withPosition(Math.max(0,
@@ -312,7 +341,12 @@ public record DnD(
             } else {
                 combatants = replace(combatants, actor.withActions(new AvailableActions(0, 0, 0)));
             }
+            DelayedResolution delayed = action instanceof EndTurn
+                    ? resolveMultiDelayedEffects(combatants, fight.delayedEffects(), log)
+                    : new DelayedResolution(combatants, fight.delayedEffects());
+            combatants = delayed.combatants();
             fight = advanceMultiFight(fight, combatants, log);
+            fight = withDelayedEffects(fight, delayed.effects());
             saveAndNotifyMulti(game, fight);
         }
     }
@@ -320,11 +354,73 @@ public record DnD(
     private CombatActions randomNpcAction(Combatant actor, List<Combatant> opponents) {
         List<CombatActions> actions = new ArrayList<>();
         actor.character().weapons().forEach(w -> actions.add(new WeaponAttack(w, opponents.getFirst().id())));
-        actor.character().spells().forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
+        actor.character().spells().stream()
+                .filter(s -> actor.character().spellSlots().hasSlotsAtLevel(s.level()))
+                .forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
         if (actor.actions().remainingSpeed() >= MOVE_STEP)
             actions.add(new Move(Dir.TOWARDS_ENEMY, MOVE_STEP));
         actions.add(new EndTurn());
         return actions.get(COMBAT_RANDOM.nextInt(actions.size()));
+    }
+
+    private static List<DelayedEffect> append(List<DelayedEffect> existing,
+                                               List<DelayedEffect> additions) {
+        List<DelayedEffect> result = new ArrayList<>(existing);
+        result.addAll(additions);
+        return result;
+    }
+
+    private static Fight withDelayedEffects(Fight fight, List<DelayedEffect> effects) {
+        return new Fight(fight.playerTurn(), fight.opponent(), fight.log(), fight.distance(),
+                fight.outcome(), fight.playerActions(), fight.opponentActions(), fight.xp(),
+                effects, fight.combatants(), fight.activeCombatant());
+    }
+
+    private static void requireAction(AvailableActions actions, boolean bonusAction) {
+        if ((bonusAction && actions.bonusActions() == 0) ||
+                (!bonusAction && actions.actions() == 0))
+            throw new IllegalStateException("No action available");
+    }
+
+    private static void requireMovement(AvailableActions actions, Move move) {
+        if (move.amount() <= 0 || move.amount() > actions.remainingSpeed())
+            throw new IllegalArgumentException("Movement exceeds remaining speed");
+    }
+
+    private static void requireSpellSlot(GameChar character, Attacks attack) {
+        if (attack instanceof SpellAttack spell &&
+                !character.spellSlots().hasSlotsAtLevel(spell.spell().level()))
+            throw new IllegalStateException("No spell slot available");
+    }
+
+    private record DelayedResolution(List<Combatant> combatants,
+                                     List<DelayedEffect> effects) {}
+
+    private static DelayedResolution resolveMultiDelayedEffects(
+            List<Combatant> initial,
+            List<DelayedEffect> effects,
+            List<String> log
+    ) {
+        List<Combatant> combatants = new ArrayList<>(initial);
+        List<DelayedEffect> remaining = new ArrayList<>();
+        for (DelayedEffect effect : effects) {
+            if (effect.inTurns() > 0) {
+                remaining.add(new DelayedEffect(effect.inTurns() - 1,
+                        effect.damageRolls(), effect.attacker(), effect.defender(), effect.attack()));
+                continue;
+            }
+            Combatant defender = combatants.stream()
+                    .filter(c -> c.character().name().equals(effect.defender().name()))
+                    .findFirst().orElse(null);
+            if (defender == null)
+                continue;
+            int damage = DndCombat.applyDamage(effect.damageRolls(), effect.attacker(), defender.character());
+            GameChar damaged = defender.character().damage(damage);
+            combatants = replace(combatants, defender.withCharacter(damaged));
+            log.add(DndCombat.combatActionDescription(effect.attack(), effect.attacker(),
+                    new Hit(damaged, damage, List.of())));
+        }
+        return new DelayedResolution(combatants, remaining);
     }
 
     private Fight advanceMultiFight(Fight old, List<Combatant> combatants, List<String> log) {
@@ -346,9 +442,15 @@ public record DnD(
         int currentIndex = living.stream().map(Combatant::id).toList().indexOf(old.activeCombatant());
         Combatant next = living.get((currentIndex + 1) % living.size());
         if (next.id().equals("player")) {
-            Combatant reset = player(combatants).withActions(gameRepository.game().orElseThrow().playerChar().availableActions());
-            combatants = replace(combatants, reset);
-            next = reset;
+            Game game = gameRepository.game().orElseThrow();
+            combatants = combatants.stream()
+                    .map(c -> c.character().isDead()
+                            ? c
+                            : c.withActions(c.id().equals("player")
+                                    ? game.playerChar().availableActions()
+                                    : c.character().availableActions()))
+                    .toList();
+            next = player(combatants);
         }
         return new Fight(next.id().equals("player"), firstEnemy(combatants).character(), log, 5, IN_PROGRESS,
                 player(combatants).actions(), firstEnemy(combatants).actions(), old.xp(),
