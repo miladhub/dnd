@@ -221,7 +221,7 @@ public record AiDM(
                     parsed.description(),
                     parsed.npcs().stream()
                             .filter(NPC::hostile)
-                            .map(npc -> new Attack(npc.name(), npc.type()))
+                            .map(npc -> new Attack(npc.name(), npc.type(), parsed.npcs()))
                             .map(a -> (Actions) a)
                             .toList(),
                     parsed.storyLine()
@@ -229,7 +229,7 @@ public record AiDM(
         } else {
             List<Actions> actions = new ArrayList<>();
             actions.addAll(parsed.npcs().stream()
-                    .map(npc -> new Attack(npc.name(), npc.type()))
+                    .map(npc -> new Attack(npc.name(), npc.type(), parsed.npcs()))
                     .toList());
             actions.addAll(parsed.npcs().stream()
                     .filter(npc -> npc.type() != NpcType.BEAST)

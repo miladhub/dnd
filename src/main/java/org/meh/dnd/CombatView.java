@@ -13,7 +13,15 @@ public record CombatView(
         String combatLog,
         int distance,
         List<CombatActionView> actions,
-        String location
+        String location,
+        List<CombatantView> combatants
 )
 {
+    public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
+                      boolean fightOver, AvailableActions availableActions,
+                      CharacterView character, CharacterView enemy, String combatLog,
+                      int distance, List<CombatActionView> actions, String location) {
+        this(yourTurn, playerWon, enemyWon, fightOver, availableActions, character,
+                enemy, combatLog, distance, actions, location, List.of());
+    }
 }

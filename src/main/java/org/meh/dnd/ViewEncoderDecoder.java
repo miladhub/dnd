@@ -44,7 +44,8 @@ public class ViewEncoderDecoder
     private static Attack parseAttack(String info) {
         String typeStr = info.split("_")[0];
         String name = info.split("_")[1];
-        return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()));
+        return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()),
+                EncounterRegistry.get(name));
     }
 
     public static String cleanString(String what) {
@@ -59,9 +60,17 @@ public class ViewEncoderDecoder
             String action,
             String info
     ) {
+        return decodeCombatAction(action, info, "");
+    }
+
+    public static CombatActions decodeCombatAction(
+            String action,
+            String info,
+            String target
+    ) {
         return switch (action) {
-            case "Melee" -> new WeaponAttack(DndCombat.weaponByName(info));
-            case "Spell" -> new SpellAttack(DndCombat.spellByName(info));
+            case "Melee" -> new WeaponAttack(DndCombat.weaponByName(info), target);
+            case "Spell" -> new SpellAttack(DndCombat.spellByName(info), target);
             case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
             case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
             case "EndTurn" -> new EndTurn();
@@ -131,9 +140,14 @@ public class ViewEncoderDecoder
                     String.join("\n", co.log().reversed()).trim(),
                     co.distance(),
                     co.availableActions().stream()
-                            .flatMap(ViewEncoderDecoder::encodeCombatAction)
+                            .flatMap(a -> encodeCombatAction(a, co))
                             .toList(),
-                    game.place()
+                    game.place(),
+                    co.combatants().stream()
+                            .map(c -> new CombatantView(c.id(), getCharacterView(c.character()),
+                                    c.ally(), c.initiative(), c.position(),
+                                    c.id().equals(co.activeCombatant())))
+                            .toList()
             ));
         };
     }
@@ -158,14 +172,21 @@ public class ViewEncoderDecoder
                 gc.spellSlots());
     }
 
-    private static Stream<CombatActionView> encodeCombatAction(AvailableAction a) {
+    private static Stream<CombatActionView> encodeCombatAction(AvailableAction a, CombatOutput output) {
+        List<String> targets = output.combatants().isEmpty()
+                ? List.of("")
+                : output.combatants().stream()
+                        .filter(c -> !c.ally() && !c.character().isDead())
+                        .map(Combatant::id)
+                        .toList();
         return switch (a.type()) {
-            case WEAPON -> Stream.of(
+            case WEAPON -> targets.stream().map(target ->
                     new CombatActionView("Melee", a.info(),
-                            "Attack with " + a.info(), a.bonusAction()));
-            case SPELL -> Stream.of(
+                            "Attack " + target + " with " + a.info(), a.bonusAction(), target));
+            case SPELL -> targets.stream().map(target ->
                     new CombatActionView("Spell", a.info(),
-                            "Cast " + a.info(), a.bonusAction()));
+                            "Cast " + a.info() + (target.isBlank() ? "" : " at " + target),
+                            a.bonusAction(), target));
             case MOVE -> Stream.of(
                     new CombatActionView("MoveForward", a.info(),
                             "Move " + a.info() + " feet forward",
@@ -186,7 +207,7 @@ public class ViewEncoderDecoder
         boolean questRelated = Quests.matchesQuestGoal(a, quest);
         return switch (a) {
             case Attack attack -> new ActionView("Attack",
-                    attack.type() + "_" + attack.target(),
+                    registerEncounter(attack),
                     "Attack " + attack.target(),
                     questRelated);
             case Rest ignored -> new ActionView("Rest", "", "Rest", questRelated);
@@ -204,6 +225,11 @@ public class ViewEncoderDecoder
             case Say say -> new ActionView("Say", say.what(), say.what(), questRelated);
             case Start start -> new ActionView("Start", start.place(), "Play", questRelated);
         };
+    }
+
+    private static String registerEncounter(Attack attack) {
+        EncounterRegistry.register(attack.target(), attack.encounter());
+        return attack.type() + "_" + attack.target();
     }
 
     public static List<QuestGoalView> encodeQuest(List<QuestGoal> goals) {

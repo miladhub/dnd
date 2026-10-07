@@ -246,31 +246,63 @@ public record SimpleDM(
                             new Rest())));
 
         } else if (roll <= 18) {
-            NpcType type = randomNpcType();
-            String name = randomNpcName(type);
+            List<AiEntities.NPC> encounter = hostileEncounter();
             String desc = fillTemplateHostile(
-                    pick(HOSTILE_DESCRIPTIONS), type, name);
-            return new EncounterResult(desc,
-                    "You were attacked by " + name + " in " + place + "!",
-                    new ArrayList<>(List.of(
-                            new Attack(name, type),
-                            new Explore(place),
-                            new Rest())));
+                    pick(HOSTILE_DESCRIPTIONS), encounter.getFirst().type(),
+                    encounter.getFirst().name()) + " " + otherEncounterNames(encounter);
+            return hostileResult(desc, place, encounter);
 
         } else {
-            NpcType type = randomNpcType();
-            String name = randomNpcName(type);
+            List<AiEntities.NPC> encounter = hostileEncounter();
             String newPlace = place + " " + pick(PLACE_SUFFIXES);
             String desc = fillTemplateHostileNewPlace(
-                    pick(HOSTILE_NEW_PLACE_DESC), newPlace, type, name);
+                    pick(HOSTILE_NEW_PLACE_DESC), newPlace,
+                    encounter.getFirst().type(), encounter.getFirst().name()) + " "
+                    + otherEncounterNames(encounter);
+            List<Actions> choices = new ArrayList<>(hostileChoices(encounter));
+            choices.addAll(List.of(new Explore(newPlace), new Explore(place), new Rest()));
             return new EncounterResult(desc,
-                    "You were ambushed near " + newPlace + "!",
-                    new ArrayList<>(List.of(
-                            new Attack(name, type),
-                            new Explore(newPlace),
-                            new Explore(place),
-                            new Rest())));
+                    "You were ambushed near " + newPlace + "!", choices);
         }
+    }
+
+    private EncounterResult hostileResult(
+            String description,
+            String place,
+            List<AiEntities.NPC> encounter
+    ) {
+        List<Actions> choices = new ArrayList<>(hostileChoices(encounter));
+        choices.addAll(List.of(new Explore(place), new Rest()));
+        return new EncounterResult(description,
+                "You were attacked by a group in " + place + "!", choices);
+    }
+
+    private static List<Actions> hostileChoices(List<AiEntities.NPC> encounter) {
+        return encounter.stream()
+                .filter(AiEntities.NPC::hostile)
+                .map(npc -> (Actions) new Attack(npc.name(), npc.type(), encounter))
+                .toList();
+    }
+
+    private static List<AiEntities.NPC> hostileEncounter() {
+        int hostileCount = 2 + RANDOM.nextInt(2);
+        List<AiEntities.NPC> encounter = new ArrayList<>();
+        for (int i = 0; i < hostileCount; i++) {
+            NpcType type = randomNpcType();
+            encounter.add(new AiEntities.NPC(randomNpcName(type) + (i == 0 ? "" : " " + (i + 1)), type, true));
+        }
+        if (RANDOM.nextBoolean()) {
+            NpcType type = randomNpcType();
+            encounter.add(new AiEntities.NPC(randomNpcName(type) + " ally", type, false));
+        }
+        return encounter;
+    }
+
+    private static String otherEncounterNames(List<AiEntities.NPC> encounter) {
+        String names = encounter.stream().skip(1).map(AiEntities.NPC::name).reduce(
+                "", (result, name) -> result.isBlank() ? "Also present: " + name
+                        : result + ", " + name);
+        return names.isBlank() ? "" : names + ".";
     }
 
     private static List<QuestGoal> generateInitialQuest(String place) {

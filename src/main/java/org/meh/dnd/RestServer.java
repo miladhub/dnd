@@ -164,9 +164,10 @@ public class RestServer
     public void combat(
             @FormParam("action") String action,
             @FormParam("info") String info,
+            @FormParam("target") String target,
             @FormParam("bonus") boolean bonusAction
     ) {
-        CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info);
+        CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info, target);
         dnd.playCombatAction(combatAction, bonusAction);
     }
 

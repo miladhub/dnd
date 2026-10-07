@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.Random;
 
 import static org.meh.dnd.AvailableActionType.*;
 import static org.meh.dnd.FightOutcome.*;
@@ -19,6 +20,7 @@ public record DnD(
 
     private static final int MOVE_STEP = 5;
     private static final int WEAPONS_REACH = 5;
+    private static final Random COMBAT_RANDOM = new Random();
 
     public void doAction(Actions action) {
         Game game = gameRepository.game().orElseThrow();
@@ -50,14 +52,19 @@ public record DnD(
                         fight.opponent(),
                         List.of(),
                         false, false, fight.distance(),
-                        computeActions(game.playerChar(), fight.playerActions(), fight.distance()));
+                        computeActions(game.playerChar(), fight.playerActions(), fight.distance()),
+                        fight.combatants(), fight.activeCombatant());
                 gameRepository.save(g -> g
                         .withMode(COMBAT)
                         .withFightStatus(fight)
                         .withLastOutput(output));
                 playersChannel.post(output);
-                if (!fight.playerTurn())
-                    playEnemyCombatTurn();
+                if (!fight.playerTurn()) {
+                    if (fight.isMultiCombat())
+                        runMultiAiTurns(fight);
+                    else
+                        playEnemyCombatTurn();
+                }
             }
             case Rest ignored -> {
                 gameRepository.save(g -> g
@@ -102,6 +109,10 @@ public record DnD(
     ) {
         Game game = gameRepository.game().orElseThrow();
         Fight fight = (Fight) game.combatStatus();
+        if (fight.isMultiCombat()) {
+            playMultiCombatAction(game, fight, action, bonusAction);
+            return;
+        }
         if (action instanceof Move move) {
             int newDistance = computeDistance(move, fight);
             GameChar gameChar = game.playerChar();
@@ -241,6 +252,163 @@ public record DnD(
             notifyPlayersFight(game, newFight);
             playEnemyCombatTurn();
         }
+    }
+
+    private void playMultiCombatAction(Game game, Fight fight,
+                                       CombatActions action, boolean bonusAction) {
+        if (!fight.activeCombatant().equals("player"))
+            return;
+        List<Combatant> combatants = new ArrayList<>(fight.combatants());
+        Combatant player = combatants.stream().filter(c -> c.id().equals("player"))
+                .findFirst().orElseThrow();
+        List<String> log = new ArrayList<>(fight.log());
+        if (action instanceof Attacks attack) {
+            String targetId = attack instanceof WeaponAttack wa ? wa.target()
+                    : ((SpellAttack) attack).target();
+            Combatant target = combatants.stream().filter(c -> c.id().equals(targetId))
+                    .filter(c -> !c.ally() && !c.character().isDead())
+                    .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid combat target"));
+            AttackResult result = combat.computeAttack(attack, player.character(), target.character());
+            combatants = replace(combatants, target.withCharacter(result.gameChar()));
+            combatants = replace(combatants, player.withActions(player.actions().subtractAction(bonusAction)));
+            log.add(DndCombat.combatActionDescription(attack, player.character(), result));
+        } else if (action instanceof Move move) {
+            int direction = move.dir() == Dir.TOWARDS_ENEMY ? 1 : -1;
+            combatants = replace(combatants, player.withPosition(Math.max(0,
+                    player.position() + direction * move.amount()))
+                    .withActions(player.actions().subtractSpeed(move.amount())));
+            log.add(player.character().name() + ": move " + dirDescription(move));
+        } else if (action instanceof EndTurn) {
+            combatants = replace(combatants, player.withActions(new AvailableActions(0, 0, 0)));
+        }
+        Fight next = advanceMultiFight(fight, combatants, log);
+        saveAndNotifyMulti(game, next);
+        runMultiAiTurns(next);
+    }
+
+    private void runMultiAiTurns(Fight initial) {
+        Fight fight = initial;
+        while (fight.outcome() == IN_PROGRESS && !fight.activeCombatant().equals("player")) {
+            Combatant actor = combatant(fight, fight.activeCombatant());
+            List<Combatant> opponents = fight.combatants().stream()
+                    .filter(c -> c.ally() != actor.ally() && !c.character().isDead()).toList();
+            if (opponents.isEmpty()) break;
+            CombatActions action = randomNpcAction(actor, opponents);
+            Game game = gameRepository.game().orElseThrow();
+            List<Combatant> combatants = new ArrayList<>(fight.combatants());
+            List<String> log = new ArrayList<>(fight.log());
+            if (action instanceof Attacks attack) {
+                Combatant target = opponents.get(COMBAT_RANDOM.nextInt(opponents.size()));
+                AttackResult result = combat.computeAttack(attack, actor.character(), target.character());
+                combatants = replace(combatants, target.withCharacter(result.gameChar()));
+                log.add(DndCombat.combatActionDescription(attack, actor.character(), result));
+                combatants = replace(combatants, actor.withActions(actor.actions().subtractAction(false)));
+            } else if (action instanceof Move move) {
+                int direction = move.dir() == Dir.TOWARDS_ENEMY ? -1 : 1;
+                combatants = replace(combatants, actor.withPosition(Math.max(0,
+                        actor.position() + direction * move.amount()))
+                        .withActions(actor.actions().subtractSpeed(move.amount())));
+                log.add(actor.character().name() + ": move " + dirDescription(move));
+            } else {
+                combatants = replace(combatants, actor.withActions(new AvailableActions(0, 0, 0)));
+            }
+            fight = advanceMultiFight(fight, combatants, log);
+            saveAndNotifyMulti(game, fight);
+        }
+    }
+
+    private CombatActions randomNpcAction(Combatant actor, List<Combatant> opponents) {
+        List<CombatActions> actions = new ArrayList<>();
+        actor.character().weapons().forEach(w -> actions.add(new WeaponAttack(w, opponents.getFirst().id())));
+        actor.character().spells().forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
+        if (actor.actions().remainingSpeed() >= MOVE_STEP)
+            actions.add(new Move(Dir.TOWARDS_ENEMY, MOVE_STEP));
+        actions.add(new EndTurn());
+        return actions.get(COMBAT_RANDOM.nextInt(actions.size()));
+    }
+
+    private Fight advanceMultiFight(Fight old, List<Combatant> combatants, List<String> log) {
+        boolean enemiesAlive = combatants.stream().anyMatch(c -> !c.ally() && !c.character().isDead());
+        boolean partyAlive = combatants.stream().anyMatch(c -> c.ally() && !c.character().isDead());
+        FightOutcome outcome = enemiesAlive ? (partyAlive ? IN_PROGRESS : ENEMY_WON) : PLAYER_WON;
+        if (outcome != IN_PROGRESS)
+            return new Fight(true, firstEnemy(combatants).character(), log, 5, outcome,
+                    player(combatants).actions(), firstEnemy(combatants).actions(),
+                    old.xp(), old.delayedEffects(), combatants, "player");
+        Combatant current = combatants.stream()
+                .filter(c -> c.id().equals(old.activeCombatant()))
+                .findFirst().orElseThrow();
+        if (current.actions().hasActionsLeft())
+            return new Fight(current.id().equals("player"), firstEnemy(combatants).character(), log,
+                    5, IN_PROGRESS, player(combatants).actions(), firstEnemy(combatants).actions(),
+                    old.xp(), old.delayedEffects(), combatants, current.id());
+        List<Combatant> living = combatants.stream().filter(c -> !c.character().isDead()).toList();
+        int currentIndex = living.stream().map(Combatant::id).toList().indexOf(old.activeCombatant());
+        Combatant next = living.get((currentIndex + 1) % living.size());
+        if (next.id().equals("player")) {
+            Combatant reset = player(combatants).withActions(gameRepository.game().orElseThrow().playerChar().availableActions());
+            combatants = replace(combatants, reset);
+            next = reset;
+        }
+        return new Fight(next.id().equals("player"), firstEnemy(combatants).character(), log, 5, IN_PROGRESS,
+                player(combatants).actions(), firstEnemy(combatants).actions(), old.xp(),
+                old.delayedEffects(), combatants, next.id());
+    }
+
+    private void saveAndNotifyMulti(Game game, Fight fight) {
+        List<QuestGoal> quest = game.quest();
+        for (Combatant enemy : fight.combatants()) {
+            if (!enemy.ally() && enemy.character().isDead()) {
+                quest = updateQuestFromFight(quest, new Fight(true, enemy.character(),
+                        List.of(), 5, PLAYER_WON, enemy.actions(), enemy.actions(), 0, List.of()));
+            }
+        }
+        int gainedXp = (fight.outcome() == PLAYER_WON)
+                ? fight.combatants().stream()
+                        .filter(c -> !c.ally() && c.character().isDead())
+                        .mapToInt(c -> DndCombat.XP_GAIN).sum()
+                : 0;
+        GameChar updatedPlayer = player(fight.combatants()).character()
+                .withXp(player(fight.combatants()).character().xp() + gainedXp);
+        List<Combatant> withXp = replace(fight.combatants(),
+                player(fight.combatants()).withCharacter(updatedPlayer));
+        fight = new Fight(fight.playerTurn(), firstEnemy(withXp).character(), fight.log(),
+                fight.distance(), fight.outcome(), player(withXp).actions(),
+                firstEnemy(withXp).actions(), fight.xp(), fight.delayedEffects(),
+                withXp, fight.activeCombatant());
+        List<QuestGoal> updatedQuest = quest;
+        Fight savedFight = fight;
+        gameRepository.save(g -> g.withFightStatus(savedFight)
+                .withPlayerChar(updatedPlayer)
+                .withQuest(updatedQuest)
+                .withMode(savedFight.outcome() == IN_PROGRESS ? COMBAT : EXPLORING));
+        notifyPlayersMulti(fight);
+    }
+
+    private void notifyPlayersMulti(Fight fight) {
+        Combatant player = player(fight.combatants());
+        playersChannel.post(new CombatOutput(
+                fight.activeCombatant().equals("player"), player.actions(),
+                firstEnemy(fight.combatants()).actions(), firstEnemy(fight.combatants()).character(),
+                fight.log(), fight.outcome() == PLAYER_WON, fight.outcome() == ENEMY_WON,
+                5, computeActions(player.character(), player.actions(), 5),
+                fight.combatants(), fight.activeCombatant()));
+    }
+
+    private static Combatant combatant(Fight fight, String id) {
+        return fight.combatants().stream().filter(c -> c.id().equals(id)).findFirst().orElseThrow();
+    }
+
+    private static Combatant player(List<Combatant> combatants) {
+        return combatants.stream().filter(c -> c.id().equals("player")).findFirst().orElseThrow();
+    }
+
+    private static Combatant firstEnemy(List<Combatant> combatants) {
+        return combatants.stream().filter(c -> !c.ally()).findFirst().orElseThrow();
+    }
+
+    private static List<Combatant> replace(List<Combatant> all, Combatant replacement) {
+        return all.stream().map(c -> c.id().equals(replacement.id()) ? replacement : c).toList();
     }
 
     private void playEnemyCombatTurn() {
