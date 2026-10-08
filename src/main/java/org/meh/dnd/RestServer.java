@@ -123,7 +123,13 @@ public class RestServer
             @FormParam("background") String background,
             @FormParam("place") String place
     ) {
-        Game game = gameRepository.game().orElseThrow();
+        Optional<Game> existingGame = gameRepository.game();
+        if (existingGame.isEmpty()) {
+            return Response.ok()
+                    .header("HX-Redirect", "/create.html")
+                    .build();
+        }
+        Game game = existingGame.get();
         Game newGame = GameSaveLoad.createGameFrom(background, place, game.playerChar());
         gameRepository.save(newGame);
         return Response.ok()

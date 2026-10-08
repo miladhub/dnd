@@ -317,6 +317,10 @@ public record DnD(
             Game game = gameRepository.game().orElseThrow();
             List<Combatant> combatants = new ArrayList<>(fight.combatants());
             List<String> log = new ArrayList<>(fight.log());
+            // The action is generated from a snapshot. If the actor has no main
+            // action by execution time, safely finish its turn instead of
+            // allowing AvailableActions to reach a negative value.
+            action = normalizeAiAction(action, actor.actions());
             if (action instanceof Attacks attack) {
                 Combatant target = opponents.get(COMBAT_RANDOM.nextInt(opponents.size()));
                 AttackResult result = combat.computeAttack(attack, actor.character(), target.character());
@@ -353,14 +357,23 @@ public record DnD(
 
     private CombatActions randomNpcAction(Combatant actor, List<Combatant> opponents) {
         List<CombatActions> actions = new ArrayList<>();
-        actor.character().weapons().forEach(w -> actions.add(new WeaponAttack(w, opponents.getFirst().id())));
-        actor.character().spells().stream()
-                .filter(s -> actor.character().spellSlots().hasSlotsAtLevel(s.level()))
-                .forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
+        if (actor.actions().actions() > 0) {
+            actor.character().weapons().forEach(w ->
+                    actions.add(new WeaponAttack(w, opponents.getFirst().id())));
+            actor.character().spells().stream()
+                    .filter(s -> actor.character().spellSlots().hasSlotsAtLevel(s.level()))
+                    .forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
+        }
         if (actor.actions().remainingSpeed() >= MOVE_STEP)
             actions.add(new Move(Dir.TOWARDS_ENEMY, MOVE_STEP));
         actions.add(new EndTurn());
         return actions.get(COMBAT_RANDOM.nextInt(actions.size()));
+    }
+
+    static CombatActions normalizeAiAction(CombatActions action, AvailableActions available) {
+        return action instanceof Attacks && available.actions() == 0
+                ? new EndTurn()
+                : action;
     }
 
     private static List<DelayedEffect> append(List<DelayedEffect> existing,

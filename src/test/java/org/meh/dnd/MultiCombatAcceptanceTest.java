@@ -75,6 +75,37 @@ class MultiCombatAcceptanceTest {
         assertFalse(updatedPlayer.character().isDead());
     }
 
+    @Test
+    void exhausted_ai_main_action_does_not_become_a_negative_action() {
+        GameChar player = wizard(new AvailableActions(0, 0, 0),
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+        GameChar enemyCharacter = npc("enemy", new AvailableActions(0, 0, 5));
+        Combatant playerCombatant = new Combatant("player", player, true,
+                20, 0, player.availableActions());
+        Combatant enemy = new Combatant("enemy", enemyCharacter, false,
+                10, 5, enemyCharacter.availableActions());
+        saveFight(player, List.of(playerCombatant, enemy));
+
+        dnd.playCombatAction(new EndTurn(), false);
+
+        Fight fight = (Fight) gameRepository.game().orElseThrow().combatStatus();
+        assertEquals("player", fight.activeCombatant());
+        assertTrue(fight.combatants().stream().allMatch(c ->
+                c.actions().actions() >= 0
+                        && c.actions().bonusActions() >= 0
+                && c.actions().remainingSpeed() >= 0));
+    }
+
+    @Test
+    void stale_ai_attack_is_replaced_with_end_turn_when_main_action_is_exhausted() {
+        CombatActions staleAttack = new WeaponAttack(DndCombat.LONGSWORD, "enemy");
+
+        CombatActions safeAction = DnD.normalizeAiAction(
+                staleAttack, new AvailableActions(0, 1, 30));
+
+        assertTrue(safeAction instanceof EndTurn);
+    }
+
     private void saveFight(GameChar player, List<Combatant> combatants) {
         Fight fight = new Fight(true, combatants.get(1).character(), List.of(), 5,
                 IN_PROGRESS, combatants.get(0).actions(), combatants.get(1).actions(),
