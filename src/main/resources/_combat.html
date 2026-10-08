@@ -127,7 +127,15 @@
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
         <input name="action" type="text" hidden="hidden" value="{{name}}">
         <input name="info" type="text" hidden="hidden" value="{{info}}">
-        <input name="target" type="text" hidden="hidden" value="{{target}}">
+        {{#hasTargets}}
+        <label class="block mb-2 font-semibold" for="target-{{name}}-{{info}}">Target</label>
+        <select id="target-{{name}}-{{info}}" name="target"
+                class="w-full mb-3 p-2 rounded bg-red-800 text-white border border-red-400">
+            {{#targets}}
+            <option value="{{id}}">{{name}}</option>
+            {{/targets}}
+        </select>
+        {{/hasTargets}}
         <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
     </form>
     {{/bonusAction}}
@@ -136,7 +144,15 @@
           class="bg-orange-600 p-4 rounded-lg shadow-lg hover:bg-orange-700">
         <input name="action" type="text" hidden="hidden" value="{{name}}">
         <input name="info" type="text" hidden="hidden" value="{{info}}">
-        <input name="target" type="text" hidden="hidden" value="{{target}}">
+        {{#hasTargets}}
+        <label class="block mb-2 font-semibold" for="bonus-target-{{name}}-{{info}}">Target</label>
+        <select id="bonus-target-{{name}}-{{info}}" name="target"
+                class="w-full mb-3 p-2 rounded bg-orange-800 text-white border border-orange-400">
+            {{#targets}}
+            <option value="{{id}}">{{name}}</option>
+            {{/targets}}
+        </select>
+        {{/hasTargets}}
         <input name="bonus" type="checkbox" hidden="hidden" value="true" checked>
         <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
     </form>

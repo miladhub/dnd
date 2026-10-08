@@ -292,7 +292,8 @@ public record DnD(
             combatants = replace(combatants, player.withPosition(Math.max(0,
                     player.position() + direction * move.amount()))
                     .withActions(player.actions().subtractSpeed(move.amount())));
-            log.add(player.character().name() + ": move " + dirDescription(move));
+            log.add(movementDescription(player.character(), move,
+                    nearestOpponent(combatants, player).character().name()));
         } else if (action instanceof EndTurn) {
             combatants = replace(combatants, player.withActions(new AvailableActions(0, 0, 0)));
         }
@@ -341,7 +342,8 @@ public record DnD(
                 combatants = replace(combatants, actor.withPosition(Math.max(0,
                         actor.position() + direction * move.amount()))
                         .withActions(actor.actions().subtractSpeed(move.amount())));
-                log.add(actor.character().name() + ": move " + dirDescription(move));
+                log.add(movementDescription(actor.character(), move,
+                        opponents.getFirst().character().name()));
             } else {
                 combatants = replace(combatants, actor.withActions(new AvailableActions(0, 0, 0)));
             }
@@ -710,6 +712,18 @@ public record DnD(
             case TOWARDS_ENEMY -> " feet towards ";
             case AWAY_FROM_ENEMY -> " feet away from ";
         };
+    }
+
+    private static String movementDescription(GameChar actor, Move move, String target) {
+        return actor.name() + ": move " + dirDescription(move) + target;
+    }
+
+    private static Combatant nearestOpponent(List<Combatant> combatants, Combatant actor) {
+        return combatants.stream()
+                .filter(c -> c.ally() != actor.ally() && !c.character().isDead())
+                .min(java.util.Comparator.comparingInt(c ->
+                        Math.abs(c.position() - actor.position())))
+                .orElseThrow();
     }
 
     public Optional<PlayerOutput> enter() {

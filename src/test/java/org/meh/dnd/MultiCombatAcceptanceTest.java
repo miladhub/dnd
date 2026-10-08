@@ -12,6 +12,7 @@ import static org.meh.dnd.DndCombat.MELF_ARROW;
 import static org.meh.dnd.DndCombat.STANDARD_ACTIONS;
 import static org.meh.dnd.FightOutcome.IN_PROGRESS;
 import static org.meh.dnd.GameMode.COMBAT;
+import static org.meh.dnd.AvailableActionType.WEAPON;
 
 class MultiCombatAcceptanceTest {
     private final InMemoryGameRepository gameRepository = new InMemoryGameRepository();
@@ -104,6 +105,49 @@ class MultiCombatAcceptanceTest {
                 staleAttack, new AvailableActions(0, 1, 30));
 
         assertTrue(safeAction instanceof EndTurn);
+    }
+
+    @Test
+    void combat_ui_renders_one_attack_with_a_target_dropdown() {
+        GameChar player = wizard(STANDARD_ACTIONS,
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+        Combatant playerCombatant = new Combatant("player", player, true,
+                20, 0, STANDARD_ACTIONS);
+        Combatant goblin = new Combatant("goblin-id", npc("goblin", STANDARD_ACTIONS),
+                false, 10, 5, STANDARD_ACTIONS);
+        Combatant orc = new Combatant("orc-id", npc("orc", STANDARD_ACTIONS),
+                false, 5, 5, STANDARD_ACTIONS);
+        List<Combatant> combatants = List.of(playerCombatant, goblin, orc);
+        CombatOutput output = new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS,
+                goblin.character(), List.of(), false, false, 5,
+                List.of(new AvailableAction(WEAPON, DndCombat.LONGSWORD.name(), false)),
+                combatants, "player");
+        Game game = new Game(COMBAT, List.of(output), player,
+                new Peace(), new NoChat(), "background", "place", new Nobody(),
+                List.of(), List.of());
+
+        String html = ViewEncoderDecoder.encodeOutput(output, game);
+
+        assertEquals(1, html.split("Attack with longsword", -1).length - 1);
+        assertTrue(html.contains("<select"));
+        assertTrue(html.contains(">goblin</option>"));
+        assertTrue(html.contains(">orc</option>"));
+    }
+
+    @Test
+    void multi_combat_movement_log_names_the_target() {
+        GameChar player = wizard(new AvailableActions(0, 0, 5),
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+        Combatant playerCombatant = new Combatant("player", player, true,
+                20, 0, player.availableActions());
+        Combatant enemy = new Combatant("enemy", npc("goblin", new AvailableActions(0, 0, 0)),
+                false, 10, 5, new AvailableActions(0, 0, 0));
+        saveFight(player, List.of(playerCombatant, enemy));
+
+        dnd.playCombatAction(new Move(Dir.AWAY_FROM_ENEMY, 5), false);
+
+        Fight fight = (Fight) gameRepository.game().orElseThrow().combatStatus();
+        assertTrue(fight.log().contains("wizard: move 5 feet away from goblin"));
     }
 
     private void saveFight(GameChar player, List<Combatant> combatants) {

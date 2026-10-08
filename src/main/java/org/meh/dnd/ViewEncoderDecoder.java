@@ -173,20 +173,19 @@ public class ViewEncoderDecoder
     }
 
     private static Stream<CombatActionView> encodeCombatAction(AvailableAction a, CombatOutput output) {
-        List<String> targets = output.combatants().isEmpty()
-                ? List.of("")
+        List<CombatTargetView> targets = output.combatants().isEmpty()
+                ? List.of()
                 : output.combatants().stream()
                         .filter(c -> !c.ally() && !c.character().isDead())
-                        .map(Combatant::id)
+                        .map(c -> new CombatTargetView(c.id(), c.character().name()))
                         .toList();
         return switch (a.type()) {
-            case WEAPON -> targets.stream().map(target ->
-                    new CombatActionView("Melee", a.info(),
-                            "Attack " + target + " with " + a.info(), a.bonusAction(), target));
-            case SPELL -> targets.stream().map(target ->
-                    new CombatActionView("Spell", a.info(),
-                            "Cast " + a.info() + (target.isBlank() ? "" : " at " + target),
-                            a.bonusAction(), target));
+            case WEAPON -> Stream.of(new CombatActionView("Melee", a.info(),
+                    "Attack with " + a.info(), a.bonusAction(),
+                    targets.isEmpty() ? "" : targets.getFirst().id(), targets));
+            case SPELL -> Stream.of(new CombatActionView("Spell", a.info(),
+                    "Cast " + a.info(), a.bonusAction(),
+                    targets.isEmpty() ? "" : targets.getFirst().id(), targets));
             case MOVE -> Stream.of(
                     new CombatActionView("MoveForward", a.info(),
                             "Move " + a.info() + " feet forward",
