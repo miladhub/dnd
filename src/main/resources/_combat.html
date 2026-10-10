@@ -70,6 +70,27 @@
     </div>
     {{/character}}
 
+    {{#hasCombatants}}
+    <div class="bg-gray-800 p-5 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <h3 class="text-2xl font-bold mb-3 text-center">Initiative</h3>
+        <div class="space-y-2">
+        {{#combatants}}
+        <div class="p-3 rounded shadow {{#active}}bg-yellow-400 text-gray-900 ring-4 ring-yellow-200{{/active}}{{^active}}{{#ally}}bg-blue-700{{/ally}}{{^ally}}bg-red-700{{/ally}}{{/active}}">
+            <div class="flex justify-between items-center gap-2">
+                <strong>{{character.charName}}</strong>
+                <span class="text-sm">Initiative {{initiative}}</span>
+            </div>
+            <div class="text-sm">
+                HP {{character.hp}}/{{character.maxHp}}, distance {{position}}
+                {{#active}}<strong> — Active</strong>{{/active}}
+            </div>
+        </div>
+        {{/combatants}}
+        </div>
+    </div>
+    {{/hasCombatants}}
+
+    {{^hasCombatants}}
     {{#enemy}}
     <div class="bg-red-800 p-5 rounded-lg shadow-lg">
         <h3 class="text-2xl font-bold mb-2 text-center">{{charName}}</h3>
@@ -99,19 +120,7 @@
         </div>
     </div>
     {{/enemy}}
-</section>
-
-<section class="container mx-auto px-4 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-        <h3 class="text-xl font-bold mb-3">Combatants</h3>
-        {{#combatants}}
-        <div class="p-2 mb-2 rounded {{#ally}}bg-blue-700{{/ally}}{{^ally}}bg-red-700{{/ally}}">
-            <strong>{{character.charName}}</strong> — HP {{character.hp}}/{{character.maxHp}},
-            initiative {{initiative}}, distance {{position}}
-            {{#active}}<span class="font-bold"> (active)</span>{{/active}}
-        </div>
-        {{/combatants}}
-    </div>
+    {{/hasCombatants}}
 </section>
 
 <section class="p-4">

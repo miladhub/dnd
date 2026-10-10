@@ -2,6 +2,7 @@ package org.meh.dnd;
 
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.Comparator;
 
 import static java.lang.Integer.parseInt;
 import static org.meh.dnd.Dir.*;
@@ -144,6 +145,7 @@ public class ViewEncoderDecoder
                             .toList(),
                     game.place(),
                     co.combatants().stream()
+                            .sorted(Comparator.comparingInt(Combatant::initiative).reversed())
                             .map(c -> new CombatantView(c.id(), getCharacterView(c.character()),
                                     c.ally(), c.initiative(), c.position(),
                                     c.id().equals(co.activeCombatant())))

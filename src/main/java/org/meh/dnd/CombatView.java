@@ -17,6 +17,10 @@ public record CombatView(
         List<CombatantView> combatants
 )
 {
+    public boolean hasCombatants() {
+        return !combatants.isEmpty();
+    }
+
     public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
                       boolean fightOver, AvailableActions availableActions,
                       CharacterView character, CharacterView enemy, String combatLog,
