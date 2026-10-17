@@ -150,9 +150,61 @@ public class ViewEncoderDecoder
                             .flatMap(a -> encodeCombatAction(a, co))
                             .toList(),
                     game.place(),
-                    combatantViews(co)
+                    combatantViews(co), combatTargetViews(co)
             ));
         };
+    }
+
+    private static List<CombatTargetView> combatTargetViews(CombatOutput output) {
+        List<Combatant> enemies = output.combatants().isEmpty()
+                ? List.of(new Combatant("enemy", output.opponent(), false, 0,
+                output.distance(), output.opponent().availableActions()))
+                : output.combatants().stream()
+                .filter(c -> !c.ally() && !c.character().isDead())
+                .toList();
+        return enemies.stream().map(target -> new CombatTargetView(
+                target.id(), target.character().name(), portraitUrl(target), target.character().hp(),
+                target.character().maxHp(), distanceFrom(output, target),
+                output.availableActions().stream()
+                        .filter(a -> a.type() == AvailableActionType.WEAPON || a.type() == AvailableActionType.SPELL)
+                        .filter(a -> legalAtDistance(a, distanceFrom(output, target)))
+                        .map(a -> combatAttackView(a, target.id()))
+                        .toList()
+        )).toList();
+    }
+
+    private static CombatActionView combatAttackView(AvailableAction action, String targetId) {
+        String label = action.type() == AvailableActionType.SPELL
+                ? "Cast " + action.info() : "Attack with " + action.info();
+        return new CombatActionView(action.type() == AvailableActionType.SPELL ? "Spell" : "Melee",
+                action.info(), label, action.bonusAction(), targetId);
+    }
+
+    private static int distanceFrom(CombatOutput output, Combatant target) {
+        if (output.combatants().isEmpty()) return output.distance();
+        Combatant player = output.combatants().stream()
+                .filter(c -> c.id().equals("player")).findFirst().orElseThrow();
+        return player.gridPosition().distanceInFeet(target.gridPosition());
+    }
+
+    private static boolean legalAtDistance(AvailableAction action, int distance) {
+        if (distance <= 5 || action.type() == AvailableActionType.SPELL && isRangedSpell(action.info())
+                || action.type() == AvailableActionType.WEAPON && isRangedWeapon(action.info())) return true;
+        return false;
+    }
+
+    private static boolean isRangedWeapon(String name) {
+        return DndCombat.weaponByName(name).ranged();
+    }
+
+    private static boolean isRangedSpell(String name) {
+        return DndCombat.WIZARD_SPELLS.stream().filter(s -> s.name().equals(name))
+                .findFirst().map(Spell::ranged).orElse(false);
+    }
+
+    private static String portraitUrl(Combatant target) {
+        return new CombatantView(target.id(), getCharacterView(target.character()), target.ally(),
+                target.initiative(), target.position(), false).portraitUrl();
     }
 
     private static List<CombatantView> combatantViews(CombatOutput output) {
@@ -206,19 +258,8 @@ public class ViewEncoderDecoder
     }
 
     private static Stream<CombatActionView> encodeCombatAction(AvailableAction a, CombatOutput output) {
-        List<CombatTargetView> targets = output.combatants().isEmpty()
-                ? List.of()
-                : output.combatants().stream()
-                        .filter(c -> !c.ally() && !c.character().isDead())
-                        .map(c -> new CombatTargetView(c.id(), c.character().name()))
-                        .toList();
         return switch (a.type()) {
-            case WEAPON -> Stream.of(new CombatActionView("Melee", a.info(),
-                    "Attack with " + a.info(), a.bonusAction(),
-                    targets.isEmpty() ? "" : targets.getFirst().id(), targets));
-            case SPELL -> Stream.of(new CombatActionView("Spell", a.info(),
-                    "Cast " + a.info(), a.bonusAction(),
-                    targets.isEmpty() ? "" : targets.getFirst().id(), targets));
+            case WEAPON, SPELL -> Stream.empty();
             case MOVE -> Stream.of(
                     new CombatActionView("MoveUp", a.info(), "Move up", a.bonusAction()),
                     new CombatActionView("MoveDown", a.info(), "Move down", a.bonusAction()),

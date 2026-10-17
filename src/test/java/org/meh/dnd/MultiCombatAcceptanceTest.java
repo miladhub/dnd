@@ -108,7 +108,7 @@ class MultiCombatAcceptanceTest {
     }
 
     @Test
-    void combat_ui_renders_one_attack_with_a_target_dropdown() {
+    void combat_ui_renders_target_first_attack_cards() {
         GameChar player = wizard(STANDARD_ACTIONS,
                 new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
         Combatant playerCombatant = new Combatant("player", player, true,
@@ -128,10 +128,10 @@ class MultiCombatAcceptanceTest {
 
         String html = ViewEncoderDecoder.encodeOutput(output, game);
 
-        assertEquals(1, html.split("Attack with longsword", -1).length - 1);
-        assertTrue(html.contains("<select"));
-        assertTrue(html.contains(">goblin</option>"));
-        assertTrue(html.contains(">orc</option>"));
+        assertFalse(html.contains("<select"));
+        assertTrue(html.contains("value=\"goblin-id\""));
+        assertTrue(html.contains("value=\"orc-id\""));
+        assertTrue(html.contains("Attack with longsword"));
     }
 
     @Test
@@ -159,9 +159,9 @@ class MultiCombatAcceptanceTest {
         assertTrue(html.contains("Finnean"));
         assertTrue(html.contains("Wolf"));
         assertTrue(html.contains("Bear"));
-        assertTrue(html.contains("left: 66%"));
-        assertTrue(html.contains("top: 56%"));
-        assertTrue(html.contains("top: 78%"));
+        assertTrue(html.contains("grid-column: 5"));
+        assertTrue(html.contains("grid-row: 1"));
+        assertTrue(html.contains("grid-row: 2"));
     }
 
     @Test

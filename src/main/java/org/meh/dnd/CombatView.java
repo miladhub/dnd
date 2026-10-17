@@ -14,7 +14,8 @@ public record CombatView(
         int distance,
         List<CombatActionView> actions,
         String location,
-        List<CombatantView> combatants
+        List<CombatantView> combatants,
+        List<CombatTargetView> targets
 )
 {
     public boolean hasCombatants() {
@@ -31,6 +32,17 @@ public record CombatView(
                       CharacterView character, CharacterView enemy, String combatLog,
                       int distance, List<CombatActionView> actions, String location) {
         this(yourTurn, playerWon, enemyWon, fightOver, availableActions, character,
-                enemy, combatLog, distance, actions, location, List.of());
+                enemy, combatLog, distance, actions, location, List.of(), List.of());
     }
+
+    public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
+                      boolean fightOver, AvailableActions availableActions,
+                      CharacterView character, CharacterView enemy, String combatLog,
+                      int distance, List<CombatActionView> actions, String location,
+                      List<CombatantView> combatants) {
+        this(yourTurn, playerWon, enemyWon, fightOver, availableActions, character,
+                enemy, combatLog, distance, actions, location, combatants, List.of());
+    }
+
+    public List<CombatTargetView> targetCards() { return targets; }
 }
