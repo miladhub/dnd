@@ -137,9 +137,9 @@
                  style="grid-column: {{gridColumnPlusOne}}; grid-row: {{gridRowPlusOne}}">
                 <div data-legacy-position="left: {{mapPosition}}%; top: {{mapTop}}%;"
                      title="{{character.charName}}"
-                     class="w-full h-full flex flex-col items-center justify-center text-center text-xs font-bold {{#active}}bg-yellow-400 text-gray-900{{/active}}{{^active}}{{#ally}}bg-blue-700{{/ally}}{{^ally}}bg-red-700{{/ally}}{{/active}}">
-                    <img class="w-10 h-10 object-cover rounded-full" src="{{portraitUrl}}" alt="{{character.charName}} portrait">
-                    <span class="truncate max-w-full px-1">{{character.charName}}</span>
+                     class="relative w-full h-full flex flex-col items-center justify-center text-center text-xs font-bold">
+                    <img class="w-10 h-10 object-cover rounded-full ring-2 {{#active}}ring-yellow-300{{/active}}{{^active}}{{#ally}}ring-blue-400{{/ally}}{{^ally}}ring-red-400{{/ally}}{{/active}}" src="{{portraitUrl}}" alt="{{character.charName}} portrait">
+                    <span class="absolute top-1/2 translate-y-5 z-10 whitespace-nowrap rounded px-1 {{#active}}bg-yellow-300 text-gray-900{{/active}}{{^active}}{{#ally}}bg-blue-700 text-white{{/ally}}{{^ally}}bg-red-700 text-white{{/ally}}{{/active}}">{{character.charName}}</span>
                 </div>
             </div>
             {{/combatants}}

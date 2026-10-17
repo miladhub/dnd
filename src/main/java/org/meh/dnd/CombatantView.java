@@ -20,7 +20,13 @@ public record CombatantView(String id, CharacterView character, boolean ally,
     public String portraitUrl() {
         String name = character.charName().toLowerCase();
         if (name.contains("goblin"))
-            return "/assets/portraits/tadga-goblin.png";
+            return "/assets/portraits/mythjourneys-goblin.jpg";
+        if (name.contains("kobold"))
+            return "/assets/portraits/mythjourneys-kobold.jpg";
+        if (name.contains("troll"))
+            return "/assets/portraits/mythjourneys-troll.jpg";
+        if (name.contains("skeleton"))
+            return "/assets/portraits/mythjourneys-skeleton.jpg";
         if (name.contains("wolf"))
             return "/assets/portraits/wolf.svg";
         if (name.contains("bear") || name.contains("beast"))

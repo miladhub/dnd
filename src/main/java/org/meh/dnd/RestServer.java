@@ -1,7 +1,7 @@
 package org.meh.dnd;
 
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.subscription.BackPressureStrategy;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.*;
@@ -15,7 +15,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -207,10 +206,8 @@ public class RestServer
                                 closed.set(true);
                                 playersChannel.unsubscribe(sub);
                             });
-                        })
-                .onItem().call(i ->
-                        Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
-                )
+                        }, BackPressureStrategy.LATEST)
+                .onOverflow().drop()
                 .onFailure().recoverWithMulti(Multi.createFrom().empty());
     }
 
