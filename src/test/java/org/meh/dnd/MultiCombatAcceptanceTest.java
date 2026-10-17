@@ -135,6 +135,52 @@ class MultiCombatAcceptanceTest {
     }
 
     @Test
+    void combat_ui_renders_a_distance_aware_battlefield() {
+        GameChar player = wizard(STANDARD_ACTIONS,
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+        Combatant playerCombatant = new Combatant("player", player, true,
+                20, 0, STANDARD_ACTIONS);
+        Combatant ally = new Combatant("ally-id", npc("Finnean", STANDARD_ACTIONS),
+                true, 15, 5, STANDARD_ACTIONS);
+        Combatant enemy = new Combatant("enemy-id", npc("Wolf", STANDARD_ACTIONS),
+                false, 10, 20, STANDARD_ACTIONS);
+        Combatant secondEnemy = new Combatant("second-enemy-id", npc("Bear", STANDARD_ACTIONS),
+                false, 5, 20, STANDARD_ACTIONS);
+        CombatOutput output = new CombatOutput(true, STANDARD_ACTIONS, STANDARD_ACTIONS,
+                enemy.character(), List.of(), false, false, 20,
+                List.of(), List.of(playerCombatant, ally, enemy, secondEnemy), "player");
+        Game game = new Game(COMBAT, List.of(), player,
+                new Peace(), new NoChat(), "background", "place", new Nobody(),
+                List.of(), List.of());
+
+        String html = ViewEncoderDecoder.encodeOutput(output, game);
+
+        assertTrue(html.contains("Battlefield"));
+        assertTrue(html.contains("Finnean"));
+        assertTrue(html.contains("Wolf"));
+        assertTrue(html.contains("Bear"));
+        assertTrue(html.contains("left: 66%"));
+        assertTrue(html.contains("top: 56%"));
+        assertTrue(html.contains("top: 78%"));
+    }
+
+    @Test
+    void non_combat_ui_renders_the_player_and_dialogue_character() {
+        GameChar player = wizard(STANDARD_ACTIONS,
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));
+        Game game = new Game(GameMode.DIALOGUE, List.of(), player,
+                new Peace(), new NoChat(), "background", "place",
+                new Somebody("Morgana", NpcType.MAGIC), List.of(), List.of());
+
+        String html = ViewEncoderDecoder.encodeOutput(
+                new DialogueOutput("Welcome, traveler.", List.of()), game);
+
+        assertTrue(html.contains("Your character"));
+        assertTrue(html.contains("Morgana"));
+        assertTrue(html.contains("magic"));
+    }
+
+    @Test
     void multi_combat_movement_log_names_the_target() {
         GameChar player = wizard(new AvailableActions(0, 0, 5),
                 new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0));

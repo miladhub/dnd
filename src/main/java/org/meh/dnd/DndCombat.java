@@ -213,17 +213,22 @@ public class DndCombat implements Combat
         if (!encounter.isEmpty()) {
             List<Combatant> combatants = new java.util.ArrayList<>();
             combatants.add(new Combatant("player", gameChar, true,
-                    Dice.initiative(gameChar), 0, gameChar.availableActions()));
+                    Dice.initiative(gameChar), 0, gameChar.availableActions(),
+                    new GridPosition(0, 3)));
             int index = 0;
             for (AiEntities.NPC npc : encounter) {
                 GameChar character = generateOpponent(npc.name(), npc.type());
+                int allyRow = 2 + (index % 3);
+                GridPosition start = npc.hostile()
+                        ? new GridPosition(10 + (index % 2), 2 + (index % 4))
+                        : new GridPosition(1 + (index % 2), allyRow);
                 combatants.add(new Combatant(
                         "npc-" + index++ + "-" + npc.name(),
                         character,
                         !npc.hostile(),
                         Dice.initiative(character),
                         npc.hostile() ? 5 : 0,
-                        character.availableActions()));
+                        character.availableActions(), start));
             }
             combatants.sort(java.util.Comparator.comparingInt(Combatant::initiative).reversed());
             Combatant active = combatants.getFirst();

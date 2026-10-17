@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Path("/")
 public class RestServer
@@ -184,22 +185,28 @@ public class RestServer
     public Multi<String> updatesStream() {
         return Multi.createFrom().<String>emitter(
                         me -> {
+                            AtomicBoolean closed = new AtomicBoolean();
                             Consumer<PlayerOutput> sub = new Consumer<>() {
                                 @Override
                                 public void accept(PlayerOutput po) {
-                                    if (me.isCancelled()) {
+                                    if (me.isCancelled() || closed.get()) {
+                                        closed.set(true);
                                         playersChannel.unsubscribe(this);
                                     } else {
                                         try {
                                             me.emit(toHtml(po));
                                         } catch (Exception ignored) {
+                                            closed.set(true);
+                                            playersChannel.unsubscribe(this);
                                         }
                                     }
                                 }
                             };
                             playersChannel.subscribe(sub);
-                            me.onTermination(() ->
-                                    playersChannel.unsubscribe(sub));
+                            me.onTermination(() -> {
+                                closed.set(true);
+                                playersChannel.unsubscribe(sub);
+                            });
                         })
                 .onItem().call(i ->
                         Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
@@ -238,6 +245,11 @@ public class RestServer
     @Path("/upload")
     public Response load(@RestForm("game") FileUpload file)
     throws Exception {
+        if (file == null || file.filePath() == null)
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Choose a saved game file to upload.")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
         try (FileReader r = new FileReader(file.filePath().toFile())
         ) {
             Game game = GameSaveLoad.load(r);

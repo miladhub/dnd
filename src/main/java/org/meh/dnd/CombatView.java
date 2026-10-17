@@ -21,6 +21,11 @@ public record CombatView(
         return !combatants.isEmpty();
     }
 
+    public List<Integer> gridCells() {
+        return java.util.stream.IntStream.range(0, GridPosition.COLUMNS * GridPosition.ROWS)
+                .boxed().toList();
+    }
+
     public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
                       boolean fightOver, AvailableActions availableActions,
                       CharacterView character, CharacterView enemy, String combatLog,

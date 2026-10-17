@@ -21,4 +21,8 @@ public record CombatActionView(
     public boolean hasTargets() {
         return !targets.isEmpty();
     }
+
+    public boolean movement() {
+        return name.startsWith("Move");
+    }
 }

@@ -52,7 +52,8 @@ public record DnD(
                         fight.opponent(),
                         List.of(),
                         false, false, fight.distance(),
-                        computeActions(game.playerChar(), fight.playerActions(), fight.distance()),
+                        computeActions(game.playerChar(), fight.playerActions(),
+                                fight.isMultiCombat() ? playerDistance(fight) : fight.distance()),
                         fight.combatants(), fight.activeCombatant());
                 gameRepository.save(g -> g
                         .withMode(COMBAT)
@@ -273,6 +274,7 @@ public record DnD(
             Combatant target = combatants.stream().filter(c -> c.id().equals(targetId))
                     .filter(c -> !c.ally() && !c.character().isDead())
                     .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid combat target"));
+            requireAttackRange(attack, player, target);
             AttackResult result = combat.computeAttack(attack, player.character(), target.character());
             combatants = replace(combatants, target.withCharacter(result.gameChar()));
             GameChar updatedPlayer = player.character();
@@ -288,9 +290,8 @@ public record DnD(
             log.add(DndCombat.combatActionDescription(attack, player.character(), result));
         } else if (action instanceof Move move) {
             requireMovement(player.actions(), move);
-            int direction = move.dir() == Dir.TOWARDS_ENEMY ? 1 : -1;
-            combatants = replace(combatants, player.withPosition(Math.max(0,
-                    player.position() + direction * move.amount()))
+            GridPosition destination = destination(player, move, combatants);
+            combatants = replace(combatants, player.withGridPosition(destination)
                     .withActions(player.actions().subtractSpeed(move.amount())));
             log.add(movementDescription(player.character(), move,
                     nearestOpponent(combatants, player).character().name()));
@@ -323,7 +324,18 @@ public record DnD(
             // allowing AvailableActions to reach a negative value.
             action = normalizeAiAction(action, actor.actions());
             if (action instanceof Attacks attack) {
-                Combatant target = opponents.get(COMBAT_RANDOM.nextInt(opponents.size()));
+                Combatant target = opponents.stream()
+                        .min(java.util.Comparator.comparingInt(c -> c.gridPosition().distanceInFeet(actor.gridPosition())))
+                        .orElseThrow();
+                if (!isInRange(attack, actor, target)) {
+                    action = new Move(preferredDirection(actor.gridPosition(), target.gridPosition()), MOVE_STEP);
+                }
+            }
+            if (action instanceof Attacks attack) {
+                Combatant target = opponents.stream()
+                        .min(java.util.Comparator.comparingInt(c -> c.gridPosition().distanceInFeet(actor.gridPosition())))
+                        .orElseThrow();
+                requireAttackRange(attack, actor, target);
                 AttackResult result = combat.computeAttack(attack, actor.character(), target.character());
                 combatants = replace(combatants, target.withCharacter(result.gameChar()));
                 log.add(DndCombat.combatActionDescription(attack, actor.character(), result));
@@ -338,12 +350,15 @@ public record DnD(
                     fight = withDelayedEffects(fight,
                             append(fight.delayedEffects(), hit.delayedEffects()));
             } else if (action instanceof Move move) {
-                int direction = move.dir() == Dir.TOWARDS_ENEMY ? -1 : 1;
-                combatants = replace(combatants, actor.withPosition(Math.max(0,
-                        actor.position() + direction * move.amount()))
-                        .withActions(actor.actions().subtractSpeed(move.amount())));
-                log.add(movementDescription(actor.character(), move,
-                        opponents.getFirst().character().name()));
+                Optional<GridPosition> destination = aiDestination(actor, move, combatants);
+                if (destination.isPresent()) {
+                    combatants = replace(combatants, actor.withGridPosition(destination.get())
+                            .withActions(actor.actions().subtractSpeed(move.amount())));
+                    log.add(movementDescription(actor.character(), move,
+                            opponents.getFirst().character().name()));
+                } else {
+                    combatants = replace(combatants, actor.withActions(new AvailableActions(0, 0, 0)));
+                }
             } else {
                 combatants = replace(combatants, actor.withActions(new AvailableActions(0, 0, 0)));
             }
@@ -367,7 +382,8 @@ public record DnD(
                     .forEach(s -> actions.add(new SpellAttack(s, opponents.getFirst().id())));
         }
         if (actor.actions().remainingSpeed() >= MOVE_STEP)
-            actions.add(new Move(Dir.TOWARDS_ENEMY, MOVE_STEP));
+            actions.add(new Move(preferredDirection(actor.gridPosition(),
+                    opponents.getFirst().gridPosition()), MOVE_STEP));
         actions.add(new EndTurn());
         return actions.get(COMBAT_RANDOM.nextInt(actions.size()));
     }
@@ -400,6 +416,68 @@ public record DnD(
     private static void requireMovement(AvailableActions actions, Move move) {
         if (move.amount() <= 0 || move.amount() > actions.remainingSpeed())
             throw new IllegalArgumentException("Movement exceeds remaining speed");
+    }
+
+    private static boolean isInRange(Attacks attack, Combatant attacker, Combatant target) {
+        int distance = attacker.gridPosition().distanceInFeet(target.gridPosition());
+        return attack instanceof WeaponAttack weapon
+                ? weapon.weapon().ranged() || distance <= WEAPONS_REACH
+                : ((SpellAttack) attack).spell().ranged() || distance <= WEAPONS_REACH;
+    }
+
+    private static void requireAttackRange(Attacks attack, Combatant attacker, Combatant target) {
+        if (!isInRange(attack, attacker, target))
+            throw new IllegalArgumentException("Target is out of range");
+    }
+
+    private static GridPosition destination(Combatant actor, Move move, List<Combatant> combatants) {
+        if (move.amount() != MOVE_STEP)
+            throw new IllegalArgumentException("Grid movement is one cell");
+        // Keep old programmatic lane actions usable while the web UI uses cardinal actions.
+        if (move.dir() == Dir.TOWARDS_ENEMY || move.dir() == Dir.AWAY_FROM_ENEMY) {
+            if (move.dir() == Dir.AWAY_FROM_ENEMY && actor.gridPosition().column() == 0)
+                return actor.gridPosition();
+            move = new Move(move.dir() == Dir.TOWARDS_ENEMY ? Dir.RIGHT : Dir.LEFT, move.amount());
+        }
+        if (!actor.gridPosition().canMove(move.dir()))
+            throw new IllegalArgumentException("Movement leaves the battlefield");
+        GridPosition destination = actor.gridPosition().move(move.dir());
+        if (combatants.stream().anyMatch(c -> !c.character().isDead()
+                && !c.id().equals(actor.id()) && c.gridPosition().equals(destination)))
+            throw new IllegalArgumentException("The destination cell is occupied");
+        return destination;
+    }
+
+    private static Optional<GridPosition> aiDestination(Combatant actor, Move move,
+                                                         List<Combatant> combatants) {
+        try {
+            return Optional.of(destination(actor, move, combatants));
+        } catch (IllegalArgumentException ignored) {
+            for (Dir direction : List.of(Dir.UP, Dir.DOWN, Dir.LEFT, Dir.RIGHT)) {
+                try {
+                    return Optional.of(destination(actor, new Move(direction, MOVE_STEP), combatants));
+                } catch (IllegalArgumentException ignoredAgain) {
+                    // Try the next adjacent cell.
+                }
+            }
+            return Optional.empty();
+        }
+    }
+
+    private static int playerDistance(Fight fight) {
+        Combatant player = player(fight.combatants());
+        return fight.combatants().stream()
+                .filter(c -> !c.ally() && !c.character().isDead())
+                .mapToInt(c -> player.gridPosition().distanceInFeet(c.gridPosition()))
+                .min().orElse(fight.distance());
+    }
+
+    private static Dir preferredDirection(GridPosition from, GridPosition to) {
+        if (from.column() != to.column())
+            return from.column() < to.column() ? Dir.RIGHT : Dir.LEFT;
+        if (from.row() != to.row())
+            return from.row() < to.row() ? Dir.DOWN : Dir.UP;
+        return Dir.UP;
     }
 
     private static void requireSpellSlot(GameChar character, Attacks attack) {
@@ -510,7 +588,7 @@ public record DnD(
                 fight.activeCombatant().equals("player"), player.actions(),
                 firstEnemy(fight.combatants()).actions(), firstEnemy(fight.combatants()).character(),
                 fight.log(), fight.outcome() == PLAYER_WON, fight.outcome() == ENEMY_WON,
-                5, computeActions(player.character(), player.actions(), 5),
+                playerDistance(fight), computeActions(player.character(), player.actions(), playerDistance(fight)),
                 fight.combatants(), fight.activeCombatant()));
     }
 
@@ -687,6 +765,7 @@ public record DnD(
         return switch (move.dir()) {
             case TOWARDS_ENEMY -> Math.max(fight.distance() - move.amount(), 0);
             case AWAY_FROM_ENEMY -> fight.distance() + move.amount();
+            case UP, DOWN, LEFT, RIGHT -> fight.distance();
         };
     }
 
@@ -713,6 +792,10 @@ public record DnD(
         return m.amount() + switch (m.dir()) {
             case TOWARDS_ENEMY -> " feet towards ";
             case AWAY_FROM_ENEMY -> " feet away from ";
+            case UP -> " feet up toward ";
+            case DOWN -> " feet down toward ";
+            case LEFT -> " feet left toward ";
+            case RIGHT -> " feet right toward ";
         };
     }
 
@@ -724,7 +807,7 @@ public record DnD(
         return combatants.stream()
                 .filter(c -> c.ally() != actor.ally() && !c.character().isDead())
                 .min(java.util.Comparator.comparingInt(c ->
-                        Math.abs(c.position() - actor.position())))
+                        c.gridPosition().distanceInFeet(actor.gridPosition())))
                 .orElseThrow();
     }
 

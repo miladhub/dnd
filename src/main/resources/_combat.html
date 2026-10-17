@@ -39,6 +39,7 @@
 <section class="container mx-auto px-4 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
     {{#character}}
     <div class="bg-blue-800 p-5 rounded-lg shadow-lg">
+        <img class="w-24 h-24 object-cover rounded-full mx-auto mb-2 ring-2 ring-purple-300" src="{{portraitUrl}}" alt="{{charName}} portrait">
         <h3 class="text-2xl font-bold mb-2 text-center">{{charName}}</h3>
         <div class="mb-2 text-center">
             <p class="text-lg">Level {{level}} {{charClass}}</p>
@@ -77,11 +78,12 @@
         {{#combatants}}
         <div class="p-3 rounded shadow {{#active}}bg-yellow-400 text-gray-900 ring-4 ring-yellow-200{{/active}}{{^active}}{{#ally}}bg-blue-700{{/ally}}{{^ally}}bg-red-700{{/ally}}{{/active}}">
             <div class="flex justify-between items-center gap-2">
+                <img class="w-10 h-10 object-cover rounded-full" src="{{portraitUrl}}" alt="{{character.charName}} portrait">
                 <strong>{{character.charName}}</strong>
                 <span class="text-sm">Initiative {{initiative}}</span>
             </div>
             <div class="text-sm">
-                HP {{character.hp}}/{{character.maxHp}}, distance {{position}}
+                HP {{character.hp}}/{{character.maxHp}}
                 {{#active}}<strong> — Active</strong>{{/active}}
             </div>
         </div>
@@ -93,6 +95,7 @@
     {{^hasCombatants}}
     {{#enemy}}
     <div class="bg-red-800 p-5 rounded-lg shadow-lg">
+        <img class="w-24 h-24 object-cover rounded-full mx-auto mb-2 ring-2 ring-red-300" src="{{portraitUrl}}" alt="{{charName}} portrait">
         <h3 class="text-2xl font-bold mb-2 text-center">{{charName}}</h3>
         <div class="mb-2 text-center">
             <p class="text-lg">Level {{level}} {{charClass}}</p>
@@ -123,6 +126,48 @@
     {{/hasCombatants}}
 </section>
 
+{{#hasCombatants}}
+<section class="container mx-auto px-4 max-w-4xl mb-8">
+    <div class="bg-gradient-to-br from-slate-800 via-emerald-950 to-slate-950 p-5 rounded-lg shadow-lg">
+        <h3 class="text-2xl font-bold mb-1 text-center">Battlefield</h3>
+        <p class="text-sm text-center text-gray-300 mb-5">12 columns × 8 rows · each cell is 5 feet</p>
+        <div class="grid grid-cols-12 grid-rows-8 gap-px rounded-lg bg-cyan-900/80 border-2 border-cyan-800 overflow-hidden aspect-[3/2] shadow-inner shadow-black/50">
+            {{#combatants}}
+            <div class="relative flex items-center justify-center min-w-0 {{#dead}}opacity-40 grayscale{{/dead}}"
+                 style="grid-column: {{gridColumnPlusOne}}; grid-row: {{gridRowPlusOne}}">
+                <div data-legacy-position="left: {{mapPosition}}%; top: {{mapTop}}%;"
+                     title="{{character.charName}}"
+                     class="w-full h-full flex flex-col items-center justify-center text-center text-xs font-bold {{#active}}bg-yellow-400 text-gray-900{{/active}}{{^active}}{{#ally}}bg-blue-700{{/ally}}{{^ally}}bg-red-700{{/ally}}{{/active}}">
+                    <img class="w-10 h-10 object-cover rounded-full" src="{{portraitUrl}}" alt="{{character.charName}} portrait">
+                    <span class="truncate max-w-full px-1">{{character.charName}}</span>
+                </div>
+            </div>
+            {{/combatants}}
+            {{#gridCells}}
+            <div class="bg-slate-950/80 border border-emerald-900/40"></div>
+            {{/gridCells}}
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-gray-400">
+            <span class="text-blue-300">Blue: Allies</span>
+            <span class="text-red-300">Red: Enemies</span>
+        </div>
+        {{#yourTurn}}
+        <div class="flex justify-center gap-2 mt-4">
+            {{#actions}}
+            {{#movement}}
+            <form hx-post="/combat" hx-swap="none">
+                <input name="action" type="hidden" value="{{name}}">
+                <input name="info" type="hidden" value="{{info}}">
+                <button class="px-4 py-3 rounded bg-blue-600 hover:bg-blue-500" type="submit">{{label}}</button>
+            </form>
+            {{/movement}}
+            {{/actions}}
+        </div>
+        {{/yourTurn}}
+    </div>
+</section>
+{{/hasCombatants}}
+
 <section class="p-4">
     <textarea id="combat-log" rows="5" readonly
               class="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-600 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-scroll">{{combatLog}}</textarea>
@@ -131,6 +176,7 @@
 <section class="container mx-auto px-4 space-y-4">
     {{^fightOver}}
     {{#actions}}
+    {{^movement}}
     {{^bonusAction}}
     <form hx-post="/combat" hx-swap="none"
           class="bg-red-600 p-4 rounded-lg shadow-lg hover:bg-red-700">
@@ -166,6 +212,7 @@
         <button type="submit" class="w-full text-center text-xl font-bold">{{label}}</button>
     </form>
     {{/bonusAction}}
+    {{/movement}}
     {{/actions}}
     {{/fightOver}}
     {{#fightOver}}

@@ -16,6 +16,16 @@
                 <h3 class="text-lg font-semibold mb-2">Background</h3>
                 <p class="text-sm mb-4">{{background}}</p>
             </div>
+            {{#character}}
+            <div class="mt-6 border-t border-gray-600 pt-4">
+                <img class="w-24 h-24 object-cover rounded-full mb-2" src="{{portraitUrl}}" alt="{{charName}} portrait">
+                <h3 class="text-lg font-semibold mb-2">Your character</h3>
+                <p class="text-sm">{{charName}}, level {{level}} {{charClass}}</p>
+                <p class="text-sm">HP {{hp}}/{{maxHp}} · AC {{ac}}</p>
+                <p class="text-sm">STR {{strength}} · DEX {{dexterity}} · CON {{constitution}}</p>
+                <p class="text-sm">INT {{intelligence}} · WIS {{wisdom}} · CHA {{charisma}}</p>
+            </div>
+            {{/character}}
             <div>
                 <h3 class="text-lg font-semibold mb-2">Quest Progress</h3>
                 {{#goals}}
@@ -78,6 +88,15 @@
                     {{description}}
                 </p>
             </section>
+
+            {{#hasInteractionCharacter}}
+            <section class="bg-purple-800 p-5 rounded-lg shadow-lg mb-8">
+                <img class="w-24 h-24 object-cover rounded-full mb-2" src="{{interactionCharacter.portraitUrl}}" alt="{{interactionCharacter.name}} portrait">
+                <h3 class="text-2xl font-bold mb-1">{{interactionCharacter.name}}</h3>
+                <p class="text-lg">Level unknown {{interactionCharacter.type}}</p>
+                <p class="text-sm mt-3 text-purple-200">You are speaking with this character.</p>
+            </section>
+            {{/hasInteractionCharacter}}
 
             <section class="space-y-4">
                 {{#choices}}
