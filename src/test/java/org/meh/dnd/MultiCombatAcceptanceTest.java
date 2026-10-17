@@ -150,6 +150,25 @@ class MultiCombatAcceptanceTest {
         assertTrue(fight.log().contains("wizard: move 5 feet away from goblin"));
     }
 
+    @Test
+    void dead_player_ends_multi_combat_even_when_an_ally_is_still_alive() {
+        GameChar deadPlayer = wizard(new AvailableActions(0, 0, 0),
+                new SpellSlots(0, 0, 0, 0, 0, 0, 0, 0, 0)).withHp(0);
+        Combatant player = new Combatant("player", deadPlayer, true,
+                20, 0, deadPlayer.availableActions());
+        Combatant ally = new Combatant("ally", npc("Finnean", STANDARD_ACTIONS),
+                true, 15, 0, STANDARD_ACTIONS);
+        Combatant enemy = new Combatant("enemy", npc("Wolf", STANDARD_ACTIONS),
+                false, 10, 5, STANDARD_ACTIONS);
+        Fight fight = new Fight(false, enemy.character(), List.of(), 5,
+                IN_PROGRESS, deadPlayer.availableActions(), enemy.actions(), 100,
+                List.of(), List.of(player, ally, enemy), "ally");
+
+        Fight advanced = dnd.advanceMultiFight(fight, fight.combatants(), fight.log());
+
+        assertEquals(FightOutcome.ENEMY_WON, advanced.outcome());
+    }
+
     private void saveFight(GameChar player, List<Combatant> combatants) {
         Fight fight = new Fight(true, combatants.get(1).character(), List.of(), 5,
                 IN_PROGRESS, combatants.get(0).actions(), combatants.get(1).actions(),

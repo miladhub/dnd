@@ -1,8 +1,10 @@
 package org.meh.dnd;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public record SimpleDM(
         PlayerChannel playerChannel,
@@ -284,16 +286,17 @@ public record SimpleDM(
                 .toList();
     }
 
-    private static List<AiEntities.NPC> hostileEncounter() {
+    static List<AiEntities.NPC> hostileEncounter() {
         int hostileCount = 2 + RANDOM.nextInt(2);
         List<AiEntities.NPC> encounter = new ArrayList<>();
+        Set<String> usedNames = new HashSet<>();
         for (int i = 0; i < hostileCount; i++) {
             NpcType type = randomNpcType();
-            encounter.add(new AiEntities.NPC(randomNpcName(type) + (i == 0 ? "" : " " + (i + 1)), type, true));
+            encounter.add(new AiEntities.NPC(randomNpcName(type, usedNames), type, true));
         }
         if (RANDOM.nextBoolean()) {
             NpcType type = randomNpcType();
-            encounter.add(new AiEntities.NPC(randomNpcName(type) + " ally", type, false));
+            encounter.add(new AiEntities.NPC(randomNpcName(type, usedNames), type, false));
         }
         return encounter;
     }
@@ -387,6 +390,20 @@ public record SimpleDM(
             case MAGIC -> pick(MAGIC_NAMES);
             case BEAST -> pick(BEAST_NAMES);
         };
+    }
+
+    private static String randomNpcName(NpcType type, Set<String> usedNames) {
+        List<String> availableNames = switch (type) {
+            case WARRIOR -> WARRIOR_NAMES;
+            case MAGIC -> MAGIC_NAMES;
+            case BEAST -> BEAST_NAMES;
+        };
+        List<String> unusedNames = availableNames.stream()
+                .filter(name -> !usedNames.contains(name))
+                .toList();
+        String name = pick(unusedNames.isEmpty() ? availableNames : unusedNames);
+        usedNames.add(name);
+        return name;
     }
 
     private static List<String> npcGreetings(NpcType type) {

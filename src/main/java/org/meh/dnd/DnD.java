@@ -438,10 +438,12 @@ public record DnD(
         return new DelayedResolution(combatants, remaining);
     }
 
-    private Fight advanceMultiFight(Fight old, List<Combatant> combatants, List<String> log) {
+    Fight advanceMultiFight(Fight old, List<Combatant> combatants, List<String> log) {
         boolean enemiesAlive = combatants.stream().anyMatch(c -> !c.ally() && !c.character().isDead());
-        boolean partyAlive = combatants.stream().anyMatch(c -> c.ally() && !c.character().isDead());
-        FightOutcome outcome = enemiesAlive ? (partyAlive ? IN_PROGRESS : ENEMY_WON) : PLAYER_WON;
+        boolean playerAlive = !player(combatants).character().isDead();
+        FightOutcome outcome = !playerAlive
+                ? ENEMY_WON
+                : enemiesAlive ? IN_PROGRESS : PLAYER_WON;
         if (outcome != IN_PROGRESS)
             return new Fight(true, firstEnemy(combatants).character(), log, 5, outcome,
                     player(combatants).actions(), firstEnemy(combatants).actions(),

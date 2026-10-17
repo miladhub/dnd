@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -130,6 +131,16 @@ class SimpleDMTest
         dm.process(new Explore("Dark Forest"));
         ExploreOutput output = (ExploreOutput) outputs.get(0);
         assertThat(output.choices(), hasItem(instanceOf(Rest.class)));
+    }
+
+    @Test
+    void hostile_encounters_use_distinct_proper_names_without_numeric_suffixes() {
+        List<AiEntities.NPC> encounter = SimpleDM.hostileEncounter();
+        Set<String> names = encounter.stream().map(AiEntities.NPC::name).collect(java.util.stream.Collectors.toSet());
+
+        assertThat(names, hasSize(encounter.size()));
+        assertThat(names, everyItem(not(matchesPattern(".*\\d$"))));
+        assertThat(names, everyItem(not(endsWith(" ally"))));
     }
 
     @Test
