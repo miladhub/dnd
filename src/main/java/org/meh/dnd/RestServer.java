@@ -2,6 +2,9 @@ package org.meh.dnd;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.subscription.BackPressureStrategy;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.websocket.Session;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.*;
@@ -17,6 +20,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +41,9 @@ public class RestServer
     private final GameRepository gameRepository = new InMemoryGameRepository();
     private final DndCombat combat = new DndCombat();
     private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
+    private final ObjectMapper apiMapper = new ObjectMapper();
+    private final Set<Session> apiSessions = new CopyOnWriteArraySet<>();
+    private long apiSequence;
     private final DM dm = System.getenv("OPENAI_API_KEY") != null
             && !System.getenv("OPENAI_API_KEY").isBlank()
             ? new AiDM(playersChannel, gameRepository)
@@ -50,6 +58,107 @@ public class RestServer
                 LOG.error(e);
             }
         });
+        playersChannel.subscribe(output -> broadcast(output instanceof CombatOutput ? "combat.updated" : "narrative.updated"));
+    }
+
+    Optional<Game> currentGame() {
+        return gameRepository.game();
+    }
+
+    ApiModels.State apiState() {
+        return gameRepository.game().map(ApiMapper::state).orElse(null);
+    }
+
+    void subscribeApi(Session session) {
+        apiSessions.add(session);
+        send(session, event("state.snapshot"));
+    }
+
+    void unsubscribeApi(Session session) {
+        apiSessions.remove(session);
+    }
+
+    void executeApiCommand(String body, Session session) {
+        try {
+            JsonNode command = apiMapper.readTree(body);
+            ApiCommand.execute(command, this);
+            send(session, event("command.accepted"));
+            broadcast("command.accepted");
+        } catch (Exception e) {
+            try {
+                send(session, apiMapper.writeValueAsString(new ApiModels.CommandResult(false, e.getMessage(), apiState())));
+            } catch (Exception ignored) {
+                unsubscribeApi(session);
+            }
+        }
+    }
+
+    void broadcast(String type) {
+        String payload;
+        try {
+            payload = event(type);
+        } catch (Exception e) {
+            LOG.error("Unable to encode API event", e);
+            return;
+        }
+        for (Session session : apiSessions) send(session, payload);
+    }
+
+    private String event(String type) {
+        try {
+            return apiMapper.writeValueAsString(new ApiModels.Event("dnd", 1, ++apiSequence, type, apiState()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void send(Session session, String payload) {
+        if (session.isOpen()) session.getAsyncRemote().sendText(payload);
+        else unsubscribeApi(session);
+    }
+
+    String saveGame() throws IOException {
+        return gameRepository.game().map(game -> {
+            try { return GameSaveLoad.save(game); }
+            catch (IOException e) { throw new IllegalStateException(e); }
+        }).orElse("");
+    }
+
+    void loadGame(String json) throws IOException {
+        gameRepository.save(GameSaveLoad.load(new java.io.StringReader(json)));
+    }
+
+    void executeApiAction(Actions action) { dnd.doAction(action); }
+
+    void executeApiCombat(CombatActions action, boolean bonusAction) {
+        dnd.playCombatAction(action, bonusAction);
+    }
+
+    void createApiCharacter(JsonNode node) {
+        String name = node.path("name").asText();
+        CharClass charClass = CharClass.valueOf(node.path("class").asText("FIGHTER").toUpperCase());
+        int level = node.path("level").asInt(1);
+        int maxHp = node.path("maxHp").asInt(10);
+        GameChar character = new GameChar(name, level, charClass, maxHp, maxHp,
+                node.path("armorClass").asInt(10), DndCombat.xpAtLevel(level),
+                DndCombat.xpAtLevel(level + 1),
+                new Stats(node.path("strength").asInt(10), node.path("dexterity").asInt(10),
+                        node.path("constitution").asInt(10), node.path("intelligence").asInt(10),
+                        node.path("wisdom").asInt(10), node.path("charisma").asInt(10)),
+                charClass == CharClass.FIGHTER ? DndCombat.FIGHTER_WEAPONS : DndCombat.WIZARD_WEAPONS,
+                charClass == CharClass.FIGHTER ? List.of() : DndCombat.WIZARD_SPELLS,
+                new AvailableActions(node.path("actions").asInt(1), node.path("bonusActions").asInt(1), node.path("speed").asInt(30)),
+                DndCombat.spellSlots(charClass, level));
+        gameRepository.save(GameSaveLoad.createGameFrom(node.path("background").asText(""), node.path("place").asText(""), character));
+    }
+
+    void createApiQuest(JsonNode node) {
+        Game game = gameRepository.game().orElseThrow(() -> new IllegalStateException("No character has been created"));
+        gameRepository.save(GameSaveLoad.createGameFrom(node.path("background").asText(""), node.path("place").asText(game.place()), game.playerChar()));
+    }
+
+    void apiLevelUp() {
+        gameRepository.save(g -> g.withPlayerChar(DndCombat.levelUp(g.playerChar())));
     }
 
     @PreDestroy
