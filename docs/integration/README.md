@@ -116,6 +116,99 @@ commands into the interactive client, for example:
 Create a character first if the server has no active game; the character
 creation cURL example above can be used for that.
 
+### Complete WebSocket client flow
+
+The WebSocket is the gameplay connection. Character creation is currently an
+HTTP operation, so a new client should use this sequence:
+
+1. Start the Java server.
+2. Create a character with `POST /api/v1/character`.
+3. Connect to `ws://localhost:8080/api/v1/events`.
+4. Read the initial `state.snapshot` event and use its `state` as the complete
+   authoritative client state.
+5. Send an `action/start` command to begin the adventure.
+6. Render each subsequent event and send further actions selected from the
+   current state.
+
+Create the character before opening the WebSocket:
+
+```sh
+curl -sS http://localhost:8080/api/v1/character \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Aria",
+    "class": "fighter",
+    "place": "The forest",
+    "background": "A lost adventurer",
+    "maxHp": 12,
+    "armorClass": 15,
+    "strength": 16,
+    "dexterity": 12,
+    "constitution": 14,
+    "actions": 1,
+    "bonusActions": 1,
+    "speed": 30
+  }'
+```
+
+After connecting, the first frame is an event envelope similar to:
+
+```json
+{
+  "protocol": "dnd",
+  "version": 1,
+  "sequence": 1,
+  "type": "state.snapshot",
+  "state": { "mode": "EXPLORING", "player": { "name": "Aria" } }
+}
+```
+
+Send this command to start the adventure. The `place` value should be the
+character's current place or another place selected by the client:
+
+```json
+{
+  "type": "action",
+  "action": "start",
+  "place": "The forest"
+}
+```
+
+The requesting connection receives a `command.accepted` event, followed by a
+`narrative.updated` event when the DM produces the result. The client should
+replace its local state with the `state` from each event rather than trying to
+apply game rules locally.
+
+Gameplay command examples:
+
+```json
+{"type":"action","action":"explore","place":"The ruined tower"}
+{"type":"action","action":"dialogue","info":"Eldric"}
+{"type":"action","action":"say","info":"I need information."}
+{"type":"action","action":"end_dialogue"}
+{"type":"action","action":"rest"}
+```
+
+Combat commands use the `combat` type:
+
+```json
+{"type":"combat","action":"melee","target":"wolf-id"}
+{"type":"combat","action":"spell","info":"Fire Bolt","target":"wolf-id"}
+{"type":"combat","action":"move","direction":"UP","amount":5}
+{"type":"combat","action":"end_turn"}
+```
+
+For an accepted command, wait for the `command.accepted` event and then the
+resulting `narrative.updated` or `combat.updated` event. Invalid commands are
+returned as a JSON object with `accepted: false`, `error`, and the current
+`state`; they are not event envelopes. A WebSocket client should display the
+error and keep its previous state unless the response contains a newer state.
+
+If the connection drops, reconnect and use the new `state.snapshot` as the
+authoritative state. Events are snapshots, not a replayable event log, so do
+not attempt to recover missing events from sequence numbers. Save and load are
+currently HTTP operations at `/api/v1/save` and `/api/v1/load`.
+
 ### SSE and WebSocket are not interchangeable
 
 Both transports push server updates, but they serve different client contracts:
@@ -157,8 +250,8 @@ A browser and a Godot instance can connect to the same Java process and observe
 the same in-memory game:
 
 ```text
-Browser ── SSE /updates ───────┐
-                               ├── Java game engine ── one shared Game
+Browser ── SSE /updates ───────────┐
+                                   ├── Java game engine ── one shared Game
 Godot ── WebSocket /api/v1/events ─┘
 ```
 
