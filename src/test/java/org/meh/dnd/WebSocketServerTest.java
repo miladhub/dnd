@@ -42,7 +42,7 @@ class WebSocketServerTest {
         try {
             listener.nextMessage(); // snapshot
             socket.sendText("{\"type\":\"action\",\"action\":\"start\",\"info\":\"The forest\"}", true).join();
-            JsonNode accepted = new ObjectMapper().readTree(listener.nextMessage());
+            JsonNode accepted = nextEvent(listener, "command.accepted");
             assertEquals("command.accepted", accepted.path("type").asText());
         } finally { socket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join(); }
     }
@@ -56,7 +56,7 @@ class WebSocketServerTest {
             given().contentType("application/json")
                     .body("{\"name\":\"Broadcast Socket Hero\",\"class\":\"fighter\"}")
                     .when().post("/api/v1/character").then().statusCode(200);
-            JsonNode event = new ObjectMapper().readTree(listener.nextMessage());
+            JsonNode event = nextEvent(listener, "state.created");
             assertEquals("state.created", event.path("type").asText());
             assertEquals("Broadcast Socket Hero", event.path("state").path("player").path("name").asText());
         } finally { socket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join(); }
@@ -65,6 +65,18 @@ class WebSocketServerTest {
     private static WebSocket connect(RecordingWebSocket listener) {
         return HttpClient.newHttpClient().newWebSocketBuilder().buildAsync(
                 URI.create("ws://localhost:" + io.restassured.RestAssured.port + "/api/v1/events"), listener).join();
+    }
+
+    private static JsonNode nextEvent(RecordingWebSocket listener, String type) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        for (int i = 0; i < 20; i++) {
+            String message = listener.nextMessage();
+            assertNotNull(message, "Timed out waiting for WebSocket event " + type);
+            JsonNode event = mapper.readTree(message);
+            if (type.equals(event.path("type").asText())) return event;
+        }
+        fail("Did not receive WebSocket event " + type);
+        return null;
     }
 
     private static void createCharacter(String name) {
