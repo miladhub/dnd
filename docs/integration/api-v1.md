@@ -1,6 +1,6 @@
 # D&D machine-client API v1
 
-This is the current protocol implemented by `ApiServer`, `ApiSocket`, `ApiCommand`, `ApiMapper`, and `ApiModels`.
+This is the current protocol implemented by `ApiServer`, `WebSocketServer`, `ApiCommand`, `ApiMapper`, and `ApiModels`.
 
 ## Transport
 

@@ -19,12 +19,12 @@ public class ApiServer {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    RestServer server;
+    GameEngine engine;
 
     @GET
     @Path("/state")
     public Response state() {
-        return server.currentGame()
+        return engine.currentGame()
                 .map(game -> Response.ok(ApiMapper.state(game)).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
@@ -35,12 +35,12 @@ public class ApiServer {
     public Response command(String body) {
         try {
             JsonNode command = mapper.readTree(body);
-            ApiCommand.execute(command, server);
-            server.broadcast("command.accepted");
-            return Response.ok(new ApiModels.CommandResult(true, "", server.apiState())).build();
+            ApiCommand.execute(command, engine);
+            engine.notifyUpdate("command.accepted");
+            return Response.ok(new ApiModels.CommandResult(true, "", engine.apiState())).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ApiModels.CommandResult(false, e.getMessage(), server.apiState()))
+                    .entity(new ApiModels.CommandResult(false, e.getMessage(), engine.apiState()))
                     .build();
         }
     }
@@ -50,9 +50,9 @@ public class ApiServer {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response character(String body) {
         try {
-            server.createApiCharacter(mapper.readTree(body));
-            server.broadcast("state.created");
-            return Response.ok(server.apiState()).build();
+            engine.createApiCharacter(mapper.readTree(body));
+            engine.notifyUpdate("state.created");
+            return Response.ok(engine.apiState()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
@@ -63,9 +63,9 @@ public class ApiServer {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response quest(String body) {
         try {
-            server.createApiQuest(mapper.readTree(body));
-            server.broadcast("state.created");
-            return Response.ok(server.apiState()).build();
+            engine.createApiQuest(mapper.readTree(body));
+            engine.notifyUpdate("state.created");
+            return Response.ok(engine.apiState()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
@@ -75,9 +75,9 @@ public class ApiServer {
     @Path("/level-up")
     public Response levelUp() {
         try {
-            server.apiLevelUp();
-            server.broadcast("level-up");
-            return Response.ok(server.apiState()).build();
+            engine.apiLevelUp();
+            engine.notifyUpdate("level-up");
+            return Response.ok(engine.apiState()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
@@ -86,7 +86,7 @@ public class ApiServer {
     @GET
     @Path("/save")
     public Response save() throws IOException {
-        return Response.ok(server.saveGame())
+        return Response.ok(engine.saveGame())
                 .header("Content-Disposition", "attachment; filename=game.json")
                 .build();
     }
@@ -96,9 +96,9 @@ public class ApiServer {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response load(String body) {
         try {
-            server.loadGame(body);
-            server.broadcast("state.loaded");
-            return Response.ok(server.apiState()).build();
+            engine.loadGame(body);
+            engine.notifyUpdate("state.loaded");
+            return Response.ok(engine.apiState()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }

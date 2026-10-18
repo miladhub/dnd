@@ -7,10 +7,10 @@ import java.util.Locale;
 final class ApiCommand {
     private ApiCommand() {}
 
-    static void execute(JsonNode command, RestServer server) {
+    static void execute(JsonNode command, GameEngine engine) {
         String type = text(command, "type").toLowerCase(Locale.ROOT);
         if ("action".equals(type)) {
-            Game game = server.currentGame().orElseThrow(() -> new IllegalStateException("No game has been created"));
+            Game game = engine.currentGame().orElseThrow(() -> new IllegalStateException("No game has been created"));
             String action = text(command, "action").toLowerCase(Locale.ROOT);
             String info = text(command, "info");
             if (command.has("place")) info = text(command, "place");
@@ -26,7 +26,7 @@ final class ApiCommand {
             };
             if ("attack".equals(action) || "dialogue".equals(action))
                 info = text(command, "info");
-            server.executeApiAction(ViewEncoderDecoder.decodeAction(encoded, info, game));
+            engine.executeApiAction(ViewEncoderDecoder.decodeAction(encoded, info, game));
             return;
         }
         if ("combat".equals(type)) {
@@ -39,7 +39,7 @@ final class ApiCommand {
                 default -> throw new IllegalArgumentException("Unknown combat action: " + action);
             };
             String info = "move".equals(action) ? Integer.toString(command.path("amount").asInt(5)) : text(command, "info");
-            server.executeApiCombat(ViewEncoderDecoder.decodeCombatAction(
+            engine.executeApiCombat(ViewEncoderDecoder.decodeCombatAction(
                             encoded, info, text(command, "target")),
                     command.path("bonusAction").asBoolean(false));
             return;

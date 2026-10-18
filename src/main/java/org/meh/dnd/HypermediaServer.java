@@ -2,15 +2,9 @@ package org.meh.dnd;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.subscription.BackPressureStrategy;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.websocket.Session;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -20,153 +14,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Path("/")
-public class RestServer
+public class HypermediaServer
 {
-    private final static Logger LOG = Logger.getLogger(RestServer.class);
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor();
-    private final DMChannel dmChannel =
-            new InMemoryThreadedDMChannel(executor);
-    private final PlayerChannel playersChannel =
-            new InMemoryThreadedPlayerChannel(executor);
-    private final GameRepository gameRepository = new InMemoryGameRepository();
-    private final DndCombat combat = new DndCombat();
-    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
-    private final ObjectMapper apiMapper = new ObjectMapper();
-    private final Set<Session> apiSessions = new CopyOnWriteArraySet<>();
-    private long apiSequence;
-    private final DM dm = System.getenv("OPENAI_API_KEY") != null
-            && !System.getenv("OPENAI_API_KEY").isBlank()
-            ? new AiDM(playersChannel, gameRepository)
-            : new SimpleDM(playersChannel, gameRepository);
-
-    @PostConstruct
-    public void initialize() {
-        dmChannel.subscribe(action -> {
-            try {
-                dm.process(action);
-            } catch (Exception e) {
-                LOG.error(e);
-            }
-        });
-        playersChannel.subscribe(output -> broadcast(output instanceof CombatOutput ? "combat.updated" : "narrative.updated"));
-    }
-
-    Optional<Game> currentGame() {
-        return gameRepository.game();
-    }
-
-    ApiModels.State apiState() {
-        return gameRepository.game().map(ApiMapper::state).orElse(null);
-    }
-
-    void subscribeApi(Session session) {
-        apiSessions.add(session);
-        send(session, event("state.snapshot"));
-    }
-
-    void unsubscribeApi(Session session) {
-        apiSessions.remove(session);
-    }
-
-    void executeApiCommand(String body, Session session) {
-        try {
-            JsonNode command = apiMapper.readTree(body);
-            ApiCommand.execute(command, this);
-            send(session, event("command.accepted"));
-            broadcast("command.accepted");
-        } catch (Exception e) {
-            try {
-                send(session, apiMapper.writeValueAsString(new ApiModels.CommandResult(false, e.getMessage(), apiState())));
-            } catch (Exception ignored) {
-                unsubscribeApi(session);
-            }
-        }
-    }
-
-    void broadcast(String type) {
-        String payload;
-        try {
-            payload = event(type);
-        } catch (Exception e) {
-            LOG.error("Unable to encode API event", e);
-            return;
-        }
-        for (Session session : apiSessions) send(session, payload);
-    }
-
-    private String event(String type) {
-        try {
-            return apiMapper.writeValueAsString(new ApiModels.Event("dnd", 1, ++apiSequence, type, apiState()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private void send(Session session, String payload) {
-        if (session.isOpen()) session.getAsyncRemote().sendText(payload);
-        else unsubscribeApi(session);
-    }
-
-    String saveGame() throws IOException {
-        return gameRepository.game().map(game -> {
-            try { return GameSaveLoad.save(game); }
-            catch (IOException e) { throw new IllegalStateException(e); }
-        }).orElse("");
-    }
-
-    void loadGame(String json) throws IOException {
-        gameRepository.save(GameSaveLoad.load(new java.io.StringReader(json)));
-    }
-
-    void executeApiAction(Actions action) { dnd.doAction(action); }
-
-    void executeApiCombat(CombatActions action, boolean bonusAction) {
-        dnd.playCombatAction(action, bonusAction);
-    }
-
-    void createApiCharacter(JsonNode node) {
-        String name = node.path("name").asText();
-        CharClass charClass = CharClass.valueOf(node.path("class").asText("FIGHTER").toUpperCase());
-        int level = node.path("level").asInt(1);
-        int maxHp = node.path("maxHp").asInt(10);
-        GameChar character = new GameChar(name, level, charClass, maxHp, maxHp,
-                node.path("armorClass").asInt(10), DndCombat.xpAtLevel(level),
-                DndCombat.xpAtLevel(level + 1),
-                new Stats(node.path("strength").asInt(10), node.path("dexterity").asInt(10),
-                        node.path("constitution").asInt(10), node.path("intelligence").asInt(10),
-                        node.path("wisdom").asInt(10), node.path("charisma").asInt(10)),
-                charClass == CharClass.FIGHTER ? DndCombat.FIGHTER_WEAPONS : DndCombat.WIZARD_WEAPONS,
-                charClass == CharClass.FIGHTER ? List.of() : DndCombat.WIZARD_SPELLS,
-                new AvailableActions(node.path("actions").asInt(1), node.path("bonusActions").asInt(1), node.path("speed").asInt(30)),
-                DndCombat.spellSlots(charClass, level));
-        gameRepository.save(GameSaveLoad.createGameFrom(node.path("background").asText(""), node.path("place").asText(""), character));
-    }
-
-    void createApiQuest(JsonNode node) {
-        Game game = gameRepository.game().orElseThrow(() -> new IllegalStateException("No character has been created"));
-        gameRepository.save(GameSaveLoad.createGameFrom(node.path("background").asText(""), node.path("place").asText(game.place()), game.playerChar()));
-    }
-
-    void apiLevelUp() {
-        gameRepository.save(g -> g.withPlayerChar(DndCombat.levelUp(g.playerChar())));
-    }
-
-    @PreDestroy
-    public void shutDown()
-    throws InterruptedException {
-        executor.shutdown();
-        assert(executor.awaitTermination(3, TimeUnit.SECONDS));
-    }
+    @jakarta.inject.Inject
+    GameEngine engine;
 
     @POST
     @Path("/character")
@@ -219,7 +74,7 @@ public class RestServer
                 DndCombat.spellSlots(charClass, level)
         );
         Game game = GameSaveLoad.createGameFrom(background, place, gameChar);
-        gameRepository.save(game);
+        engine.save(game);
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();
@@ -232,7 +87,7 @@ public class RestServer
             @FormParam("background") String background,
             @FormParam("place") String place
     ) {
-        Optional<Game> existingGame = gameRepository.game();
+        Optional<Game> existingGame = engine.currentGame();
         if (existingGame.isEmpty()) {
             return Response.ok()
                     .header("HX-Redirect", "/create.html")
@@ -240,7 +95,7 @@ public class RestServer
         }
         Game game = existingGame.get();
         Game newGame = GameSaveLoad.createGameFrom(background, place, game.playerChar());
-        gameRepository.save(newGame);
+        engine.save(newGame);
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();
@@ -257,7 +112,7 @@ public class RestServer
     @Path("/game")
     @Produces(MediaType.TEXT_HTML)
     public Response enter() {
-        return dnd.enter()
+        return engine.enter()
                 .map(this::toHtml)
                 .map(Response::ok)
                 .orElse(Response.ok().header("HX-Redirect", "/create.html"))
@@ -270,8 +125,8 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        Game game = gameRepository.game().orElseThrow();
-        dnd.doAction(ViewEncoderDecoder.decodeAction(action, info, game));
+        Game game = engine.currentGame().orElseThrow();
+        engine.doAction(ViewEncoderDecoder.decodeAction(action, info, game));
     }
 
     @POST
@@ -283,7 +138,7 @@ public class RestServer
             @FormParam("bonus") boolean bonusAction
     ) {
         CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info, target);
-        dnd.playCombatAction(combatAction, bonusAction);
+        engine.playCombatAction(combatAction, bonusAction);
     }
 
     @GET
@@ -299,21 +154,21 @@ public class RestServer
                                 public void accept(PlayerOutput po) {
                                     if (me.isCancelled() || closed.get()) {
                                         closed.set(true);
-                                        playersChannel.unsubscribe(this);
+                                        engine.unsubscribePlayer(this);
                                     } else {
                                         try {
                                             me.emit(toHtml(po));
                                         } catch (Exception ignored) {
                                             closed.set(true);
-                                            playersChannel.unsubscribe(this);
+                                            engine.unsubscribePlayer(this);
                                         }
                                     }
                                 }
                             };
-                            playersChannel.subscribe(sub);
+                            engine.subscribePlayer(sub);
                             me.onTermination(() -> {
                                 closed.set(true);
-                                playersChannel.unsubscribe(sub);
+                                engine.unsubscribePlayer(sub);
                             });
                         }, BackPressureStrategy.LATEST)
                 .onOverflow().drop()
@@ -323,7 +178,7 @@ public class RestServer
     private String toHtml(
             PlayerOutput output
     ) {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         return ViewEncoderDecoder.encodeOutput(output, game);
     }
 
@@ -332,7 +187,7 @@ public class RestServer
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response save()
     throws IOException {
-        Optional<Game> game = gameRepository.game();
+        Optional<Game> game = engine.currentGame();
         if (game.isEmpty()) {
             return Response.ok("".getBytes(StandardCharsets.UTF_8))
                     .header("Content-disposition",
@@ -359,7 +214,7 @@ public class RestServer
         try (FileReader r = new FileReader(file.filePath().toFile())
         ) {
             Game game = GameSaveLoad.load(r);
-            gameRepository.save(game);
+            engine.save(game);
             return Response.ok()
                     .header("HX-Redirect", "/")
                     .build();
@@ -370,7 +225,7 @@ public class RestServer
     @Path("/level-up")
     @Produces(MediaType.TEXT_HTML)
     public String viewLevelUp() {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         GameChar gc = game.playerChar();
         GameChar newGc = DndCombat.levelUp(gc);
         return Templates.template(new LevelUpView(
@@ -387,10 +242,10 @@ public class RestServer
     @POST
     @Path("/level-up")
     public Response saveLevelUp() {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         GameChar gc = game.playerChar();
         GameChar newGc = DndCombat.levelUp(gc);
-        gameRepository.save(g -> g.withPlayerChar(newGc));
+        engine.update(g -> g.withPlayerChar(newGc));
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();

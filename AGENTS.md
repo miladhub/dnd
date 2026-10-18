@@ -26,7 +26,7 @@
 ## Structure
 
 - Single module, single package: `org.meh.dnd` (90 source files, flat).
-- Entrypoint: `RestServer.java` — JAX-RS resource, manual wiring (no `@Inject`).
+- Hypermedia adapter: `HypermediaServer.java` — JAX-RS resource.
 - Game loop: `DnD.java` orchestrates actions/combat.
 - AI narrative: `AiDM.java` via LangChain4j `AiServices`.
 - Persistence: `GameSaveLoad.java` — JSON export/import via `/save` and `/upload`.
@@ -50,8 +50,8 @@ mvn test -Dtest=DnDAcceptanceTest
 ## Testing
 
 - `DnDAcceptanceTest` — main test suite (1165 lines), pure unit tests with `InMemoryChannel`/`InMemoryDMChannel`/`InMemoryPlayerChannel`. No env vars needed.
-- `RestServerTest` — `@QuarkusTest` using REST Assured on `/hello`
-- `RestServerIT` — `@QuarkusIntegrationTest` (packaged mode)
+- `HypermediaServerTest` — `@QuarkusTest` using REST Assured on `/hello`
+- `HypermediaServerIT` — `@QuarkusIntegrationTest` (packaged mode)
 - `DiceTest`, `DndCombatTest`, `AiEntitiesTest`, `GameSaveLoadTest`
 - Surefire for unit tests, Failsafe for integration tests (`*IT.java`)
 

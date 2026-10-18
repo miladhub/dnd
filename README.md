@@ -6,7 +6,7 @@ DnD™-like app using ChatGPT as the Dungeon Master
 # Pre-requisites
 
 * [JDK 25 or newer](https://www.oracle.com/java/technologies/downloads/)
-* [OpenAI](http://openai.com) key
+* [OpenAI](http://openai.com) key (optional; only needed for the OpenAI-backed DM)
 
 # Building
 
@@ -15,6 +15,44 @@ Building requires [Maven](https://maven.apache.org):
 ```shell
 mvn clean install
 ```
+
+# Distribution
+
+To give someone a runnable copy of the backend, build the project and provide
+the complete distribution archive:
+
+```shell
+mvn clean package
+```
+
+The archive is created at:
+
+```text
+target/dnd-1.0-SNAPSHOT-dist.zip
+```
+
+It contains the runnable JAR and all of the Quarkus application files it needs.
+Do not send `quarkus-run.jar` by itself; keep the extracted `app`, `lib`, and
+`quarkus` folders alongside it.
+
+The recipient needs a [JDK 25 or newer](https://www.oracle.com/java/technologies/downloads/).
+They do not need Maven or the project source code.
+
+## Windows
+
+Extract the ZIP to a folder, open PowerShell in that folder, and run:
+
+```powershell
+java -version
+java -jar .\quarkus-run.jar
+```
+
+The backend listens on port `8080` and is available at
+<http://localhost:8080/>. A Godot client running on the same computer should
+connect to `ws://localhost:8080/api/v1/events`.
+
+An OpenAI API key is only needed when using the OpenAI-backed DM. Without one,
+the backend uses the deterministic/simple DM implementation.
 
 # Running on a server
 
@@ -72,14 +110,14 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 \
 
 ## Integration architecture
 
-`ApiServer` is the REST/HTTP inbound adapter and `ApiSocket` is the WebSocket
-inbound adapter. Both delegate through the shared `RestServer` façade to the
+`ApiServer` is the REST/HTTP inbound adapter and `WebSocketServer` is the WebSocket
+inbound adapter. Both delegate through the shared `GameEngine` interactor to the
 authoritative game engine:
 
 ```text
-REST client ──> ApiServer ──┐
-                            ├──> RestServer ──> DnD / game engine
-Godot WS ────> ApiSocket ───┘
+Browser ──────> HypermediaServer ──┐
+REST clients ─> ApiServer ─────────┼──> GameEngine ──> DnD
+Godot WS ─────> WebSocketServer ───┘
 ```
 
 The browser and Godot are two renderers over the same authoritative Java game
