@@ -54,6 +54,51 @@ connect to `ws://localhost:8080/api/v1/events`.
 An OpenAI API key is only needed when using the OpenAI-backed DM. Without one,
 the backend uses the deterministic/simple DM implementation.
 
+## Sharing over a local network
+
+On a trusted LAN, the distribution ZIP can be shared with a temporary local
+download server. From the project directory, run:
+
+```shell
+mvn clean package
+cd target
+python3 -m http.server 8000
+```
+
+Find the host computer's LAN IP address, for example `192.168.1.42`, and give
+the recipient this URL:
+
+```text
+http://192.168.1.42:8000/dnd-1.0-SNAPSHOT-dist.zip
+```
+
+After the ZIP has been downloaded, stop the server with `Ctrl+C`. Only use this
+on a trusted network because the contents of the `target` folder are temporarily
+available to other devices on the LAN.
+
+If the backend and Godot both run on the recipient's Windows computer, Godot
+connects to:
+
+```text
+ws://localhost:8080/api/v1/events
+```
+
+If the backend runs on the host computer and Godot runs on another computer,
+start the backend using the host computer's LAN interface:
+
+```shell
+java -Dquarkus.http.host=0.0.0.0 -jar quarkus-run.jar
+```
+
+Godot must then connect to the host computer's LAN address, for example:
+
+```text
+ws://192.168.1.42:8080/api/v1/events
+```
+
+The host computer's firewall may need to allow Java to accept connections on
+port `8080`.
+
 # Running on a server
 
 To install and run the game on a server, expand the contents of file
@@ -73,6 +118,28 @@ java -jar quarkus-run.jar
 ```
 
 The game is accessible at <http://localhost:8080/>.
+
+# Merging a feature branch
+
+After committing your work, merge the current feature branch into `main` and
+remove the merged branch:
+
+```shell
+FEATURE_BRANCH=$(git branch --show-current)
+git status
+git add .
+git commit -m "Describe the change"
+
+git switch main
+git pull --ff-only origin main
+git merge --no-ff "$FEATURE_BRANCH"
+git push origin main
+
+git branch -d "$FEATURE_BRANCH"
+git push origin --delete "$FEATURE_BRANCH"
+```
+
+If no remote repository is configured, omit the commands containing `origin`.
 
 # Running in dev mode
 
