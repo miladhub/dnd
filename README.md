@@ -5,7 +5,7 @@ DnD™-like app using ChatGPT as the Dungeon Master
 
 # Pre-requisites
 
-* [JDK 21](https://www.oracle.com/java/technologies/downloads/)
+* [JDK 25 or newer](https://www.oracle.com/java/technologies/downloads/)
 * [OpenAI](http://openai.com) key
 
 # Building
