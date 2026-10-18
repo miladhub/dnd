@@ -327,8 +327,11 @@ public record DnD(
                 Combatant target = opponents.stream()
                         .min(java.util.Comparator.comparingInt(c -> c.gridPosition().distanceInFeet(actor.gridPosition())))
                         .orElseThrow();
-                if (!isInRange(attack, actor, target)) {
+                if (!isInRange(attack, actor, target)
+                        && actor.actions().remainingSpeed() >= MOVE_STEP) {
                     action = new Move(preferredDirection(actor.gridPosition(), target.gridPosition()), MOVE_STEP);
+                } else if (!isInRange(attack, actor, target)) {
+                    action = new EndTurn();
                 }
             }
             if (action instanceof Attacks attack) {
@@ -384,7 +387,8 @@ public record DnD(
         if (actor.actions().remainingSpeed() >= MOVE_STEP)
             actions.add(new Move(preferredDirection(actor.gridPosition(),
                     opponents.getFirst().gridPosition()), MOVE_STEP));
-        actions.add(new EndTurn());
+        if (actions.isEmpty())
+            actions.add(new EndTurn());
         return actions.get(COMBAT_RANDOM.nextInt(actions.size()));
     }
 

@@ -64,3 +64,10 @@ mvn test -Dtest=DnDAcceptanceTest
 - Quarkus profiles: `native` (activated via `-Dnative`)
 - `.drawio.*` files are gitignored
 - No CI/CD, no pre-commit hooks, no linter/formatter config
+
+## Domain Context
+
+- Keep this file focused on rules that apply to most tasks.
+- For combat changes, read [docs/decisions/combat-redesign.md](docs/decisions/combat-redesign.md).
+- For the complete history and surrounding changes from the `ai` branch, read [docs/decisions/ai-branch.md](docs/decisions/ai-branch.md).
+- The combat source and test changes currently present in the working tree are user work; preserve them and do not reset or discard them.

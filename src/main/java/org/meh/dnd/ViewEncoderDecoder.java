@@ -260,14 +260,39 @@ public class ViewEncoderDecoder
     private static Stream<CombatActionView> encodeCombatAction(AvailableAction a, CombatOutput output) {
         return switch (a.type()) {
             case WEAPON, SPELL -> Stream.empty();
-            case MOVE -> Stream.of(
-                    new CombatActionView("MoveUp", a.info(), "Move up", a.bonusAction()),
-                    new CombatActionView("MoveDown", a.info(), "Move down", a.bonusAction()),
-                    new CombatActionView("MoveLeft", a.info(), "Move left", a.bonusAction()),
-                    new CombatActionView("MoveRight", a.info(), "Move right", a.bonusAction()));
+            case MOVE -> movementActions(a, output);
             case END_TURN -> Stream.of(
                     new CombatActionView("EndTurn", "", "End Turn", false)
             );
+        };
+    }
+
+    private static Stream<CombatActionView> movementActions(AvailableAction action,
+                                                              CombatOutput output) {
+        List<Dir> directions = List.of(UP, DOWN, LEFT, RIGHT);
+        if (!output.combatants().isEmpty()) {
+            Combatant player = output.combatants().stream()
+                    .filter(c -> c.id().equals("player"))
+                    .findFirst().orElse(null);
+            if (player != null)
+                directions = directions.stream()
+                        .filter(direction -> player.gridPosition().canMove(direction))
+                        .toList();
+        }
+        return directions.stream()
+                .map(direction -> new CombatActionView(
+                        "Move" + directionName(direction), action.info(),
+                        "Move " + directionName(direction).toLowerCase(), action.bonusAction()));
+    }
+
+    private static String directionName(Dir direction) {
+        return switch (direction) {
+            case UP -> "Up";
+            case DOWN -> "Down";
+            case LEFT -> "Left";
+            case RIGHT -> "Right";
+            case TOWARDS_ENEMY, AWAY_FROM_ENEMY -> throw new IllegalArgumentException(
+                    "Combat UI does not render relative movement");
         };
     }
 
