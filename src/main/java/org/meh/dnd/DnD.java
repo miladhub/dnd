@@ -15,8 +15,14 @@ public record DnD(
             GameRepository gameRepository,
             DMChannel dmChannel,
             PlayerChannel playersChannel,
-            Combat combat
+            Combat combat,
+            TurnDelay turnDelay
     ) {
+
+    DnD(GameRepository gameRepository, DMChannel dmChannel,
+        PlayerChannel playersChannel, Combat combat) {
+        this(gameRepository, dmChannel, playersChannel, combat, TurnDelay.none());
+    }
 
     private static final int MOVE_STEP = 5;
     private static final int WEAPONS_REACH = 5;
@@ -372,6 +378,8 @@ public record DnD(
             fight = advanceMultiFight(fight, combatants, log);
             fight = withDelayedEffects(fight, delayed.effects());
             saveAndNotifyMulti(game, fight);
+            if (fight.outcome() == IN_PROGRESS && !fight.activeCombatant().equals("player"))
+                turnDelay.pause();
         }
     }
 
@@ -623,6 +631,9 @@ public record DnD(
             enemyCombatAction(ga);
             game = gameRepository.game().orElseThrow();
             fight = (Fight) game.combatStatus();
+            if (fight.outcome() == IN_PROGRESS && fight.opponentActions().hasActionsLeft()
+                    && !fight.playerTurn())
+                turnDelay.pause();
         }
     }
 

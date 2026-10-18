@@ -24,7 +24,8 @@ public class GameEngine {
     private final DMChannel dmChannel = new InMemoryThreadedDMChannel(executor);
     private final PlayerChannel playersChannel = new InMemoryThreadedPlayerChannel(executor);
     private final GameRepository gameRepository = new InMemoryGameRepository();
-    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, new DndCombat());
+    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel,
+            new DndCombat(), TurnDelay.ofMillis(700));
     private final Set<Consumer<String>> apiSubscribers = new CopyOnWriteArraySet<>();
     private final DM dm = System.getenv("OPENAI_API_KEY") != null
             && !System.getenv("OPENAI_API_KEY").isBlank()
