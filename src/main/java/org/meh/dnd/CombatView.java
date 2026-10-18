@@ -13,7 +13,36 @@ public record CombatView(
         String combatLog,
         int distance,
         List<CombatActionView> actions,
-        String location
+        String location,
+        List<CombatantView> combatants,
+        List<CombatTargetView> targets
 )
 {
+    public boolean hasCombatants() {
+        return !combatants.isEmpty();
+    }
+
+    public List<Integer> gridCells() {
+        return java.util.stream.IntStream.range(0, GridPosition.COLUMNS * GridPosition.ROWS)
+                .boxed().toList();
+    }
+
+    public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
+                      boolean fightOver, AvailableActions availableActions,
+                      CharacterView character, CharacterView enemy, String combatLog,
+                      int distance, List<CombatActionView> actions, String location) {
+        this(yourTurn, playerWon, enemyWon, fightOver, availableActions, character,
+                enemy, combatLog, distance, actions, location, List.of(), List.of());
+    }
+
+    public CombatView(boolean yourTurn, boolean playerWon, boolean enemyWon,
+                      boolean fightOver, AvailableActions availableActions,
+                      CharacterView character, CharacterView enemy, String combatLog,
+                      int distance, List<CombatActionView> actions, String location,
+                      List<CombatantView> combatants) {
+        this(yourTurn, playerWon, enemyWon, fightOver, availableActions, character,
+                enemy, combatLog, distance, actions, location, combatants, List.of());
+    }
+
+    public List<CombatTargetView> targetCards() { return targets; }
 }

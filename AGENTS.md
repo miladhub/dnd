@@ -10,22 +10,26 @@
 - Create integration tests for outer layers.
 - Create acceptance tests on middle layers, these should mostly be ECB "Control" classes (use cases).
 - Ensure type safety all the way.
+- When finding a bug, create a non-regression automated test first.
 
 ## Stack
-- Java 21, Quarkus 3.29.0, Maven
-- LangChain4j (`quarkus-langchain4j-openai`) for AI DM
-- Mustache (`_template.html`, `_combat.html`, `_levelup.html`) for server-side HTML
-- Htmx + SSE (`/updates`) for real-time UI
-- Tailwind CSS (inline in templates)
-- Jackson for JSON save/load
-- In-memory state only — no database
+
+- Java 21 or higher, Quarkus, Maven.
+- LangChain4j (`quarkus-langchain4j-openai`) for AI DM.
+- Mustache (`_template.html`, `_combat.html`, `_levelup.html`) for server-side HTML.
+- Htmx + SSE (`/updates`) for real-time UI.
+- Tailwind CSS (inline in templates).
+- Any custom UI element that cannot be done via standard HTML must be placed into its own self-contained web component.
+- Jackson for JSON save/load.
+- In-memory state only — no database.
 
 ## Structure
-- Single module, single package: `org.meh.dnd` (90 source files, flat)
-- Entrypoint: `RestServer.java` — JAX-RS resource, manual wiring (no `@Inject`)
-- Game loop: `DnD.java` orchestrates actions/combat
-- AI narrative: `AiDM.java` via LangChain4j `AiServices`
-- Persistence: `GameSaveLoad.java` — JSON export/import via `/save` and `/upload`
+
+- Single module, single package: `org.meh.dnd` (90 source files, flat).
+- Hypermedia adapter: `HypermediaServer.java` — JAX-RS resource.
+- Game loop: `DnD.java` orchestrates actions/combat.
+- AI narrative: `AiDM.java` via LangChain4j `AiServices`.
+- Persistence: `GameSaveLoad.java` — JSON export/import via `/save` and `/upload`.
 
 ## Commands
 ```sh
@@ -44,13 +48,15 @@ mvn test -Dtest=DnDAcceptanceTest
 ```
 
 ## Testing
+
 - `DnDAcceptanceTest` — main test suite (1165 lines), pure unit tests with `InMemoryChannel`/`InMemoryDMChannel`/`InMemoryPlayerChannel`. No env vars needed.
-- `RestServerTest` — `@QuarkusTest` using REST Assured on `/hello`
-- `RestServerIT` — `@QuarkusIntegrationTest` (packaged mode)
+- `HypermediaServerTest` — `@QuarkusTest` using REST Assured on `/hello`
+- `HypermediaServerIT` — `@QuarkusIntegrationTest` (packaged mode)
 - `DiceTest`, `DndCombatTest`, `AiEntitiesTest`, `GameSaveLoadTest`
 - Surefire for unit tests, Failsafe for integration tests (`*IT.java`)
 
 ## Quirks
+
 - `OPENAI_API_KEY` env var required for AI DM to work (dev mode, production). Tests with mock channels don't need it.
 - Debug port `5005` in dev mode
 - Default bind: `localhost:8080`. Use `-Dquarkus.http.host=0.0.0.0` for all interfaces.
@@ -58,3 +64,10 @@ mvn test -Dtest=DnDAcceptanceTest
 - Quarkus profiles: `native` (activated via `-Dnative`)
 - `.drawio.*` files are gitignored
 - No CI/CD, no pre-commit hooks, no linter/formatter config
+
+## Domain Context
+
+- Keep this file focused on rules that apply to most tasks.
+- For combat changes, read [docs/decisions/combat-redesign.md](docs/decisions/combat-redesign.md).
+- For the complete history and surrounding changes from the `ai` branch, read [docs/decisions/ai-branch.md](docs/decisions/ai-branch.md).
+- The combat source and test changes currently present in the working tree are user work; preserve them and do not reset or discard them.

@@ -1,8 +1,10 @@
 package org.meh.dnd;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public record SimpleDM(
         PlayerChannel playerChannel,
@@ -246,31 +248,64 @@ public record SimpleDM(
                             new Rest())));
 
         } else if (roll <= 18) {
-            NpcType type = randomNpcType();
-            String name = randomNpcName(type);
+            List<AiEntities.NPC> encounter = hostileEncounter();
             String desc = fillTemplateHostile(
-                    pick(HOSTILE_DESCRIPTIONS), type, name);
-            return new EncounterResult(desc,
-                    "You were attacked by " + name + " in " + place + "!",
-                    new ArrayList<>(List.of(
-                            new Attack(name, type),
-                            new Explore(place),
-                            new Rest())));
+                    pick(HOSTILE_DESCRIPTIONS), encounter.getFirst().type(),
+                    encounter.getFirst().name()) + " " + otherEncounterNames(encounter);
+            return hostileResult(desc, place, encounter);
 
         } else {
-            NpcType type = randomNpcType();
-            String name = randomNpcName(type);
+            List<AiEntities.NPC> encounter = hostileEncounter();
             String newPlace = place + " " + pick(PLACE_SUFFIXES);
             String desc = fillTemplateHostileNewPlace(
-                    pick(HOSTILE_NEW_PLACE_DESC), newPlace, type, name);
+                    pick(HOSTILE_NEW_PLACE_DESC), newPlace,
+                    encounter.getFirst().type(), encounter.getFirst().name()) + " "
+                    + otherEncounterNames(encounter);
+            List<Actions> choices = new ArrayList<>(hostileChoices(encounter));
+            choices.addAll(List.of(new Explore(newPlace), new Explore(place), new Rest()));
             return new EncounterResult(desc,
-                    "You were ambushed near " + newPlace + "!",
-                    new ArrayList<>(List.of(
-                            new Attack(name, type),
-                            new Explore(newPlace),
-                            new Explore(place),
-                            new Rest())));
+                    "You were ambushed near " + newPlace + "!", choices);
         }
+    }
+
+    private EncounterResult hostileResult(
+            String description,
+            String place,
+            List<AiEntities.NPC> encounter
+    ) {
+        List<Actions> choices = new ArrayList<>(hostileChoices(encounter));
+        choices.addAll(List.of(new Explore(place), new Rest()));
+        return new EncounterResult(description,
+                "You were attacked by a group in " + place + "!", choices);
+    }
+
+    private static List<Actions> hostileChoices(List<AiEntities.NPC> encounter) {
+        return encounter.stream()
+                .filter(AiEntities.NPC::hostile)
+                .map(npc -> (Actions) new Attack(npc.name(), npc.type(), encounter))
+                .toList();
+    }
+
+    static List<AiEntities.NPC> hostileEncounter() {
+        int hostileCount = 2 + RANDOM.nextInt(2);
+        List<AiEntities.NPC> encounter = new ArrayList<>();
+        Set<String> usedNames = new HashSet<>();
+        for (int i = 0; i < hostileCount; i++) {
+            NpcType type = randomNpcType();
+            encounter.add(new AiEntities.NPC(randomNpcName(type, usedNames), type, true));
+        }
+        if (RANDOM.nextBoolean()) {
+            NpcType type = randomNpcType();
+            encounter.add(new AiEntities.NPC(randomNpcName(type, usedNames), type, false));
+        }
+        return encounter;
+    }
+
+    private static String otherEncounterNames(List<AiEntities.NPC> encounter) {
+        String names = encounter.stream().skip(1).map(AiEntities.NPC::name).reduce(
+                "", (result, name) -> result.isBlank() ? "Also present: " + name
+                        : result + ", " + name);
+        return names.isBlank() ? "" : names + ".";
     }
 
     private static List<QuestGoal> generateInitialQuest(String place) {
@@ -355,6 +390,20 @@ public record SimpleDM(
             case MAGIC -> pick(MAGIC_NAMES);
             case BEAST -> pick(BEAST_NAMES);
         };
+    }
+
+    private static String randomNpcName(NpcType type, Set<String> usedNames) {
+        List<String> availableNames = switch (type) {
+            case WARRIOR -> WARRIOR_NAMES;
+            case MAGIC -> MAGIC_NAMES;
+            case BEAST -> BEAST_NAMES;
+        };
+        List<String> unusedNames = availableNames.stream()
+                .filter(name -> !usedNames.contains(name))
+                .toList();
+        String name = pick(unusedNames.isEmpty() ? availableNames : unusedNames);
+        usedNames.add(name);
+        return name;
     }
 
     private static List<String> npcGreetings(NpcType type) {

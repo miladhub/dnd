@@ -12,7 +12,12 @@ public record GameView(
         List<QuestGoalView> goals,
         String location,
         boolean questDone,
-        boolean canLevelUp
+        boolean canLevelUp,
+        CharacterView character,
+        NpcView interactionCharacter
 )
 {
+    public boolean hasInteractionCharacter() {
+        return interactionCharacter != null;
+    }
 }

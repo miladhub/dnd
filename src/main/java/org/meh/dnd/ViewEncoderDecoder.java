@@ -1,7 +1,10 @@
 package org.meh.dnd;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
+import java.util.Comparator;
 
 import static java.lang.Integer.parseInt;
 import static org.meh.dnd.Dir.*;
@@ -44,7 +47,8 @@ public class ViewEncoderDecoder
     private static Attack parseAttack(String info) {
         String typeStr = info.split("_")[0];
         String name = info.split("_")[1];
-        return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()));
+        return new Attack(name, NpcType.valueOf(typeStr.toUpperCase()),
+                EncounterRegistry.get(name));
     }
 
     public static String cleanString(String what) {
@@ -59,11 +63,23 @@ public class ViewEncoderDecoder
             String action,
             String info
     ) {
+        return decodeCombatAction(action, info, "");
+    }
+
+    public static CombatActions decodeCombatAction(
+            String action,
+            String info,
+            String target
+    ) {
         return switch (action) {
-            case "Melee" -> new WeaponAttack(DndCombat.weaponByName(info));
-            case "Spell" -> new SpellAttack(DndCombat.spellByName(info));
+            case "Melee" -> new WeaponAttack(DndCombat.weaponByName(info), target);
+            case "Spell" -> new SpellAttack(DndCombat.spellByName(info), target);
             case "MoveForward" -> new Move(TOWARDS_ENEMY, parseInt(info));
             case "MoveBackward" -> new Move(AWAY_FROM_ENEMY, parseInt(info));
+            case "MoveUp" -> new Move(UP, parseInt(info));
+            case "MoveDown" -> new Move(DOWN, parseInt(info));
+            case "MoveLeft" -> new Move(LEFT, parseInt(info));
+            case "MoveRight" -> new Move(RIGHT, parseInt(info));
             case "EndTurn" -> new EndTurn();
             default ->
                     throw new IllegalStateException("Unexpected value: " + action);
@@ -93,7 +109,7 @@ public class ViewEncoderDecoder
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place(), questDone,
-                    pc.xp() >= pc.nextXp()));
+                    pc.xp() >= pc.nextXp(), getCharacterView(pc), interactionCharacter(game)));
             case ExploreOutput e -> Templates.template(new GameView(
                     pc.name(),
                     pc.level(),
@@ -105,7 +121,7 @@ public class ViewEncoderDecoder
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place(), questDone,
-                    pc.xp() >= pc.nextXp()));
+                    pc.xp() >= pc.nextXp(), getCharacterView(pc), interactionCharacter(game)));
             case RestOutput ignored -> Templates.template(new GameView(
                     pc.name(),
                     pc.level(),
@@ -117,7 +133,7 @@ public class ViewEncoderDecoder
                     game.background(),
                     ViewEncoderDecoder.encodeQuest(game.quest()),
                     game.place(), questDone,
-                    pc.xp() >= pc.nextXp()));
+                    pc.xp() >= pc.nextXp(), getCharacterView(pc), interactionCharacter(game)));
             case CombatOutput co -> Templates.combat(new CombatView(
                     co.playerTurn(),
                     co.playerWon(),
@@ -131,11 +147,86 @@ public class ViewEncoderDecoder
                     String.join("\n", co.log().reversed()).trim(),
                     co.distance(),
                     co.availableActions().stream()
-                            .flatMap(ViewEncoderDecoder::encodeCombatAction)
+                            .flatMap(a -> encodeCombatAction(a, co))
                             .toList(),
-                    game.place()
+                    game.place(),
+                    combatantViews(co), combatTargetViews(co)
             ));
         };
+    }
+
+    private static List<CombatTargetView> combatTargetViews(CombatOutput output) {
+        List<Combatant> enemies = output.combatants().isEmpty()
+                ? List.of(new Combatant("enemy", output.opponent(), false, 0,
+                output.distance(), output.opponent().availableActions()))
+                : output.combatants().stream()
+                .filter(c -> !c.ally() && !c.character().isDead())
+                .toList();
+        return enemies.stream().map(target -> new CombatTargetView(
+                target.id(), target.character().name(), portraitUrl(target), target.character().hp(),
+                target.character().maxHp(), distanceFrom(output, target),
+                output.availableActions().stream()
+                        .filter(a -> a.type() == AvailableActionType.WEAPON || a.type() == AvailableActionType.SPELL)
+                        .filter(a -> legalAtDistance(a, distanceFrom(output, target)))
+                        .map(a -> combatAttackView(a, target.id()))
+                        .toList()
+        )).toList();
+    }
+
+    private static CombatActionView combatAttackView(AvailableAction action, String targetId) {
+        String label = action.type() == AvailableActionType.SPELL
+                ? "Cast " + action.info() : "Attack with " + action.info();
+        return new CombatActionView(action.type() == AvailableActionType.SPELL ? "Spell" : "Melee",
+                action.info(), label, action.bonusAction(), targetId);
+    }
+
+    private static int distanceFrom(CombatOutput output, Combatant target) {
+        if (output.combatants().isEmpty()) return output.distance();
+        Combatant player = output.combatants().stream()
+                .filter(c -> c.id().equals("player")).findFirst().orElseThrow();
+        return player.gridPosition().distanceInFeet(target.gridPosition());
+    }
+
+    private static boolean legalAtDistance(AvailableAction action, int distance) {
+        if (distance <= 5 || action.type() == AvailableActionType.SPELL && isRangedSpell(action.info())
+                || action.type() == AvailableActionType.WEAPON && isRangedWeapon(action.info())) return true;
+        return false;
+    }
+
+    private static boolean isRangedWeapon(String name) {
+        return DndCombat.weaponByName(name).ranged();
+    }
+
+    private static boolean isRangedSpell(String name) {
+        return DndCombat.WIZARD_SPELLS.stream().filter(s -> s.name().equals(name))
+                .findFirst().map(Spell::ranged).orElse(false);
+    }
+
+    private static String portraitUrl(Combatant target) {
+        return new CombatantView(target.id(), getCharacterView(target.character()), target.ally(),
+                target.initiative(), target.position(), false).portraitUrl();
+    }
+
+    private static List<CombatantView> combatantViews(CombatOutput output) {
+        Map<String, Integer> rows = new HashMap<>();
+        java.util.Set<GridPosition> occupied = new java.util.HashSet<>();
+        return output.combatants().stream()
+                .sorted(Comparator.comparingInt(Combatant::initiative).reversed())
+                .map(c -> {
+                    String rowKey = c.ally() + ":" + c.position();
+                    int row = rows.getOrDefault(rowKey, 0);
+                    rows.put(rowKey, row + 1);
+                    GridPosition cell = c.gridPosition();
+                    while (occupied.contains(cell))
+                        cell = new GridPosition(cell.column(), (cell.row() + 1) % GridPosition.ROWS);
+                    occupied.add(cell);
+                    return new CombatantView(c.id(), getCharacterView(c.character()),
+                            c.ally(), c.initiative(), c.position(),
+                            c.id().equals(output.activeCombatant()), row,
+                            cell.column(), cell.row(),
+                            c.ally() ? "ally" : "enemy", c.character().isDead());
+                })
+                .toList();
     }
 
     private static CharacterView getCharacterView(GameChar gc) {
@@ -158,24 +249,50 @@ public class ViewEncoderDecoder
                 gc.spellSlots());
     }
 
-    private static Stream<CombatActionView> encodeCombatAction(AvailableAction a) {
+    private static NpcView interactionCharacter(Game game) {
+        return switch (game.dialogueTarget()) {
+            case Somebody somebody -> new NpcView(somebody.who(),
+                    somebody.type().toString().toLowerCase());
+            case Nobody ignored -> null;
+        };
+    }
+
+    private static Stream<CombatActionView> encodeCombatAction(AvailableAction a, CombatOutput output) {
         return switch (a.type()) {
-            case WEAPON -> Stream.of(
-                    new CombatActionView("Melee", a.info(),
-                            "Attack with " + a.info(), a.bonusAction()));
-            case SPELL -> Stream.of(
-                    new CombatActionView("Spell", a.info(),
-                            "Cast " + a.info(), a.bonusAction()));
-            case MOVE -> Stream.of(
-                    new CombatActionView("MoveForward", a.info(),
-                            "Move " + a.info() + " feet forward",
-                            a.bonusAction()),
-                    new CombatActionView("MoveBackward", a.info(),
-                            "Move " + a.info() + " feet backward",
-                            a.bonusAction()));
+            case WEAPON, SPELL -> Stream.empty();
+            case MOVE -> movementActions(a, output);
             case END_TURN -> Stream.of(
                     new CombatActionView("EndTurn", "", "End Turn", false)
             );
+        };
+    }
+
+    private static Stream<CombatActionView> movementActions(AvailableAction action,
+                                                              CombatOutput output) {
+        List<Dir> directions = List.of(UP, DOWN, LEFT, RIGHT);
+        if (!output.combatants().isEmpty()) {
+            Combatant player = output.combatants().stream()
+                    .filter(c -> c.id().equals("player"))
+                    .findFirst().orElse(null);
+            if (player != null)
+                directions = directions.stream()
+                        .filter(direction -> player.gridPosition().canMove(direction))
+                        .toList();
+        }
+        return directions.stream()
+                .map(direction -> new CombatActionView(
+                        "Move" + directionName(direction), action.info(),
+                        "Move " + directionName(direction).toLowerCase(), action.bonusAction()));
+    }
+
+    private static String directionName(Dir direction) {
+        return switch (direction) {
+            case UP -> "Up";
+            case DOWN -> "Down";
+            case LEFT -> "Left";
+            case RIGHT -> "Right";
+            case TOWARDS_ENEMY, AWAY_FROM_ENEMY -> throw new IllegalArgumentException(
+                    "Combat UI does not render relative movement");
         };
     }
 
@@ -186,7 +303,7 @@ public class ViewEncoderDecoder
         boolean questRelated = Quests.matchesQuestGoal(a, quest);
         return switch (a) {
             case Attack attack -> new ActionView("Attack",
-                    attack.type() + "_" + attack.target(),
+                    registerEncounter(attack),
                     "Attack " + attack.target(),
                     questRelated);
             case Rest ignored -> new ActionView("Rest", "", "Rest", questRelated);
@@ -204,6 +321,11 @@ public class ViewEncoderDecoder
             case Say say -> new ActionView("Say", say.what(), say.what(), questRelated);
             case Start start -> new ActionView("Start", start.place(), "Play", questRelated);
         };
+    }
+
+    private static String registerEncounter(Attack attack) {
+        EncounterRegistry.register(attack.target(), attack.encounter());
+        return attack.type() + "_" + attack.target();
     }
 
     public static List<QuestGoalView> encodeQuest(List<QuestGoal> goals) {

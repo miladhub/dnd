@@ -209,6 +209,40 @@ public class DndCombat implements Combat
             GameChar gameChar,
             Attack attack
     ) {
+        List<AiEntities.NPC> encounter = attack.encounter();
+        if (!encounter.isEmpty()) {
+            List<Combatant> combatants = new java.util.ArrayList<>();
+            combatants.add(new Combatant("player", gameChar, true,
+                    Dice.initiative(gameChar), 0, gameChar.availableActions(),
+                    new GridPosition(0, 3)));
+            int index = 0;
+            for (AiEntities.NPC npc : encounter) {
+                GameChar character = generateOpponent(npc.name(), npc.type());
+                int allyRow = 2 + (index % 3);
+                GridPosition start = npc.hostile()
+                        ? new GridPosition(10 + (index % 2), 2 + (index % 4))
+                        : new GridPosition(1 + (index % 2), allyRow);
+                combatants.add(new Combatant(
+                        "npc-" + index++ + "-" + npc.name(),
+                        character,
+                        !npc.hostile(),
+                        Dice.initiative(character),
+                        npc.hostile() ? 5 : 0,
+                        character.availableActions(), start));
+            }
+            combatants.sort(java.util.Comparator.comparingInt(Combatant::initiative).reversed());
+            Combatant active = combatants.getFirst();
+            GameChar firstOpponent = combatants.stream()
+                    .filter(c -> !c.ally())
+                    .map(Combatant::character)
+                    .findFirst()
+                    .orElse(generateOpponent(attack.target(), attack.type()));
+            return new Fight(
+                    active.id().equals("player"), firstOpponent, List.of(), 5, IN_PROGRESS,
+                    gameChar.availableActions(), firstOpponent.availableActions(),
+                    (int) encounter.stream().filter(AiEntities.NPC::hostile).count() * XP_GAIN,
+                    List.of(), combatants, active.id());
+        }
         GameChar opponent = generateOpponent(attack.target(), attack.type());
         boolean playersTurn = computePlayerTurn(gameChar, opponent);
         return new Fight(playersTurn, opponent, List.of(), 5, IN_PROGRESS,

@@ -1,13 +1,10 @@
 package org.meh.dnd;
 
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import io.smallrye.mutiny.subscription.BackPressureStrategy;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -15,49 +12,16 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Path("/")
-public class RestServer
+public class HypermediaServer
 {
-    private final static Logger LOG = Logger.getLogger(RestServer.class);
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor();
-    private final DMChannel dmChannel =
-            new InMemoryThreadedDMChannel(executor);
-    private final PlayerChannel playersChannel =
-            new InMemoryThreadedPlayerChannel(executor);
-    private final GameRepository gameRepository = new InMemoryGameRepository();
-    private final DndCombat combat = new DndCombat();
-    private final DnD dnd = new DnD(gameRepository, dmChannel, playersChannel, combat);
-    private final DM dm = System.getenv("OPENAI_API_KEY") != null
-            && !System.getenv("OPENAI_API_KEY").isBlank()
-            ? new AiDM(playersChannel, gameRepository)
-            : new SimpleDM(playersChannel, gameRepository);
-
-    @PostConstruct
-    public void initialize() {
-        dmChannel.subscribe(action -> {
-            try {
-                dm.process(action);
-            } catch (Exception e) {
-                LOG.error(e);
-            }
-        });
-    }
-
-    @PreDestroy
-    public void shutDown()
-    throws InterruptedException {
-        executor.shutdown();
-        assert(executor.awaitTermination(3, TimeUnit.SECONDS));
-    }
+    @jakarta.inject.Inject
+    GameEngine engine;
 
     @POST
     @Path("/character")
@@ -110,7 +74,7 @@ public class RestServer
                 DndCombat.spellSlots(charClass, level)
         );
         Game game = GameSaveLoad.createGameFrom(background, place, gameChar);
-        gameRepository.save(game);
+        engine.save(game);
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();
@@ -123,9 +87,15 @@ public class RestServer
             @FormParam("background") String background,
             @FormParam("place") String place
     ) {
-        Game game = gameRepository.game().orElseThrow();
+        Optional<Game> existingGame = engine.currentGame();
+        if (existingGame.isEmpty()) {
+            return Response.ok()
+                    .header("HX-Redirect", "/create.html")
+                    .build();
+        }
+        Game game = existingGame.get();
         Game newGame = GameSaveLoad.createGameFrom(background, place, game.playerChar());
-        gameRepository.save(newGame);
+        engine.save(newGame);
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();
@@ -142,7 +112,7 @@ public class RestServer
     @Path("/game")
     @Produces(MediaType.TEXT_HTML)
     public Response enter() {
-        return dnd.enter()
+        return engine.enter()
                 .map(this::toHtml)
                 .map(Response::ok)
                 .orElse(Response.ok().header("HX-Redirect", "/create.html"))
@@ -155,8 +125,8 @@ public class RestServer
             @FormParam("action") String action,
             @FormParam("info") String info
     ) {
-        Game game = gameRepository.game().orElseThrow();
-        dnd.doAction(ViewEncoderDecoder.decodeAction(action, info, game));
+        Game game = engine.currentGame().orElseThrow();
+        engine.doAction(ViewEncoderDecoder.decodeAction(action, info, game));
     }
 
     @POST
@@ -164,10 +134,11 @@ public class RestServer
     public void combat(
             @FormParam("action") String action,
             @FormParam("info") String info,
+            @FormParam("target") String target,
             @FormParam("bonus") boolean bonusAction
     ) {
-        CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info);
-        dnd.playCombatAction(combatAction, bonusAction);
+        CombatActions combatAction = ViewEncoderDecoder.decodeCombatAction(action, info, target);
+        engine.playCombatAction(combatAction, bonusAction);
     }
 
     @GET
@@ -177,33 +148,37 @@ public class RestServer
     public Multi<String> updatesStream() {
         return Multi.createFrom().<String>emitter(
                         me -> {
+                            AtomicBoolean closed = new AtomicBoolean();
                             Consumer<PlayerOutput> sub = new Consumer<>() {
                                 @Override
                                 public void accept(PlayerOutput po) {
-                                    if (me.isCancelled()) {
-                                        playersChannel.unsubscribe(this);
+                                    if (me.isCancelled() || closed.get()) {
+                                        closed.set(true);
+                                        engine.unsubscribePlayer(this);
                                     } else {
                                         try {
                                             me.emit(toHtml(po));
                                         } catch (Exception ignored) {
+                                            closed.set(true);
+                                            engine.unsubscribePlayer(this);
                                         }
                                     }
                                 }
                             };
-                            playersChannel.subscribe(sub);
-                            me.onTermination(() ->
-                                    playersChannel.unsubscribe(sub));
-                        })
-                .onItem().call(i ->
-                        Uni.createFrom().nullItem().onItem().delayIt().by(Duration.ofMillis(500))
-                )
+                            engine.subscribePlayer(sub);
+                            me.onTermination(() -> {
+                                closed.set(true);
+                                engine.unsubscribePlayer(sub);
+                            });
+                        }, BackPressureStrategy.LATEST)
+                .onOverflow().drop()
                 .onFailure().recoverWithMulti(Multi.createFrom().empty());
     }
 
     private String toHtml(
             PlayerOutput output
     ) {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         return ViewEncoderDecoder.encodeOutput(output, game);
     }
 
@@ -212,7 +187,7 @@ public class RestServer
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response save()
     throws IOException {
-        Optional<Game> game = gameRepository.game();
+        Optional<Game> game = engine.currentGame();
         if (game.isEmpty()) {
             return Response.ok("".getBytes(StandardCharsets.UTF_8))
                     .header("Content-disposition",
@@ -231,10 +206,15 @@ public class RestServer
     @Path("/upload")
     public Response load(@RestForm("game") FileUpload file)
     throws Exception {
+        if (file == null || file.filePath() == null)
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Choose a saved game file to upload.")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
         try (FileReader r = new FileReader(file.filePath().toFile())
         ) {
             Game game = GameSaveLoad.load(r);
-            gameRepository.save(game);
+            engine.save(game);
             return Response.ok()
                     .header("HX-Redirect", "/")
                     .build();
@@ -245,7 +225,7 @@ public class RestServer
     @Path("/level-up")
     @Produces(MediaType.TEXT_HTML)
     public String viewLevelUp() {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         GameChar gc = game.playerChar();
         GameChar newGc = DndCombat.levelUp(gc);
         return Templates.template(new LevelUpView(
@@ -262,10 +242,10 @@ public class RestServer
     @POST
     @Path("/level-up")
     public Response saveLevelUp() {
-        Game game = gameRepository.game().orElseThrow();
+        Game game = engine.currentGame().orElseThrow();
         GameChar gc = game.playerChar();
         GameChar newGc = DndCombat.levelUp(gc);
-        gameRepository.save(g -> g.withPlayerChar(newGc));
+        engine.update(g -> g.withPlayerChar(newGc));
         return Response.ok()
                 .header("HX-Redirect", "/")
                 .build();

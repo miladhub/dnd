@@ -84,4 +84,21 @@ class DndCombatTest
                 c.generateAttack(new Fight(true, everything_heavy, List.of(), 5,
                         IN_PROGRESS, available, new AvailableActions(0, 1, 30), XP_GAIN, List.of())));
     }
+
+    @Test
+    void generate_fight_with_multiple_allies_and_enemies() {
+        List<AiEntities.NPC> encounter = List.of(
+                new AiEntities.NPC("guard", NpcType.WARRIOR, false),
+                new AiEntities.NPC("goblin", NpcType.BEAST, true),
+                new AiEntities.NPC("orc", NpcType.WARRIOR, true));
+
+        Fight fight = c.generateFight(all_weapons,
+                new Attack("goblin", NpcType.BEAST, encounter));
+
+        assertTrue(fight.isMultiCombat());
+        assertEquals(4, fight.combatants().size());
+        assertEquals(2, fight.combatants().stream().filter(Combatant::ally).count());
+        assertEquals(2, fight.combatants().stream().filter(c -> !c.ally()).count());
+        assertTrue(fight.combatants().stream().allMatch(c -> c.initiative() >= 0));
+    }
 }
